@@ -6,6 +6,14 @@ Repository: [https://github.com/softcents/central-account](https://github.com/so
 
 ---
 
+> [!IMPORTANT]
+> **⚠️ Multi-Software VPS Safety Alert (সার্ভার সতর্কতা):**
+> এই VPS সার্ভারে সেন্ট্রাল অ্যাকাউন্ট ছাড়াও অন্যান্য গুরুত্বপূর্ণ সফটওয়্যার চলছে (যেমন: `smsagri.softcents.com` - Go app on port 8080, Python, PHP ইত্যাদি)।
+> কাজ করার সময় কখনো `pkill -f node` বা গ্লোবাল কমান্ড দেওয়া যাবে না। সেন্ট্রাল অ্যাকাউন্ট শুধুমাত্র পোর্ট `3000` ও `4000` ব্যবহার করে।
+> বিস্তারিত নিয়মাবলীর জন্য [SERVER_GUIDELINES.md](SERVER_GUIDELINES.md) দেখুন।
+
+
+
 ## 📋 Table of Contents
 1. [Architecture Overview](#-architecture-overview)
 2. [aaPanel Full Deployment Guide (ধাপে ধাপে গাইড)](#-aapanel-full-deployment-guide)
