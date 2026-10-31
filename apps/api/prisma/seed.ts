@@ -204,6 +204,23 @@ async function main() {
   });
 
   await (prisma as any).adminUser.upsert({
+    where: { email: 'admin@softcents.com' },
+    update: {
+      password_hash: adminPasswordHash,
+      role: 'SUPER_ADMIN',
+      status: 'ACTIVE',
+    },
+    create: {
+      email: 'admin@softcents.com',
+      password_hash: adminPasswordHash,
+      first_name: 'Softcents',
+      last_name: 'Administrator',
+      role: 'SUPER_ADMIN',
+      status: 'ACTIVE',
+    },
+  });
+
+  await (prisma as any).adminUser.upsert({
     where: { email: 'admin@centralidentity.com' },
     update: {
       password_hash: adminPasswordHash,
