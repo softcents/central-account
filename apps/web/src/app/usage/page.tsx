@@ -92,23 +92,23 @@ export default function UsagePage() {
       {/* Plan Banner */}
       <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-950/40 via-violet-950/20 to-slate-900/60 border border-indigo-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">
-            Current Tier Allocation
+          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+            Workspace Status
           </span>
           <div className="text-2xl font-bold text-white tracking-tight mt-0.5">
-            {usage?.planName || 'Free Starter'} Plan
+            Enterprise Multi-Domain (Unlimited)
           </div>
           <div className="text-xs text-slate-400 mt-1">
-            Cycle resets on the 1st of every month.
+            Unlimited KYC, KYB, API calls, and custom domains enabled.
           </div>
         </div>
 
         <Link
-          href="/subscription"
+          href="/organizations"
           className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition-all shrink-0"
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-          <span>Upgrade Tier for More Volume</span>
+          <Building2 className="w-3.5 h-3.5 text-indigo-300" />
+          <span>Manage Organizations & Domains</span>
         </Link>
       </div>
 

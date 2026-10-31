@@ -81,46 +81,8 @@ export class IdentityService {
    * Falls back to FREE plan limits (20/mo) if no tenant/subscription exists.
    */
   private async checkKycQuota(userId: string) {
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-    // Find user's ACTIVE tenant with a plan
-    const membership = await (this.prisma as any).tenantMember.findFirst({
-      where: { user_id: userId },
-      include: {
-        tenant: {
-          include: {
-            subscriptions: {
-              where: { status: 'ACTIVE' },
-              include: { plan: true },
-              take: 1,
-              orderBy: { created_at: 'desc' },
-            },
-          },
-        },
-      },
-    });
-
-    const activePlan = membership?.tenant?.subscriptions?.[0]?.plan;
-    // Default to FREE plan limits if no subscription exists
-    const maxKycMonthly: number = activePlan?.max_kyc_monthly ?? 20;
-    const planName: string = activePlan?.name ?? 'Free';
-
-    // Count KYC verifications started this month for this user
-    const usedThisMonth = await this.prisma.identityVerification.count({
-      where: {
-        user_id: userId,
-        created_at: { gte: startOfMonth },
-      },
-    });
-
-    if (usedThisMonth >= maxKycMonthly) {
-      throw new ForbiddenException(
-        `Monthly KYC limit reached (${usedThisMonth}/${maxKycMonthly}) on your current plan (${planName}). ` +
-        `Upgrade your plan to continue running identity verifications.`,
-      );
-    }
+    // Subscription & billing disabled — unlimited KYC checks
+    return;
   }
 
   async uploadDocument(

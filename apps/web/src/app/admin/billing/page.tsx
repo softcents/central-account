@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   CreditCard,
   DollarSign,
@@ -14,6 +15,11 @@ import { useAdminAuth } from '@/context/AdminAuthContext';
 import { apiFetch } from '@/lib/api';
 
 export default function AdminBillingPage() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/admin/dashboard');
+  }, [router]);
+
   const { token } = useAdminAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);

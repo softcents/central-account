@@ -60,10 +60,8 @@ function SubscriptionContent() {
   };
 
   useEffect(() => {
-    if (token) {
-      fetchData();
-    }
-  }, [token]);
+    router.replace('/organizations');
+  }, [router]);
 
   const handleSubscribe = async (planCode: string, startTrial = false) => {
     if (!selectedTenantId) {

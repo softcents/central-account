@@ -12,6 +12,7 @@ import {
   Clock,
   Sparkles,
   ArrowUpRight,
+  Globe,
 } from 'lucide-react';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import { apiFetch } from '@/lib/api';
@@ -137,7 +138,7 @@ export default function AdminTenantsPage() {
               <tr>
                 <th className="py-3 px-6">Tenant Organization</th>
                 <th className="py-3 px-6">Owner Account</th>
-                <th className="py-3 px-6">Active Plan</th>
+                <th className="py-3 px-6">Multi-Domain</th>
                 <th className="py-3 px-6">Metrics</th>
                 <th className="py-3 px-6">Status</th>
                 <th className="py-3 px-6 text-right">Actions</th>
@@ -179,9 +180,9 @@ export default function AdminTenantsPage() {
                       </td>
 
                       <td className="py-4 px-6">
-                        <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-violet-950/40 border border-violet-500/30 text-violet-300 text-[11px] font-semibold">
-                          <Sparkles className="w-3 h-3 text-violet-400" />
-                          <span>{plan?.name || 'Free Starter'}</span>
+                        <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold">
+                          <Globe className="w-3 h-3 text-emerald-400" />
+                          <span>Unlimited Domains</span>
                         </span>
                       </td>
 
@@ -211,12 +212,6 @@ export default function AdminTenantsPage() {
                       </td>
 
                       <td className="py-4 px-6 text-right space-x-2">
-                        <button
-                          onClick={() => openPlanModal(t)}
-                          className="px-3 py-1 rounded-lg bg-indigo-950/30 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-900/40 text-xs font-medium transition-colors"
-                        >
-                          Change Plan
-                        </button>
 
                         <button
                           onClick={() => toggleTenantStatus(t)}

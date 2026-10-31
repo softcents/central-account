@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   CreditCard,
   DollarSign,
@@ -16,6 +17,11 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 
 export default function BillingPage() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/organizations');
+  }, [router]);
+
   const { token } = useAuth();
   const [tenants, setTenants] = useState<any[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState<string>('');

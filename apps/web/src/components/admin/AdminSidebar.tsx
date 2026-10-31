@@ -30,7 +30,6 @@ export function AdminSidebar() {
     { label: 'KYC Reviews', href: '/admin/kyc', icon: UserCheck },
     { label: 'KYB Reviews', href: '/admin/kyb', icon: Building2 },
     { label: 'SaaS Tenants', href: '/admin/tenants', icon: Boxes },
-    { label: 'Billing & Invoices', href: '/admin/billing', icon: CreditCard },
     { label: 'BullMQ Queues', href: '/admin/queues', icon: Cpu },
     { label: 'Support Desk', href: '/admin/support', icon: HelpCircle },
     { label: 'OAuth Clients', href: '/admin/oauth', icon: KeyRound },

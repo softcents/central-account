@@ -119,27 +119,6 @@ export function Navbar() {
                 <span>Organizations</span>
               </Link>
 
-              <Link
-                href="/subscription"
-                className={`hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  isActive('/subscription')
-                    ? 'bg-slate-800 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-              >
-                <span>Plans</span>
-              </Link>
-
-              <Link
-                href="/billing"
-                className={`hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  isActive('/billing')
-                    ? 'bg-slate-800 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-              >
-                <span>Billing</span>
-              </Link>
 
               <Link
                 href="/profile"

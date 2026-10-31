@@ -98,46 +98,8 @@ export class BusinessService {
    * Falls back to FREE plan limits (5/mo) if no tenant/subscription found.
    */
   private async checkKybQuota(userId: string) {
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-    // Find user's ACTIVE tenant with a plan
-    const membership = await (this.prisma as any).tenantMember.findFirst({
-      where: { user_id: userId },
-      include: {
-        tenant: {
-          include: {
-            subscriptions: {
-              where: { status: 'ACTIVE' },
-              include: { plan: true },
-              take: 1,
-              orderBy: { created_at: 'desc' },
-            },
-          },
-        },
-      },
-    });
-
-    const activePlan = membership?.tenant?.subscriptions?.[0]?.plan;
-    // Default to FREE plan limits if no subscription found
-    const maxKybMonthly: number = activePlan?.max_kyb_monthly ?? 5;
-    const planName: string = activePlan?.name ?? 'Free';
-
-    // Count businesses (KYB entities) created this month for this user
-    const usedThisMonth = await this.prisma.businessUser.count({
-      where: {
-        user_id: userId,
-        created_at: { gte: startOfMonth },
-      },
-    });
-
-    if (usedThisMonth >= maxKybMonthly) {
-      throw new ForbiddenException(
-        `Monthly KYB limit reached (${usedThisMonth}/${maxKybMonthly}) on your current plan (${planName}). ` +
-        `Upgrade your subscription to register additional business entities.`,
-      );
-    }
+    // Subscription & billing disabled — unlimited KYB checks
+    return;
   }
 
   async listUserBusinesses(userId: string) {

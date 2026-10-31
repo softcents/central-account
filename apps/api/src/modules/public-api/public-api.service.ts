@@ -346,11 +346,11 @@ export class PublicApiService {
 
     if (!tenant) throw new NotFoundException('Tenant not found');
 
-    const plan = tenant.subscriptions[0]?.plan ?? {
-      name: 'Free',
-      max_kyc_monthly: 20,
-      max_kyb_monthly: 5,
-      max_api_calls_monthly: 1000,
+    const plan = {
+      name: 'Enterprise Multi-Domain',
+      max_kyc_monthly: 999999,
+      max_kyb_monthly: 999999,
+      max_api_calls_monthly: 9999999,
     };
 
     return {

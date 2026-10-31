@@ -16,6 +16,7 @@ import {
   Server,
   Database,
   RefreshCw,
+  Globe,
 } from 'lucide-react';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import { apiFetch } from '@/lib/api';
@@ -128,24 +129,24 @@ export default function AdminDashboardPage() {
           <div className="text-2xl font-bold text-white tracking-tight">
             {stats?.saas?.tenants || 0}
           </div>
-          <div className="text-[11px] text-violet-400 font-medium mt-1">
-            {stats?.saas?.activeSubscriptions || 0} Subscriptions
+          <div className="text-[11px] text-emerald-400 font-medium mt-1">
+            All Tenants Active
           </div>
         </div>
 
-        {/* Monthly MRR */}
+        {/* Multi-Domain Support */}
         <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
           <div className="flex items-center justify-between text-slate-400 mb-3">
-            <span className="text-xs font-medium">Monthly MRR</span>
+            <span className="text-xs font-medium">Domain Routing</span>
             <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
-              <CreditCard className="w-4 h-4" />
+              <Globe className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-bold text-emerald-400 tracking-tight">
-            ${stats?.saas?.estimatedMrr || 0}
+            Unlimited
           </div>
           <div className="text-[11px] text-slate-400 font-medium mt-1">
-            Recurring Platform Revenue
+            Multi-Domain Support Active
           </div>
         </div>
 
@@ -213,14 +214,14 @@ export default function AdminDashboardPage() {
             </div>
             <h3 className="text-sm font-semibold text-white">Multi-Tenant SaaS Management</h3>
             <p className="text-xs text-slate-400 mt-1">
-              Control tenant organizations, assign subscription tiers, monitor API keys, and enforce quotas.
+              Control tenant organizations, configure multi-domains, monitor API keys, and manage members.
             </p>
           </div>
           <Link
             href="/admin/tenants"
             className="mt-5 inline-flex items-center space-x-2 text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors"
           >
-            <span>Manage Tenants & Quotas ({stats?.saas?.tenants || 0})</span>
+            <span>Manage Tenants & Domains ({stats?.saas?.tenants || 0})</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>

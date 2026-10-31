@@ -59,8 +59,8 @@ export class TenantService {
         slug,
         owner_id: userId,
         business_id: dto.businessId || undefined,
-        // Start SUSPENDED — org activates only after the owner selects a plan
-        status: 'SUSPENDED',
+        // Start ACTIVE immediately — no subscription or plan required
+        status: 'ACTIVE',
         members: {
           create: {
             user_id: userId,
@@ -398,13 +398,13 @@ export class TenantService {
       },
     });
 
-    const plan = tenant?.subscriptions?.[0]?.plan || {
-      name: 'Free',
-      max_kyc_monthly: 10,
-      max_kyb_monthly: 2,
-      max_api_calls_monthly: 1000,
-      storage_mb: 250,
-      max_users: 3,
+    const plan = {
+      name: 'Enterprise Multi-Domain',
+      max_kyc_monthly: 999999,
+      max_kyb_monthly: 999999,
+      max_api_calls_monthly: 9999999,
+      storage_mb: 999999,
+      max_users: 999999,
     };
 
     const usages = await (this.prisma as any).tenantUsage.findMany({
