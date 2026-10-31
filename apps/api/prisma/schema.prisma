@@ -1,0 +1,1248 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+}
+
+enum VerificationStatus {
+  PENDING
+  PROCESSING
+  VERIFIED
+  REVIEW_REQUIRED
+  REJECTED
+  EXPIRED
+}
+
+enum VerificationLevel {
+  LEVEL_0
+  LEVEL_1
+  LEVEL_2
+  LEVEL_3
+  LEVEL_4
+  LEVEL_5
+}
+
+enum BusinessStatus {
+  DRAFT
+  PENDING
+  DOCUMENT_PROCESSING
+  KYC_PENDING
+  UNDER_REVIEW
+  VERIFIED
+  REJECTED
+  EXPIRED
+  SUSPENDED
+}
+
+enum BusinessLevel {
+  BUSINESS_LEVEL_0
+  BUSINESS_LEVEL_1
+  BUSINESS_LEVEL_2
+  BUSINESS_LEVEL_3
+  BUSINESS_LEVEL_4
+}
+
+enum BusinessRole {
+  OWNER
+  ADMIN
+  MANAGER
+  STAFF
+  VIEWER
+}
+
+model User {
+  id                   String                 @id @default(uuid())
+  email                String                 @unique
+  password_hash        String
+  status               UserStatus             @default(PENDING_VERIFICATION)
+  email_verified       Boolean                @default(false)
+  email_verified_at    DateTime?
+  customer_registration_completed Boolean      @default(false)
+  tenant_id            String?
+  created_at           DateTime               @default(now())
+  updated_at           DateTime               @updatedAt
+
+  profile              UserProfile?
+  customer_registration CustomerRegistration?
+  security             UserSecurity?
+  sessions             UserSession[]
+  email_verifications   EmailVerification[]
+  password_resets      PasswordReset[]
+  mfa_methods          MfaMethod[]
+  audit_logs           AuditLog[]
+  identity_verifications IdentityVerification[]
+  verification_attempts VerificationAttempt[]
+  business_memberships BusinessUser[]
+  support_tickets      SupportTicket[]
+  email_change_requests EmailChangeRequest[]
+  oauth_authorizations ConnectedApplication[]
+  oauth_auth_codes     OAuthAuthorizationCode[]
+  oauth_access_tokens  OAuthAccessToken[]
+  oauth_refresh_tokens OAuthRefreshToken[]
+  owned_tenants        Tenant[]               @relation("TenantOwner")
+  tenant_memberships   TenantMember[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id           String   @id @default(uuid())
+  user_id      String   @unique
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  first_name   String?
+  last_name    String?
+  country_code String?
+  phone_number String?
+  tenant_id    String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@map("user_profiles")
+}
+
+enum CustomerType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum CompanyPosition {
+  OWNER
+  MANAGING_DIRECTOR
+  CHAIRMAN
+  DIRECTOR
+  CEO
+  MANAGER
+  AUTHORIZED_REPRESENTATIVE
+  OTHER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+model CustomerRegistration {
+  id                          String           @id @default(uuid())
+  user_id                     String           @unique
+  user                        User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  // I. Customer Type
+  customer_type               CustomerType     @default(INDIVIDUAL)
+
+  // II. Company Information (Only for Company Customers)
+  company_name                String?
+  authorized_person_name      String?
+  company_position            CompanyPosition?
+
+  // III. Personal Information
+  full_name                   String
+  nid_passport_number         String
+  phone_number                String
+  email                       String
+  date_of_birth               DateTime
+  gender                      Gender
+
+  // IV. Present Address
+  present_street              String
+  present_city                String
+  present_postal_code         String
+  present_country             String
+
+  // V. Permanent Address
+  same_as_present_address     Boolean          @default(false)
+  permanent_street            String
+  permanent_city              String
+  permanent_postal_code       String
+  permanent_country           String
+
+  // VI. Family Information
+  father_name                 String
+  mother_name                 String
+
+  // VII. Contact Information
+  contact_phone               String
+  contact_email               String
+
+  // VIII. KYC Verification & Declaration
+  declaration_confirmed       Boolean          @default(false)
+  declaration_confirmed_at    DateTime?
+
+  nid_hash                    String?
+  nid_hash_version            Int              @default(1)
+
+  tenant_id                   String?
+  created_at                  DateTime         @default(now())
+  updated_at                  DateTime         @updatedAt
+
+  @@index([user_id])
+  @@index([nid_passport_number])
+  @@index([nid_hash])
+  @@map("customer_registrations")
+}
+
+model UserSecurity {
+  id                    String    @id @default(uuid())
+  user_id               String    @unique
+  user                  User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  failed_login_attempts Int       @default(0)
+  locked_until          DateTime?
+  last_password_change  DateTime?
+  tenant_id             String?
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+
+  @@map("user_security")
+}
+
+model UserSession {
+  id                 String   @id @default(uuid())
+  user_id            String
+  user               User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  refresh_token_hash String   @unique
+  user_agent         String?
+  ip_address         String?
+  device_name        String?
+  is_revoked         Boolean  @default(false)
+  expires_at         DateTime
+  tenant_id          String?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  @@index([user_id])
+  @@map("user_sessions")
+}
+
+model EmailVerification {
+  id         String    @id @default(uuid())
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  token_hash String    @unique
+  expires_at DateTime
+  verified_at DateTime?
+  tenant_id  String?
+  created_at DateTime  @default(now())
+
+  @@index([user_id])
+  @@map("email_verifications")
+}
+
+model PasswordReset {
+  id         String    @id @default(uuid())
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  token_hash String    @unique
+  expires_at DateTime
+  used_at    DateTime?
+  tenant_id  String?
+  created_at DateTime  @default(now())
+
+  @@index([user_id])
+  @@map("password_resets")
+}
+
+model MfaMethod {
+  id           String   @id @default(uuid())
+  user_id      String
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  type         String   @default("TOTP")
+  secret       String
+  is_enabled   Boolean  @default(false)
+  backup_codes String[]
+  tenant_id    String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@index([user_id])
+  @@map("mfa_methods")
+}
+
+model Country {
+  id                     String                @id @default(uuid())
+  code                   String                @unique
+  name                   String
+  iso3                   String?
+  dial_code              String?
+  is_active              Boolean               @default(true)
+  tenant_id              String?
+  created_at             DateTime              @default(now())
+  updated_at             DateTime              @updatedAt
+  country_document_types CountryDocumentType[]
+
+  @@map("countries")
+}
+
+model DocumentType {
+  id                     String                @id @default(uuid())
+  code                   String                @unique
+  name                   String
+  description            String?
+  tenant_id              String?
+  created_at             DateTime              @default(now())
+  updated_at             DateTime              @updatedAt
+  country_document_types CountryDocumentType[]
+  identity_documents     IdentityDocument[]
+
+  @@map("document_types")
+}
+
+model CountryDocumentType {
+  id               String       @id @default(uuid())
+  country_id       String
+  country          Country      @relation(fields: [country_id], references: [id], onDelete: Cascade)
+  document_type_id String
+  document_type    DocumentType @relation(fields: [document_type_id], references: [id], onDelete: Cascade)
+  is_required      Boolean      @default(false)
+  tenant_id        String?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+  @@unique([country_id, document_type_id])
+  @@map("country_document_types")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  user_id    String?
+  user       User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  event_type String
+  ip_address String?
+  user_agent String?
+  metadata   Json?
+  tenant_id  String?
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@index([event_type])
+  @@map("audit_logs")
+}
+
+// -------------------------------------------------------------
+// PART A: PERSONAL KYC MODELS
+// -------------------------------------------------------------
+
+model IdentityVerification {
+  id                 String             @id @default(uuid())
+  user_id            String
+  user               User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  status             VerificationStatus @default(PENDING)
+  verification_level VerificationLevel  @default(LEVEL_0)
+  current_step       String             @default("DOCUMENT")
+  rejection_reasons  String[]
+  tenant_id          String?
+  customer_id        String?
+  customer           TenantCustomer?        @relation(fields: [customer_id], references: [id], onDelete: SetNull)
+  reviewed_by_type   String?                @default("PLATFORM")
+  reviewed_by_id     String?
+  created_at         DateTime           @default(now())
+  updated_at         DateTime           @updatedAt
+
+  documents          IdentityDocument[]
+  face_verifications FaceVerification[]
+  liveness_verifications LivenessVerification[]
+  results            VerificationResult[]
+  business_verifications BusinessVerification[]
+
+  @@index([user_id])
+  @@index([status])
+  @@index([tenant_id])
+  @@index([customer_id])
+  @@map("identity_verifications")
+}
+
+model IdentityDocument {
+  id               String               @id @default(uuid())
+  verification_id  String
+  verification     IdentityVerification @relation(fields: [verification_id], references: [id], onDelete: Cascade)
+  document_type_id String
+  document_type    DocumentType         @relation(fields: [document_type_id], references: [id])
+  country_code     String
+  front_image_path String
+  back_image_path  String?
+  document_hash    String?
+  status           String               @default("UPLOADED")
+  tenant_id        String?
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
+
+  ocr_results      DocumentOcrResult[]
+
+  @@index([verification_id])
+  @@index([document_hash])
+  @@map("identity_documents")
+}
+
+model DocumentOcrResult {
+  id                 String           @id @default(uuid())
+  document_id        String
+  document           IdentityDocument @relation(fields: [document_id], references: [id], onDelete: Cascade)
+  raw_text           String?
+  first_name         String?
+  last_name          String?
+  full_name          String?
+  document_number    String?
+  date_of_birth      DateTime?
+  issue_date         DateTime?
+  expiry_date        DateTime?
+  nationality        String?
+  gender             String?
+  address            String?
+  mrz_data           Json?
+  confidence_score   Float            @default(0.0)
+  field_confidences  Json?
+  tenant_id          String?
+  created_at         DateTime         @default(now())
+
+  @@index([document_id])
+  @@map("document_ocr_results")
+}
+
+model FaceVerification {
+  id                  String               @id @default(uuid())
+  verification_id     String
+  verification        IdentityVerification @relation(fields: [verification_id], references: [id], onDelete: Cascade)
+  portrait_image_path String?
+  live_face_image_path String?
+  match_score         Float                @default(0.0)
+  is_matched          Boolean              @default(false)
+  quality_metrics     Json?
+  tenant_id           String?
+  created_at          DateTime             @default(now())
+
+  @@index([verification_id])
+  @@map("face_verifications")
+}
+
+model LivenessVerification {
+  id                     String               @id @default(uuid())
+  verification_id        String
+  verification           IdentityVerification @relation(fields: [verification_id], references: [id], onDelete: Cascade)
+  challenge_type         String
+  challenge_token        String?
+  is_active_passed       Boolean              @default(false)
+  passive_liveness_score Float                @default(0.0)
+  is_live                Boolean              @default(false)
+  tenant_id              String?
+  created_at             DateTime             @default(now())
+
+  @@index([verification_id])
+  @@map("liveness_verifications")
+}
+
+model VerificationResult {
+  id              String               @id @default(uuid())
+  verification_id String
+  verification    IdentityVerification @relation(fields: [verification_id], references: [id], onDelete: Cascade)
+  decision        String
+  scores          Json?
+  summary         String?
+  reviewer_notes  String?
+  reviewed_by     String?
+  tenant_id       String?
+  created_at      DateTime             @default(now())
+
+  @@index([verification_id])
+  @@map("verification_results")
+}
+
+model VerificationAttempt {
+  id             String   @id @default(uuid())
+  user_id        String
+  user           User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  attempt_number Int      @default(1)
+  ip_address     String?
+  user_agent     String?
+  tenant_id      String?
+  created_at     DateTime @default(now())
+
+  @@index([user_id])
+  @@map("verification_attempts")
+}
+
+model VerificationProvider {
+  id           String                @id @default(uuid())
+  name         String
+  code         String                @unique
+  is_active    Boolean               @default(true)
+  config       Json?
+  tenant_id    String?
+  created_at   DateTime              @default(now())
+  transactions ProviderTransaction[]
+
+  @@map("verification_providers")
+}
+
+model ProviderTransaction {
+  id               String               @id @default(uuid())
+  provider_id      String
+  provider         VerificationProvider @relation(fields: [provider_id], references: [id], onDelete: Cascade)
+  verification_id  String?
+  action           String
+  request_payload  Json?
+  response_payload Json?
+  status           String
+  tenant_id        String?
+  created_at       DateTime             @default(now())
+
+  @@index([provider_id])
+  @@map("provider_transactions")
+}
+
+// -------------------------------------------------------------
+// PART B: BUSINESS KYB MODELS
+// -------------------------------------------------------------
+
+model Business {
+  id                   String                 @id @default(uuid())
+  legal_name           String
+  trade_name           String?
+  business_type        String
+  country_code         String
+  address              String
+  business_email       String
+  website              String?
+  trade_license_number String
+  license_issue_date   DateTime?
+  license_expiry_date  DateTime?
+  issuing_authority    String?
+  description          String?
+  status               BusinessStatus         @default(DRAFT)
+  verification_level   BusinessLevel          @default(BUSINESS_LEVEL_0)
+  tenant_id            String?
+  created_at           DateTime               @default(now())
+  updated_at           DateTime               @updatedAt
+
+  members              BusinessUser[]
+  documents            BusinessDocument[]
+  verifications        BusinessVerification[]
+  tenant               Tenant?
+
+  @@index([trade_license_number, country_code])
+  @@map("businesses")
+}
+
+model BusinessUser {
+  id                 String       @id @default(uuid())
+  business_id        String
+  business           Business     @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  user_id            String
+  user               User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  role               BusinessRole @default(VIEWER)
+  is_primary_contact Boolean      @default(false)
+  tenant_id          String?
+  created_at         DateTime     @default(now())
+  updated_at         DateTime     @updatedAt
+
+  @@unique([business_id, user_id])
+  @@map("business_users")
+}
+
+model BusinessRoleDef {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  permissions String[]
+  tenant_id   String?
+  created_at  DateTime @default(now())
+
+  @@map("business_roles")
+}
+
+model BusinessDocumentType {
+  id          String             @id @default(uuid())
+  code        String             @unique
+  name        String
+  description String?
+  tenant_id   String?
+  created_at  DateTime           @default(now())
+  documents   BusinessDocument[]
+
+  @@map("business_document_types")
+}
+
+model BusinessDocument {
+  id               String               @id @default(uuid())
+  business_id      String
+  business         Business             @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  document_type_id String
+  document_type    BusinessDocumentType @relation(fields: [document_type_id], references: [id])
+  file_path        String
+  file_name        String
+  file_type        String
+  ocr_data         Json?
+  status           String               @default("UPLOADED")
+  tenant_id        String?
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
+
+  @@index([business_id])
+  @@map("business_documents")
+}
+
+model BusinessVerification {
+  id           String                        @id @default(uuid())
+  business_id  String
+  business     Business                      @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  owner_kyc_id String?
+  owner_kyc    IdentityVerification?         @relation(fields: [owner_kyc_id], references: [id], onDelete: SetNull)
+  decision     String                        @default("PENDING")
+  score        Float                         @default(0.0)
+  notes        String?
+  tenant_id    String?
+  customer_id  String?
+  customer     TenantCustomer?               @relation(fields: [customer_id], references: [id], onDelete: SetNull)
+  reviewed_by_type String?                   @default("PLATFORM")
+  reviewed_by_id   String?
+  created_at   DateTime                      @default(now())
+  updated_at   DateTime                      @updatedAt
+  results      BusinessVerificationResult[]
+
+  @@index([business_id])
+  @@index([tenant_id])
+  @@index([customer_id])
+  @@map("business_verifications")
+}
+
+model BusinessVerificationResult {
+  id                       String               @id @default(uuid())
+  business_verification_id String
+  verification             BusinessVerification @relation(fields: [business_verification_id], references: [id], onDelete: Cascade)
+  rules_evaluated          Json?
+  tenant_id                String?
+  created_at               DateTime             @default(now())
+
+  @@index([business_verification_id])
+  @@map("business_verification_results")
+}
+
+// -------------------------------------------------------------
+// PART A & B: SUPPORT TICKETS & EMAIL CHANGE WORKFLOW
+// -------------------------------------------------------------
+
+enum TicketCategory {
+  EMAIL_CHANGE
+  IDENTITY_VERIFICATION
+  BUSINESS_VERIFICATION
+  ACCOUNT_SECURITY
+  GENERAL_SUPPORT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_REVIEW
+  WAITING_FOR_USER
+  APPROVED
+  REJECTED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum MessageSenderType {
+  USER
+  ADMIN
+  SYSTEM
+}
+
+model SupportTicket {
+  id               String                   @id @default(uuid())
+  user_id          String
+  user             User                     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  category         TicketCategory
+  subject          String
+  description      String
+  status           TicketStatus             @default(OPEN)
+  priority         TicketPriority           @default(NORMAL)
+  assigned_admin   String?
+  closed_at        DateTime?
+  created_at       DateTime                 @default(now())
+  updated_at       DateTime                 @updatedAt
+
+  messages         SupportTicketMessage[]
+  attachments      SupportTicketAttachment[]
+  email_change_req EmailChangeRequest?
+
+  @@index([user_id])
+  @@index([status])
+  @@index([category])
+  @@map("support_tickets")
+}
+
+model SupportTicketMessage {
+  id          String                   @id @default(uuid())
+  ticket_id   String
+  ticket      SupportTicket            @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  sender_id   String
+  sender_type MessageSenderType
+  message     String
+  created_at  DateTime                 @default(now())
+
+  attachments SupportTicketAttachment[]
+
+  @@index([ticket_id])
+  @@map("support_ticket_messages")
+}
+
+model SupportTicketAttachment {
+  id          String                @id @default(uuid())
+  ticket_id   String?
+  ticket      SupportTicket?        @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  message_id  String?
+  message     SupportTicketMessage? @relation(fields: [message_id], references: [id], onDelete: Cascade)
+  file_path   String
+  file_name   String
+  file_size   Int
+  mime_type   String
+  created_at  DateTime              @default(now())
+
+  @@index([ticket_id])
+  @@index([message_id])
+  @@map("support_ticket_attachments")
+}
+
+enum EmailChangeStatus {
+  PENDING_APPROVAL
+  APPROVED
+  COMPLETED
+  REJECTED
+  EXPIRED
+}
+
+model EmailChangeRequest {
+  id                      String            @id @default(uuid())
+  user_id                 String
+  user                    User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  ticket_id               String            @unique
+  ticket                  SupportTicket     @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  old_email               String
+  new_email               String
+  status                  EmailChangeStatus @default(PENDING_APPROVAL)
+  verification_token_hash String?           @unique
+  token_expires_at        DateTime?
+  rejection_reason        String?
+  approved_by             String?
+  created_at              DateTime          @default(now())
+  updated_at              DateTime          @updatedAt
+
+  @@index([user_id])
+  @@index([status])
+  @@map("email_change_requests")
+}
+
+// -------------------------------------------------------------
+// PART C: OAUTH 2.0 & OIDC SSO PROVIDER
+// -------------------------------------------------------------
+
+enum OAuthClientStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
+model OAuthClient {
+  id                          String             @id @default(uuid())
+  client_id                   String             @unique
+  client_secret_hash          String
+  name                        String
+  description                 String?
+  logo_uri                    String?
+  redirect_uris               String[]
+  allowed_scopes              String[]
+  required_verification_level VerificationLevel  @default(LEVEL_0)
+  status                      OAuthClientStatus  @default(ACTIVE)
+  created_at                  DateTime           @default(now())
+  updated_at                  DateTime           @updatedAt
+
+  authorizations              ConnectedApplication[]
+  auth_codes                  OAuthAuthorizationCode[]
+  access_tokens               OAuthAccessToken[]
+  refresh_tokens              OAuthRefreshToken[]
+
+  @@map("oauth_clients")
+}
+
+model OAuthScope {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  created_at  DateTime @default(now())
+
+  @@map("oauth_scopes")
+}
+
+model OAuthAuthorizationCode {
+  id                    String      @id @default(uuid())
+  code_hash             String      @unique
+  client_id             String
+  client                OAuthClient @relation(fields: [client_id], references: [client_id], onDelete: Cascade)
+  user_id               String
+  user                  User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  redirect_uri          String
+  scope                 String
+  code_challenge        String
+  code_challenge_method String
+  expires_at            DateTime
+  is_used               Boolean     @default(false)
+  created_at            DateTime    @default(now())
+
+  @@index([code_hash])
+  @@map("oauth_authorization_codes")
+}
+
+model OAuthAccessToken {
+  id         String      @id @default(uuid())
+  token_hash String      @unique
+  client_id  String
+  client     OAuthClient @relation(fields: [client_id], references: [client_id], onDelete: Cascade)
+  user_id    String
+  user       User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  scope      String
+  expires_at DateTime
+  is_revoked Boolean     @default(false)
+  created_at DateTime    @default(now())
+
+  @@index([token_hash])
+  @@map("oauth_access_tokens")
+}
+
+model OAuthRefreshToken {
+  id         String      @id @default(uuid())
+  token_hash String      @unique
+  client_id  String
+  client     OAuthClient @relation(fields: [client_id], references: [client_id], onDelete: Cascade)
+  user_id    String
+  user       User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  scope      String
+  expires_at DateTime
+  is_used    Boolean     @default(false)
+  is_revoked Boolean     @default(false)
+  created_at DateTime    @default(now())
+
+  @@index([token_hash])
+  @@map("oauth_refresh_tokens")
+}
+
+model ConnectedApplication {
+  id             String      @id @default(uuid())
+  user_id        String
+  user           User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  client_id      String
+  client         OAuthClient @relation(fields: [client_id], references: [client_id], onDelete: Cascade)
+  granted_scopes String[]
+  is_revoked     Boolean     @default(false)
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+
+  @@unique([user_id, client_id])
+  @@map("connected_applications")
+}
+
+// -------------------------------------------------------------
+// PART D: MULTI-TENANT SAAS, SUBSCRIPTIONS & BILLING
+// -------------------------------------------------------------
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  TRIAL
+  CANCELLED
+}
+
+enum TenantRole {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+  BILLING_ADMIN
+  VIEWER
+}
+
+enum PlanTier {
+  FREE
+  STARTER
+  BUSINESS
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  UNCOLLECTIBLE
+  VOID
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum UsageMetric {
+  KYC_CHECKS
+  KYB_CHECKS
+  FACE_VERIFICATIONS
+  API_CALLS
+  ACTIVE_USERS
+  STORAGE_MB
+}
+
+model Tenant {
+  id            String       @id @default(uuid())
+  name          String
+  slug          String       @unique
+  business_id   String?      @unique
+  business      Business?    @relation(fields: [business_id], references: [id])
+  owner_id      String
+  owner         User         @relation("TenantOwner", fields: [owner_id], references: [id], onDelete: Cascade)
+  status        TenantStatus @default(ACTIVE)
+  custom_domain String?
+  logo_url      String?
+  brand_color   String?      @default("#3b82f6")
+  settings      Json?
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
+  members           TenantMember[]
+  api_keys          TenantApiKey[]
+  subscriptions     Subscription[]
+  invoices          Invoice[]
+  usages            TenantUsage[]
+  webhook_endpoints WebhookEndpoint[]
+  customers         TenantCustomer[]
+  provider_configs  TenantProviderConfig[]
+  custom_domains    CustomDomain[]
+
+  @@map("tenants")
+}
+
+model TenantMember {
+  id          String     @id @default(uuid())
+  tenant_id   String
+  tenant      Tenant     @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  user_id     String
+  user        User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  role        TenantRole @default(MEMBER)
+  permissions String[]
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
+  @@unique([tenant_id, user_id])
+  @@map("tenant_members")
+}
+
+model TenantApiKey {
+  id           String    @id @default(uuid())
+  tenant_id    String
+  tenant       Tenant    @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  name         String
+  key_prefix   String
+  key_hash     String    @unique
+  scopes       String[]
+  last_used_at DateTime?
+  expires_at   DateTime?
+  is_revoked   Boolean   @default(false)
+  ip_allowlist String[]
+  created_at   DateTime  @default(now())
+
+  @@index([tenant_id])
+  @@map("tenant_api_keys")
+}
+
+model Plan {
+  id                    String         @id @default(uuid())
+  code                  PlanTier       @unique
+  name                  String
+  description           String?
+  price_monthly         Float          @default(0)
+  price_yearly          Float          @default(0)
+  currency              String         @default("USD")
+  max_users             Int            @default(5)
+  max_kyc_monthly       Int            @default(20)
+  max_kyb_monthly       Int            @default(5)
+  max_api_calls_monthly Int            @default(1000)
+  max_connected_apps    Int            @default(3)
+  storage_mb            Int            @default(500)
+  features              String[]
+  is_active             Boolean        @default(true)
+  created_at            DateTime       @default(now())
+  subscriptions         Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  tenant_id            String
+  tenant               Tenant             @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  plan_id              String
+  plan                 Plan               @relation(fields: [plan_id], references: [id])
+  status               SubscriptionStatus @default(ACTIVE)
+  billing_cycle        BillingCycle       @default(MONTHLY)
+  current_period_start DateTime           @default(now())
+  current_period_end   DateTime
+  trial_ends_at        DateTime?
+  cancel_at_period_end Boolean            @default(false)
+  created_at           DateTime           @default(now())
+  updated_at           DateTime           @updatedAt
+  invoices             Invoice[]
+
+  @@index([tenant_id])
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id              String        @id @default(uuid())
+  invoice_number  String        @unique
+  tenant_id       String
+  tenant          Tenant        @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  subscription_id String?
+  subscription    Subscription? @relation(fields: [subscription_id], references: [id])
+  amount          Float
+  currency        String        @default("USD")
+  status          InvoiceStatus @default(PAID)
+  billing_reason  String?
+  line_items      Json?
+  pdf_url         String?
+  due_date        DateTime
+  paid_at         DateTime?
+  created_at      DateTime      @default(now())
+  payments        Payment[]
+
+  @@index([tenant_id])
+  @@map("invoices")
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  invoice_id     String
+  invoice        Invoice       @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  amount         Float
+  currency       String        @default("USD")
+  status         PaymentStatus @default(COMPLETED)
+  payment_method String        @default("CARD")
+  provider       String        @default("MANUAL")
+  transaction_id String        @unique
+  receipt_url    String?
+  created_at     DateTime      @default(now())
+
+  @@index([invoice_id])
+  @@map("payments")
+}
+
+model TenantUsage {
+  id           String      @id @default(uuid())
+  tenant_id    String
+  tenant       Tenant      @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  metric       UsageMetric
+  count        Int         @default(0)
+  period_start DateTime
+  period_end   DateTime
+  updated_at   DateTime    @updatedAt
+
+  @@unique([tenant_id, metric, period_start])
+  @@map("tenant_usages")
+}
+
+// -------------------------------------------------------------
+// PART E: DEDICATED ADMIN SYSTEM & RBAC
+// -------------------------------------------------------------
+
+enum AdminRole {
+  SUPER_ADMIN
+  SAAS_ADMIN
+  IDENTITY_ADMIN
+  KYC_REVIEWER
+  KYB_REVIEWER
+  SUPPORT_AGENT
+  BILLING_ADMIN
+  SECURITY_ADMIN
+  AUDITOR
+}
+
+model AdminUser {
+  id            String       @id @default(uuid())
+  email         String       @unique
+  password_hash String
+  first_name    String
+  last_name     String
+  role          AdminRole    @default(SUPER_ADMIN)
+  status        UserStatus   @default(ACTIVE)
+  mfa_secret    String?
+  mfa_enabled   Boolean      @default(false)
+  last_login_at DateTime?
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
+  sessions   AdminSession[]
+  audit_logs AdminAuditLog[]
+
+  @@map("admin_users")
+}
+
+model AdminSession {
+  id         String    @id @default(uuid())
+  admin_id   String
+  admin      AdminUser @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+  token_hash String    @unique
+  ip_address String?
+  user_agent String?
+  expires_at DateTime
+  created_at DateTime  @default(now())
+
+  @@index([admin_id])
+  @@map("admin_sessions")
+}
+
+model AdminAuditLog {
+  id         String    @id @default(uuid())
+  admin_id   String
+  admin      AdminUser @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+  action     String
+  resource   String
+  target_id  String?
+  details    Json?
+  ip_address String?
+  user_agent String?
+  created_at DateTime  @default(now())
+
+  @@index([admin_id])
+  @@index([action])
+  @@map("admin_audit_logs")
+}
+
+// -------------------------------------------------------------
+// PART F: WEBHOOKS
+// -------------------------------------------------------------
+
+model WebhookEndpoint {
+  id         String            @id @default(uuid())
+  tenant_id  String
+  tenant     Tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  url        String
+  secret     String
+  events     String[]
+  is_active  Boolean           @default(true)
+  created_at DateTime          @default(now())
+  updated_at DateTime          @updatedAt
+  deliveries WebhookDelivery[]
+
+  @@index([tenant_id])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id              String          @id @default(uuid())
+  endpoint_id     String
+  endpoint        WebhookEndpoint @relation(fields: [endpoint_id], references: [id], onDelete: Cascade)
+  event           String
+  payload         Json
+  response_status Int?
+  response_body   String?
+  success         Boolean         @default(false)
+  attempt_count   Int             @default(1)
+  created_at      DateTime        @default(now())
+
+  @@index([endpoint_id])
+  @@map("webhook_deliveries")
+}
+
+// -------------------------------------------------------------
+// PART H: MULTI-TENANT CUSTOMER VERIFICATION & CUSTOM DOMAINS (PHASE 1)
+// -------------------------------------------------------------
+
+enum CustomDomainStatus {
+  PENDING_DNS
+  VERIFIED
+  FAILED
+}
+
+model CustomDomain {
+  id                 String             @id @default(uuid())
+  tenant_id          String
+  tenant             Tenant             @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  domain             String             @unique
+  verification_token String
+  status             CustomDomainStatus @default(PENDING_DNS)
+  is_primary         Boolean            @default(false)
+  ssl_status         String             @default("PENDING")
+  last_verified_at   DateTime?
+  error_message      String?
+  created_at         DateTime           @default(now())
+  updated_at         DateTime           @updatedAt
+
+  @@index([tenant_id])
+  @@index([domain])
+  @@map("custom_domains")
+}
+
+model TenantCustomer {
+  id                 String             @id @default(uuid())
+  tenant_id          String
+  tenant             Tenant             @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  user_id            String?
+  customer_type      CustomerType       @default(INDIVIDUAL)
+  name               String
+  email              String
+  phone_number       String?
+  status             VerificationStatus @default(PENDING)
+  verification_level VerificationLevel  @default(LEVEL_0)
+  metadata           Json?
+  created_at         DateTime           @default(now())
+  updated_at         DateTime           @updatedAt
+
+  identity_verifications IdentityVerification[]
+  business_verifications BusinessVerification[]
+
+  @@unique([tenant_id, email])
+  @@index([tenant_id])
+  @@map("tenant_customers")
+}
+
+model TenantProviderConfig {
+  id                    String   @id @default(uuid())
+  tenant_id             String
+  tenant                Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  provider_code         String
+  is_enabled            Boolean  @default(true)
+  is_primary            Boolean  @default(false)
+  api_key_encrypted     String
+  api_secret_encrypted  String?
+  api_url               String?
+  additional_config     Json?
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+
+  @@unique([tenant_id, provider_code])
+  @@index([tenant_id])
+  @@map("tenant_provider_configs")
+}
+
+

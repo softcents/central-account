@@ -1,0 +1,21 @@
+{
+  "name": "central-account-platform",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*"
+  ],
+  "scripts": {
+    "start": "concurrently -n \"API,WEB\" -c \"cyan,blue\" \"npm run start:prod --workspace=api\" \"npm run start --workspace=web\"",
+    "start:api": "npm run start:prod --workspace=api",
+    "start:web": "npm run start --workspace=web",
+    "dev": "concurrently -n \"API,WEB\" -c \"cyan,blue\" \"npm run start:dev --workspace=api\" \"npm run dev --workspace=web\"",
+    "build": "npm run build:api && npm run build:web",
+    "build:api": "npm run build --workspace=api",
+    "build:web": "npm run build --workspace=web"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}

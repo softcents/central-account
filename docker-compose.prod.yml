@@ -1,0 +1,113 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: central-identity-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-central_identity}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-central_identity}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: central-identity-redis
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  face-service:
+    build:
+      context: ./services/face-verification
+      dockerfile: Dockerfile
+    container_name: central-identity-face-service
+    restart: always
+    environment:
+      PORT: 8000
+      TESSERACT_CMD: /usr/bin/tesseract
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  api:
+    volumes:
+      - identity_uploads:/app/apps/api/uploads
+    build:
+      context: .
+      dockerfile: ./apps/api/Dockerfile
+    container_name: central-identity-api
+    restart: always
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-central_identity}?schema=public
+      REDIS_URL: redis://redis:6379
+      PYTHON_SERVICE_URL: http://face-service:8000
+      PYTHON_VERIFICATION_URL: http://face-service:8000
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-access_token_secret_key_super_secure_32chars_min}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-refresh_token_secret_key_super_secure_32chars_min}
+      JWT_MFA_SECRET: ${JWT_MFA_SECRET:-mfa_challenge_token_secret_key_32chars_min}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      NODE_ENV: production
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-Central Account <noreply@localhost>}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+      NID_HMAC_KEY: ${NID_HMAC_KEY:-}
+      INTERNAL_ALLOWED_IPS: ${INTERNAL_ALLOWED_IPS:-}
+      TESSERACT_CMD: /usr/bin/tesseract
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      face-service:
+        condition: service_started
+
+  web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+    container_name: central-identity-web
+    restart: always
+    environment:
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+      NODE_ENV: production
+    depends_on:
+      - api
+
+  nginx:
+    image: nginx:alpine
+    container_name: central-identity-nginx
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+      - api
+
+volumes:
+  postgres_data:
+  redis_data:
+  identity_uploads:
