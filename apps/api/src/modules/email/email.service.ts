@@ -387,7 +387,7 @@ export class EmailService {
     isExistingUser: boolean;
   }): Promise<boolean> {
     const subject = `You've been invited to join ${details.orgName} on Central Account`;
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://account.softcents.com');
     const actionUrl = `${frontendUrl}/organizations/${details.orgId}`;
     const inviterDisplay = details.inviterName || details.inviterEmail;
 

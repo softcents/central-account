@@ -292,7 +292,7 @@ export class EmailChangeService {
       },
     });
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://account.softcents.com');
     const verificationUrl = `${frontendUrl}/verify-email-change?token=${confirmationToken}`;
 
     this.logger.log(`[EmailChange] Confirmation URL for new address ${request.new_email}: ${verificationUrl}`);

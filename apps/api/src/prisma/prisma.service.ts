@@ -115,6 +115,20 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           parallelism: 4,
         });
 
+        // Seed Super Admin (admin@softcents.com)
+        await (this as any).adminUser.upsert({
+          where: { email: 'admin@softcents.com' },
+          update: {},
+          create: {
+            email: 'admin@softcents.com',
+            password_hash: adminPasswordHash,
+            first_name: 'Softcents',
+            last_name: 'Administrator',
+            role: 'SUPER_ADMIN',
+            status: 'ACTIVE',
+          },
+        });
+
         // Seed Super Admin
         await (this as any).adminUser.upsert({
           where: { email: 'admin@centralidentity.com' },

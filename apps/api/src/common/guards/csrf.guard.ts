@@ -32,7 +32,7 @@ export class CsrfGuard implements CanActivate {
     // Origin / Referer validation against allowed domains
     const origin = request.headers['origin'] as string;
     const referer = request.headers['referer'] as string;
-    const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const allowedOrigin = process.env.FRONTEND_URL || 'https://account.softcents.com';
 
     if (origin && origin.startsWith(allowedOrigin)) {
       return true;

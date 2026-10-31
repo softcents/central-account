@@ -124,7 +124,7 @@ export class AuthService {
       },
     });
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://account.softcents.com');
     const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
 
     // Audit log: ACCOUNT_CREATED
@@ -313,7 +313,7 @@ export class AuthService {
       },
     });
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://account.softcents.com');
     const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
 
     this.logger.log(`[Resend Verification] Link for ${user.email}: ${verificationUrl}`);

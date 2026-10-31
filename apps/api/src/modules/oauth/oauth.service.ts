@@ -544,7 +544,7 @@ export class OAuthService {
 
   private async generateTokenResponse(clientId: string, userId: string, scopeString: string) {
     const scopes = scopeString.split(' ').map((s) => s.trim().toLowerCase());
-    const issuer = this.configService.get<string>('OAUTH_ISSUER', 'http://localhost:4000/api/v1/oauth');
+    const issuer = this.configService.get<string>('OAUTH_ISSUER', 'https://account.softcents.com/api/v1/oauth');
 
     // Fetch user details for claims
     const user = await this.prisma.user.findUnique({
@@ -780,7 +780,7 @@ export class OAuthService {
   // --------------------------------------------------------------------------
 
   getOpenIdConfiguration() {
-    const baseUrl = this.configService.get<string>('BASE_API_URL', 'http://localhost:4000/api/v1/oauth');
+    const baseUrl = this.configService.get<string>('BASE_API_URL', 'https://account.softcents.com/api/v1/oauth');
     return {
       issuer: baseUrl,
       authorization_endpoint: `${baseUrl}/authorize`,

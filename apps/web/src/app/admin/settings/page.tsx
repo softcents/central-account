@@ -206,7 +206,7 @@ export default function AdminSettingsPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="jane.doe@centralidentity.com"
+                  placeholder="admin@softcents.com"
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500/60"
                 />
               </div>
