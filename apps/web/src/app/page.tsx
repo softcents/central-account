@@ -16,10 +16,10 @@ export default function HomePage() {
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
             Central Account Platform
           </h1>
-          <p className="text-base text-slate-400 max-w-lg mx-auto">
+          <p className="text-base text-slate-600 max-w-lg mx-auto">
             Centralized authentication, identity proofing, and business verification engine.
           </p>
         </div>
@@ -60,7 +60,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-sm font-medium border border-slate-800 transition-all"
+                className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-sm font-medium border border-slate-300 shadow-sm transition-all"
               >
                 <span>Create Account</span>
               </Link>

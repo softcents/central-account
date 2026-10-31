@@ -41,7 +41,7 @@ export function Navbar() {
             <Shield className="w-5 h-5 text-white" />
           </div>
           <div>
-            <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400">
+            <span className="text-base font-bold text-slate-900">
               Central Account
             </span>
           </div>

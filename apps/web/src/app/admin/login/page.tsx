@@ -45,7 +45,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-6 relative overflow-hidden">
       {/* Decorative gradient glow */}
       <div className="absolute top-1/4 -translate-y-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 translate-y-1/2 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -56,14 +56,14 @@ export default function AdminLoginPage() {
           <div className="inline-flex w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-400 items-center justify-center shadow-xl shadow-indigo-500/25 mb-4">
             <Shield className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Enterprise Admin Portal</h1>
-          <p className="text-xs text-slate-400 mt-1.5">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Enterprise Admin Portal</h1>
+          <p className="text-xs text-slate-500 mt-1.5">
             Central Account Multi-Tenant Operations & Compliance
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl p-7 shadow-2xl shadow-black/60">
+        <div className="bg-white border border-slate-200 rounded-2xl p-7 shadow-xl shadow-slate-200/50">
           {error && (
             <div className="mb-5 p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/30 text-rose-300 text-xs flex items-center space-x-2.5">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
@@ -73,42 +73,42 @@ export default function AdminLoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 mb-1.5">
                 Administrator Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@softcents.com"
-                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/60 transition-all"
+                  className="w-full bg-white border border-slate-300 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/60 transition-all"
+                  className="w-full bg-white border border-slate-300 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                MFA / TOTP Code <span className="text-slate-500 font-normal">(Optional)</span>
+              <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                MFA / TOTP Code <span className="text-slate-400 font-normal">(Optional)</span>
               </label>
               <input
                 type="text"
@@ -116,7 +116,7 @@ export default function AdminLoginPage() {
                 value={mfaCode}
                 onChange={(e) => setMfaCode(e.target.value)}
                 placeholder="6-digit code if MFA active"
-                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 transition-all text-center tracking-widest font-mono"
+                className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-all text-center tracking-widest font-mono"
               />
             </div>
 
@@ -137,11 +137,11 @@ export default function AdminLoginPage() {
           </form>
 
           {/* Quick Super Admin Preset */}
-          <div className="mt-5 pt-4 border-t border-slate-800/80 text-center">
+          <div className="mt-5 pt-4 border-t border-slate-200 text-center">
             <button
               type="button"
               onClick={fillSuperAdmin}
-              className="inline-flex items-center space-x-1.5 text-[11px] text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+              className="inline-flex items-center space-x-1.5 text-[11px] text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
             >
               <Sparkles className="w-3 h-3 text-amber-400" />
               <span>Use Default Super Admin Credentials</span>

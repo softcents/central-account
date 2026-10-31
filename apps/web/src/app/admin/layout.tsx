@@ -36,11 +36,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex">
       <AdminSidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <AdminHeader />
-        <main className="flex-1 p-8 overflow-y-auto bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900/40 via-slate-950 to-slate-950">
+        <main className="flex-1 p-8 overflow-y-auto bg-slate-50">
           {children}
         </main>
       </div>
