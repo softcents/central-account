@@ -32,9 +32,9 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
 
   // CORS configuration
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://account.softcents.com';
   app.enableCors({
-    origin: [frontendUrl, 'http://localhost:3000'],
+    origin: [frontendUrl, 'https://account.softcents.com', 'http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [

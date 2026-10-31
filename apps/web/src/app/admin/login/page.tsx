@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
   };
 
   const fillSuperAdmin = () => {
-    setEmail('admin@centralidentity.com');
+    setEmail('admin@softcents.com');
     setPassword('AdminPassword123!');
   };
 
@@ -83,7 +83,7 @@ export default function AdminLoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@centralidentity.com"
+                  placeholder="admin@softcents.com"
                   className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/60 transition-all"
                 />
               </div>
