@@ -7,7 +7,7 @@
     "services/*"
   ],
   "scripts": {
-    "start": "concurrently -n \"API,WEB\" -c \"cyan,blue\" \"npm run start:prod --workspace=api\" \"npm run start --workspace=web\"",
+    "start": "concurrently --restart-tries 10 --restart-after 3000 -n \"API,WEB\" -c \"cyan,blue\" \"npm run start:prod --workspace=api\" \"npm run start --workspace=web\"",
     "start:api": "npm run start:prod --workspace=api",
     "start:web": "npm run start --workspace=web",
     "dev": "concurrently -n \"API,WEB\" -c \"cyan,blue\" \"npm run start:dev --workspace=api\" \"npm run dev --workspace=web\"",
