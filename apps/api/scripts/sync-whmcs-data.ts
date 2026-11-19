@@ -70,7 +70,8 @@ async function main() {
   console.log('--> Fetching all clients from billing.softcents.com...');
   const clients = queryTsv(`
     SELECT id, firstname, lastname, companyname, email, phonenumber, address1, city, state, postcode, country, status, credit, datecreated
-    FROM tblclients;
+    FROM tblclients
+    ORDER BY id DESC;
   `);
   console.log(`✓ Fetched ${clients.length} clients via TSV.`);
 
@@ -304,20 +305,32 @@ async function main() {
         instructions: 'City Bank / BRAC Bank SoftCents Systems Account',
       },
     ],
-    clients: clients.map((c: any) => ({
-      id: c.id,
-      name: `${c.firstname || ''} ${c.lastname || ''}`.trim(),
-      company: c.companyname || '',
-      email: c.email,
-      phone: c.phonenumber,
-      address1: c.address1,
-      city: c.city,
-      state: c.state,
-      country: c.country,
-      status: c.status,
-      credit: c.credit,
-      dateCreated: c.datecreated,
-    })),
+    clients: clients.map((c: any) => {
+      const activeSvc = services.filter((s: any) => String(s.userid) === String(c.id) && s.domainstatus === 'Active').length;
+      const totalSvc = services.filter((s: any) => String(s.userid) === String(c.id)).length;
+      return {
+        id: c.id,
+        firstname: c.firstname || '',
+        lastname: c.lastname || '',
+        name: `${c.firstname || ''} ${c.lastname || ''}`.trim() || c.companyname || c.email,
+        company: c.companyname || '',
+        companyname: c.companyname || '',
+        email: c.email || '',
+        phone: c.phonenumber || '',
+        phonenumber: c.phonenumber || '',
+        address1: c.address1 || '',
+        city: c.city || '',
+        state: c.state || '',
+        country: c.country || 'BD',
+        status: c.status || 'Active',
+        credit: c.credit || '0.00',
+        dateCreated: c.datecreated || '',
+        datecreated: c.datecreated || '',
+        active_services: activeSvc,
+        total_services: totalSvc,
+        services_count: `${activeSvc} (${totalSvc})`,
+      };
+    }),
     services: services.map((s: any) => ({
       ...s,
       clientName: clientMap[s.userid] || `Client #${s.userid}`,
