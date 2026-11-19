@@ -750,38 +750,44 @@ export function AdminHeader() {
             {activeDropdown === 'setup' && (
               <div className="absolute left-0 top-full mt-1 w-56 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50">
                 <Link
-                  href="/admin/settings"
+                  href="/admin/setup"
                   onClick={() => setActiveDropdown(null)}
-                  className="flex items-center px-3 py-1.5 hover:bg-slate-100 font-bold text-slate-800"
+                  className="flex items-center px-3 py-1.5 hover:bg-slate-100 font-bold text-[#1A4D80]"
                 >
                   <img src="/whmcs/icons/config.png" className="w-3.5 h-3.5 mr-2" alt="" />
+                  <span>System Settings</span>
+                </Link>
+                <div className="border-t border-slate-100 my-1"></div>
+                <Link
+                  href="/admin/settings?tab=general"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700"
+                >
                   General Settings
                 </Link>
                 <Link
                   href="/admin/servers"
                   onClick={() => setActiveDropdown(null)}
-                  className="flex items-center px-3 py-1.5 hover:bg-slate-100 text-[#1A4D80] font-semibold"
+                  className="flex items-center px-3 py-1.5 hover:bg-slate-100 text-slate-700 font-semibold"
                 >
-                  <img src="/whmcs/icons/income.png" className="w-3.5 h-3.5 mr-2" alt="" />
                   Servers & Provisioning (6)
                 </Link>
-                <div className="border-t border-slate-100 my-1"></div>
                 <Link
-                  href="/admin/settings"
+                  href="/admin/settings?tab=automation"
                   onClick={() => setActiveDropdown(null)}
                   className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700"
                 >
                   Automation Settings
                 </Link>
                 <Link
-                  href="/admin/settings"
+                  href="/admin/settings?tab=gateways"
                   onClick={() => setActiveDropdown(null)}
                   className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700"
                 >
                   Payment Gateways (PipraPay)
                 </Link>
                 <Link
-                  href="/admin/settings"
+                  href="/admin/settings?tab=admins"
                   onClick={() => setActiveDropdown(null)}
                   className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700"
                 >
@@ -835,9 +841,9 @@ export function AdminHeader() {
             <Settings className="w-4 h-4" />
           </Link>
 
-          {/* Wrench Configuration */}
+          {/* Wrench Configuration (System Settings / Setup Hub) */}
           <Link
-            href="/admin/settings"
+            href="/admin/setup"
             className="p-1 hover:text-white hover:bg-black/20 rounded transition-colors"
             title="System Settings"
           >

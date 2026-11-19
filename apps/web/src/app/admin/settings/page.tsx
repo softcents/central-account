@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Users,
   UserPlus,
@@ -16,13 +17,23 @@ import {
   Box,
   Save,
   Check,
+  ArrowLeft,
+  LayoutGrid,
 } from 'lucide-react';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import { apiFetch } from '@/lib/api';
 
-export default function AdminSettingsPage() {
+function AdminSettingsContent() {
   const { token, admin } = useAdminAuth();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState<'admins' | 'general' | 'automation' | 'gateways'>('general');
+
+  useEffect(() => {
+    if (tabParam === 'admins' || tabParam === 'general' || tabParam === 'automation' || tabParam === 'gateways') {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   // Admin team state
   const [team, setTeam] = useState<any[]>([]);
@@ -126,6 +137,14 @@ export default function AdminSettingsPage() {
             Configure system parameters, automation rules, payment gateways, and staff administrators.
           </p>
         </div>
+
+        <Link
+          href="/admin/setup"
+          className="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-xs px-3 py-1.5 rounded flex items-center space-x-1.5 transition-colors shadow-sm"
+        >
+          <LayoutGrid className="w-3.5 h-3.5 text-amber-300" />
+          <span>System Settings Hub (24 Modules)</span>
+        </Link>
       </div>
 
       {/* Tabs */}
@@ -498,5 +517,13 @@ export default function AdminSettingsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminSettingsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading settings...</div>}>
+      <AdminSettingsContent />
+    </Suspense>
   );
 }
