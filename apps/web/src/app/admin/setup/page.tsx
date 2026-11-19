@@ -32,6 +32,17 @@ import {
   ChevronRight,
   Store,
   CheckCircle2,
+  LifeBuoy,
+  Shuffle,
+  Filter,
+  User,
+  FileText,
+  Navigation,
+  Link2,
+  Bell,
+  Landmark,
+  MailX,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface SetupTile {
@@ -46,11 +57,11 @@ interface SetupTile {
 
 export default function AdminSetupPage() {
   const router = useRouter();
-  const [selectedCategory, setSelectedCategory] = useState<string>('system');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   const tiles: SetupTile[] = [
-    // Row 1
+    // --- ROW 1 (Screenshot 1) ---
     {
       id: 'general',
       name: 'General Settings',
@@ -87,7 +98,7 @@ export default function AdminSetupPage() {
       href: '/admin/addons',
     },
 
-    // Row 2
+    // --- ROW 2 (Screenshot 1) ---
     {
       id: 'products',
       name: 'Products/Services',
@@ -122,7 +133,7 @@ export default function AdminSetupPage() {
       href: '/admin/settings?tab=general',
     },
 
-    // Row 3
+    // --- ROW 3 (Screenshot 1) ---
     {
       id: 'promotions',
       name: 'Promotions and Coupons',
@@ -156,15 +167,110 @@ export default function AdminSetupPage() {
       href: '/admin/addons',
     },
 
-    // Row 4
+    // --- ROW 4 (Screenshot 2: Support & Communication) ---
+    {
+      id: 'support-depts',
+      name: 'Support Departments',
+      description: 'Setup and manage ticket departments',
+      category: 'support',
+      icon: LifeBuoy,
+      href: '/admin/support',
+    },
+    {
+      id: 'escalations',
+      name: 'Escalation Rules',
+      description: 'Manage ticket escalation rules',
+      category: 'support',
+      icon: Shuffle,
+      href: '/admin/support',
+    },
+    {
+      id: 'spam-control',
+      name: 'Spam Control',
+      description: 'Manage email spam filters',
+      category: 'support',
+      icon: Filter,
+      href: '/admin/settings?tab=general',
+    },
+    {
+      id: 'email-templates',
+      name: 'Email Templates',
+      description: 'Customise email templates',
+      category: 'system',
+      badge: 'UPDATED',
+      icon: Mail,
+      href: '/admin/settings?tab=general',
+    },
+
+    // --- ROW 5 (Screenshot 2: Client & Order Management) ---
+    {
+      id: 'client-groups',
+      name: 'Client Groups',
+      description: 'Manage client groups',
+      category: 'users',
+      icon: User,
+      href: '/admin/clients',
+    },
+    {
+      id: 'custom-fields',
+      name: 'Custom Fields',
+      description: 'Manage custom profile fields',
+      category: 'users',
+      icon: Tag,
+      href: '/admin/settings?tab=general',
+    },
+    {
+      id: 'order-statuses',
+      name: 'Order Statuses',
+      description: 'Setup and manage order statuses',
+      category: 'system',
+      icon: FileText,
+      href: '/admin/orders',
+    },
+    {
+      id: 'banned-ips',
+      name: 'Banned IPs',
+      description: 'View and manage IP restrictions',
+      category: 'security',
+      icon: Navigation,
+      href: '/admin/addons/unblockip',
+    },
+
+    // --- ROW 6 (Screenshot 2: Security, Auth & Notifications) ---
+    {
+      id: 'banned-emails',
+      name: 'Banned Emails',
+      description: 'Manage banned email domains',
+      category: 'security',
+      icon: MailX,
+      href: '/admin/settings?tab=general',
+    },
+    {
+      id: 'sign-in-integrations',
+      name: 'Sign-In Integrations',
+      description: 'Setup sign-in with Google, Facebook and Twitter',
+      category: 'security',
+      icon: Link2,
+      href: '/admin/oauth',
+    },
+    {
+      id: 'notifications',
+      name: 'Notifications',
+      description: 'Setup Notifications with Slack and more.',
+      category: 'system',
+      icon: Bell,
+      href: '/admin/addons/bdhost_wa',
+    },
     {
       id: 'gateways',
       name: 'Payment Gateways',
       description: 'Setup and configure payment gateways',
       category: 'system',
-      icon: CreditCard,
+      icon: Landmark,
       href: '/admin/settings?tab=gateways',
     },
+
+    // --- ADDITIONAL SYSTEM & SECURITY TILES ---
     {
       id: 'tax',
       name: 'Tax Configuration',
@@ -182,32 +288,6 @@ export default function AdminSetupPage() {
       href: '/admin/settings?tab=general',
     },
     {
-      id: 'email-templates',
-      name: 'Email Templates',
-      description: 'Create and edit email templates',
-      category: 'system',
-      icon: Mail,
-      href: '/admin/settings?tab=general',
-    },
-
-    // Row 5
-    {
-      id: 'support-depts',
-      name: 'Support Departments',
-      description: 'Manage support ticket departments',
-      category: 'support',
-      icon: HelpCircle,
-      href: '/admin/support',
-    },
-    {
-      id: 'escalations',
-      name: 'Ticket Escalations',
-      description: 'Setup automated escalation rules',
-      category: 'support',
-      icon: AlertCircle,
-      href: '/admin/support',
-    },
-    {
       id: 'admin-users',
       name: 'Administrator Users',
       description: 'Manage administrator staff accounts',
@@ -223,16 +303,6 @@ export default function AdminSetupPage() {
       icon: Shield,
       href: '/admin/settings?tab=admins',
     },
-
-    // Row 6
-    {
-      id: 'api-credentials',
-      name: 'API Credentials',
-      description: 'Manage API roles and access keys',
-      category: 'security',
-      icon: Key,
-      href: '/admin/oauth',
-    },
     {
       id: 'two-factor',
       name: 'Two-Factor Authentication',
@@ -242,12 +312,12 @@ export default function AdminSetupPage() {
       href: '/admin/security',
     },
     {
-      id: 'banned-ips',
-      name: 'Banned IPs',
-      description: 'Manage banned IP addresses and firewall',
+      id: 'api-credentials',
+      name: 'API Credentials',
+      description: 'Manage API roles and access keys',
       category: 'security',
-      icon: Ban,
-      href: '/admin/addons/unblockip',
+      icon: Key,
+      href: '/admin/oauth',
     },
     {
       id: 'backups',
@@ -260,7 +330,7 @@ export default function AdminSetupPage() {
   ];
 
   const categories = [
-    { id: 'system', name: 'System' },
+    { id: 'all', name: 'System (All)' },
     { id: 'apps', name: 'Apps & Integrations' },
     { id: 'users', name: 'User Management' },
     { id: 'products', name: 'Products & Services' },
@@ -277,7 +347,9 @@ export default function AdminSetupPage() {
         t.description.toLowerCase().includes(q);
 
       const matchesCat =
-        selectedCategory === 'system' ? true : t.category === selectedCategory;
+        selectedCategory === 'all' || selectedCategory === 'system'
+          ? true
+          : t.category === selectedCategory;
 
       return matchesSearch && matchesCat;
     });
@@ -290,7 +362,7 @@ export default function AdminSetupPage() {
         <div className="bg-white border border-[#ddd] rounded shadow-sm overflow-hidden text-xs">
           <div className="bg-[#f5f5f5] px-3.5 py-2.5 font-bold text-[#333] border-b border-[#ddd] flex items-center space-x-2">
             <Settings className="w-4 h-4 text-[#1A4D80]" />
-            <span>Setup Categories</span>
+            <span>System</span>
           </div>
 
           <ul className="py-1">
@@ -356,10 +428,10 @@ export default function AdminSetupPage() {
               <Link
                 key={tile.id}
                 href={tile.href}
-                className="bg-white border border-[#e5e7eb] rounded-lg p-4 sm:p-5 flex flex-col justify-between hover:shadow-md hover:border-[#1A4D80]/50 transition-all group relative overflow-hidden"
+                className="bg-white border border-[#e5e7eb] rounded-lg p-4 sm:p-5 flex flex-col justify-between hover:shadow-md hover:border-[#1A4D80]/50 transition-all group relative overflow-hidden min-h-[125px]"
               >
                 <div>
-                  {/* Subtle Top-Right Icon */}
+                  {/* Icon & Badges */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="p-2 rounded bg-slate-50 text-slate-400 group-hover:text-[#1A4D80] group-hover:bg-[#eef4fa] transition-colors">
                       <IconComponent className="w-5 h-5 stroke-[1.8]" />
