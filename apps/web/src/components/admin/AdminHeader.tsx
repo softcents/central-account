@@ -591,7 +591,7 @@ export function AdminHeader() {
             )}
           </div>
 
-          {/* Addons Dropdown */}
+          {/* Addons Dropdown - 1:1 WHMCS Modules from billing.softcents.com */}
           <div className="relative hidden lg:block">
             <button
               onClick={() => toggleDropdown('addons')}
@@ -603,45 +603,134 @@ export function AdminHeader() {
               <ChevronDown className="w-3 h-3 opacity-70" />
             </button>
             {activeDropdown === 'addons' && (
-              <div className="absolute left-0 top-full mt-1 w-56 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50">
+              <div className="absolute left-0 top-full mt-1 w-64 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50 max-h-[85vh] overflow-y-auto">
+                <Link
+                  href="/admin/addons/DomainsReseller"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Domains Reseller
+                </Link>
+                <Link
+                  href="/admin/addons/RegistrationAlert"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Registration Email Alert
+                </Link>
+                <Link
+                  href="/admin/addons/SOFTCENTS_SMS"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  SOFTCENTS SMS
+                </Link>
+                <Link
+                  href="/admin/addons/advanced_client_verification"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Advanced Client Verification
+                </Link>
+                <Link
+                  href="/admin/addons/bdhost_wa"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Bdhost WhatsApp Pro
+                </Link>
+                <Link
+                  href="/admin/addons/dynamiccoupon"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Dynamic Coupon
+                </Link>
+                <Link
+                  href="/admin/addons/expiredproducts"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Expired Products Manager
+                </Link>
+                <Link
+                  href="/admin/addons/forceclientactive"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Force Client Active
+                </Link>
+                <Link
+                  href="/admin/addons/italk_balance"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  iTalk Balance
+                </Link>
+                <Link
+                  href="/admin/addons/italk_recharge"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Multi-Provider Auto Recharge
+                </Link>
+                <Link
+                  href="/admin/addons/price_updater"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Price Updater Pro
+                </Link>
+                <Link
+                  href="/admin/addons/project_management"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Project Management
+                </Link>
+                <Link
+                  href="/admin/addons/scrolling_notice"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Scrolling Notice Manager
+                </Link>
+                <Link
+                  href="/admin/addons/suiten_genrenew"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Service Renewal
+                </Link>
+                <Link
+                  href="/admin/addons/tld_price_updater"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  Domain & TLD Price Updater
+                </Link>
+                <Link
+                  href="/admin/addons/unblockip"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  ip Unblocker
+                </Link>
+                <Link
+                  href="/admin/addons/whois"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700 hover:text-[#1A4D80]"
+                >
+                  WHOIS for clientarea
+                </Link>
+                <div className="border-t border-slate-100 my-1"></div>
                 <Link
                   href="/admin/addons"
                   onClick={() => setActiveDropdown(null)}
                   className="flex items-center px-3 py-1.5 hover:bg-slate-100 font-bold text-[#1A4D80]"
                 >
                   <img src="/whmcs/icons/addonmodules.png" className="w-3.5 h-3.5 mr-2" alt="" />
-                  <span>Addon Modules Hub (24)</span>
-                </Link>
-                <div className="border-t border-slate-100 my-1"></div>
-                <Link
-                  href="/admin/kyc"
-                  onClick={() => setActiveDropdown(null)}
-                  className="flex items-center justify-between px-3 py-1.5 hover:bg-slate-100 font-bold text-[#1A4D80]"
-                >
-                  <span>Document Verify (KYC)</span>
-                  <span className="text-[10px] bg-[#5cb85c] text-white px-1.5 py-0.2 rounded font-mono">Module</span>
-                </Link>
-                <Link
-                  href="/admin/kyb"
-                  onClick={() => setActiveDropdown(null)}
-                  className="block px-3 py-1.5 hover:bg-slate-100"
-                >
-                  Business KYB Verification
-                </Link>
-                <div className="border-t border-slate-100 my-1"></div>
-                <Link
-                  href="/admin/oauth"
-                  onClick={() => setActiveDropdown(null)}
-                  className="block px-3 py-1.5 hover:bg-slate-100"
-                >
-                  OAuth Clients & SSO
-                </Link>
-                <Link
-                  href="/admin/tenants"
-                  onClick={() => setActiveDropdown(null)}
-                  className="block px-3 py-1.5 hover:bg-slate-100"
-                >
-                  Multi-Tenant Clusters
+                  <span>Addon Modules Hub</span>
                 </Link>
               </div>
             )}
