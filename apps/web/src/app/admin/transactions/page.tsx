@@ -12,46 +12,34 @@ import {
   ArrowUpRight,
   Filter,
 } from 'lucide-react';
+import whmcsData from '@/data/whmcs_sync.json';
 
 export default function TransactionsListPage() {
   const [search, setSearch] = useState('');
-  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
 
-  const transactions = [
-    {
-      id: 1,
-      transId: 'TXN-984124',
-      date: '2026-11-19 19:02',
-      gateway: 'bKash Auto Gateway',
-      description: 'Invoice #464 Payment',
-      amountIn: '৳1,500.00',
-      fees: '৳22.50',
-      amountOut: '৳0.00',
-      invoiceId: '464',
-    },
-    {
-      id: 2,
-      transId: 'SSL-281903',
-      date: '2026-11-18 12:45',
-      gateway: 'SSLCommerz',
-      description: 'Invoice #463 Payment',
-      amountIn: '৳450.00',
-      fees: '৳11.25',
-      amountOut: '৳0.00',
-      invoiceId: '463',
-    },
-    {
-      id: 3,
-      transId: 'BANK-004128',
-      date: '2026-11-15 14:10',
-      gateway: 'Bank Transfer (EBL)',
-      description: 'Invoice #458 Payment',
-      amountIn: '৳12,000.00',
-      fees: '৳0.00',
-      amountOut: '৳0.00',
-      invoiceId: '458',
-    },
-  ];
+  const transactions = whmcsData?.transactions || [];
+
+  const filtered = transactions.filter((t) => {
+    if (search) {
+      const q = search.toLowerCase();
+      return (
+        String(t.transid || '').toLowerCase().includes(q) ||
+        String(t.id).includes(q) ||
+        (t.clientName || '').toLowerCase().includes(q) ||
+        (t.gateway || '').toLowerCase().includes(q) ||
+        String(t.invoiceid || '').includes(q)
+      );
+    }
+    return true;
+  });
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const totalIncome = transactions.reduce((acc, t) => acc + (parseFloat(t.amountin) || 0), 0);
+  const totalFees = transactions.reduce((acc, t) => acc + (parseFloat(t.fees) || 0), 0);
 
   return (
     <div className="p-4 space-y-4 max-w-[1600px] mx-auto text-slate-800">
@@ -60,108 +48,129 @@ export default function TransactionsListPage() {
           Dashboard
         </Link>
         <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-        <span className="font-bold text-slate-700">Transactions List</span>
+        <span className="font-bold text-slate-700">Transactions List ({transactions.length})</span>
       </div>
 
-      <div className="bg-white p-4 rounded border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center space-x-3">
-          <div className="p-2.5 bg-[#1A4D80]/10 rounded text-[#1A4D80]">
-            <img src="/whmcs/icons/income.png" className="w-6 h-6 object-contain" alt="" />
-          </div>
-          <div>
-            <h1 className="text-base font-bold text-slate-900 leading-tight">Transactions List</h1>
-            <p className="text-xs text-slate-500">
-              View all payment gateway inflows, merchant processing fees, refunds, and withdrawals
-            </p>
+      {/* Income / Fees Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+        <div className="bg-white border border-slate-200 rounded p-3 shadow-sm">
+          <div className="text-slate-500 font-semibold">Total Transactions</div>
+          <div className="text-xl font-bold text-slate-900 mt-1">{transactions.length}</div>
+        </div>
+        <div className="bg-white border border-slate-200 rounded p-3 shadow-sm">
+          <div className="text-emerald-600 font-semibold">Total Revenue In</div>
+          <div className="text-xl font-bold text-emerald-700 mt-1">
+            ৳{totalIncome.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
         </div>
-
-        <div className="flex items-center space-x-2 text-xs">
-          <button
-            onClick={() => setAddModalOpen(true)}
-            className="flex items-center space-x-1.5 bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-3 py-1.5 rounded font-semibold shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Transaction</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white p-3.5 rounded border border-slate-200 shadow-sm flex items-center space-x-3">
-          <div className="p-2 bg-emerald-50 text-emerald-600 rounded">
-            <ArrowDownLeft className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs text-slate-500 font-medium">Total Amount In (Gross)</div>
-            <div className="text-lg font-bold text-emerald-700 font-mono">৳13,950.00</div>
-          </div>
-        </div>
-        <div className="bg-white p-3.5 rounded border border-slate-200 shadow-sm flex items-center space-x-3">
-          <div className="p-2 bg-rose-50 text-rose-600 rounded">
-            <ArrowUpRight className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs text-slate-500 font-medium">Payment Gateway Fees</div>
-            <div className="text-lg font-bold text-rose-700 font-mono">৳33.75</div>
-          </div>
-        </div>
-        <div className="bg-white p-3.5 rounded border border-slate-200 shadow-sm flex items-center space-x-3">
-          <div className="p-2 bg-blue-50 text-[#1A4D80] rounded">
-            <DollarSign className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs text-slate-500 font-medium">Net Settled Balance</div>
-            <div className="text-lg font-bold text-[#1A4D80] font-mono">৳13,916.25</div>
+        <div className="bg-white border border-slate-200 rounded p-3 shadow-sm">
+          <div className="text-slate-500 font-semibold">Payment Gateway Fees</div>
+          <div className="text-xl font-bold text-slate-600 mt-1">
+            ৳{totalFees.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white border border-slate-200 rounded shadow-sm overflow-x-auto">
-        <table className="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr className="bg-[#eef3f7] border-b border-slate-200 text-slate-700 font-bold">
-              <th className="py-2.5 px-3">Date</th>
-              <th className="py-2.5 px-3">Gateway</th>
-              <th className="py-2.5 px-3">Transaction ID</th>
-              <th className="py-2.5 px-3">Description</th>
-              <th className="py-2.5 px-3">Invoice #</th>
-              <th className="py-2.5 px-3 text-right">Amount In</th>
-              <th className="py-2.5 px-3 text-right">Fees</th>
-              <th className="py-2.5 px-3 text-right">Amount Out</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {transactions.map((t, idx) => (
-              <tr
-                key={t.id}
-                className={`hover:bg-[#f0f4f8] transition-colors ${
-                  idx % 2 === 1 ? 'bg-[#fbfcfd]' : 'bg-white'
-                }`}
-              >
-                <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">{t.date}</td>
-                <td className="py-2.5 px-3 font-medium text-slate-800">{t.gateway}</td>
-                <td className="py-2.5 px-3 font-mono font-semibold text-[#1A4D80]">{t.transId}</td>
-                <td className="py-2.5 px-3 text-slate-700">{t.description}</td>
-                <td className="py-2.5 px-3">
-                  <Link
-                    href={`/admin/invoices/${t.invoiceId}`}
-                    className="text-[#1A4D80] hover:underline font-bold"
-                  >
-                    #{t.invoiceId}
-                  </Link>
-                </td>
-                <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-700">
-                  {t.amountIn}
-                </td>
-                <td className="py-2.5 px-3 text-right font-mono text-rose-600">{t.fees}</td>
-                <td className="py-2.5 px-3 text-right font-mono text-slate-500">{t.amountOut}</td>
+      {/* Search Bar */}
+      <div className="bg-white p-3 rounded border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 absolute left-2.5 top-2 text-slate-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+            placeholder="Search by transaction ID, invoice #, or client..."
+            className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-[#1A4D80]"
+          />
+        </div>
+      </div>
+
+      {/* Transactions Table */}
+      <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-[#f5f7f8] text-slate-700 font-bold border-b border-slate-200">
+              <tr>
+                <th className="py-2.5 px-3">Date</th>
+                <th className="py-2.5 px-3">Transaction ID</th>
+                <th className="py-2.5 px-3">Client</th>
+                <th className="py-2.5 px-3">Gateway</th>
+                <th className="py-2.5 px-3">Description</th>
+                <th className="py-2.5 px-3">Amount In</th>
+                <th className="py-2.5 px-3">Fees</th>
+                <th className="py-2.5 px-3">Invoice #</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-slate-500">
+                    No transactions found.
+                  </td>
+                </tr>
+              ) : (
+                paginated.map((t) => (
+                  <tr key={t.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-2.5 px-3 text-slate-600">{t.date}</td>
+                    <td className="py-2.5 px-3 font-mono font-bold text-[#1A4D80]">
+                      {t.transid || `TXN-${t.id}`}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <Link
+                        href={`/admin/clients/${t.userid}`}
+                        className="text-[#1A4D80] hover:underline font-semibold"
+                      >
+                        {t.clientName}
+                      </Link>
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-700">{t.gateway || 'PipraPay'}</td>
+                    <td className="py-2.5 px-3 text-slate-800">{t.description || 'Invoice Payment'}</td>
+                    <td className="py-2.5 px-3 font-bold text-emerald-700">
+                      ৳{parseFloat(t.amountin || '0').toFixed(2)}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-500">
+                      ৳{parseFloat(t.fees || '0').toFixed(2)}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono font-semibold text-[#1A4D80]">
+                      <a href={`/viewinvoice?id=${t.invoiceid}`} target="_blank" rel="noreferrer" className="hover:underline">
+                        #{t.invoiceid}
+                      </a>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="p-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600 bg-[#f9fafb]">
+            <div>
+              Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+              {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} entries
+            </div>
+            <div className="flex items-center space-x-1">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+                className="px-2.5 py-1 rounded border border-slate-300 disabled:opacity-50 hover:bg-slate-200"
+              >
+                Previous
+              </button>
+              <span className="px-2 font-bold text-[#1A4D80]">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+                className="px-2.5 py-1 rounded border border-slate-300 disabled:opacity-50 hover:bg-slate-200"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

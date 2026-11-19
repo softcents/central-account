@@ -18,13 +18,14 @@ import {
 } from 'lucide-react';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import { apiFetch } from '@/lib/api';
+import whmcsData from '@/data/whmcs_sync.json';
 
 export default function AdminClientsPage() {
   const { token } = useAdminAuth();
   const router = useRouter();
 
-  const [clients, setClients] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [clients, setClients] = useState<any[]>(whmcsData?.clients || []);
+  const [loading, setLoading] = useState(false);
   const [statusTab, setStatusTab] = useState<'ALL' | 'ACTIVE' | 'SUSPENDED' | 'PENDING'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -32,31 +33,53 @@ export default function AdminClientsPage() {
     setLoading(true);
     try {
       const res = await apiFetch<any>('/admin/users', {}, token);
-      if (res.ok) {
-        setClients(res.data.items || res.data || []);
+      if (res && res.ok && res.data) {
+        const list = res.data.users || res.data.items || (Array.isArray(res.data) ? res.data : []);
+        if (Array.isArray(list) && list.length > 0) {
+          setClients(list);
+        } else if (whmcsData?.clients) {
+          setClients(whmcsData.clients);
+        }
+      } else if (whmcsData?.clients) {
+        setClients(whmcsData.clients);
       }
     } catch (e) {
       console.error('Failed to load clients', e);
+      if (whmcsData?.clients) {
+        setClients(whmcsData.clients);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) fetchClients();
+    fetchClients();
   }, [token]);
 
-  const filteredClients = clients.filter((c) => {
+  const rawList = Array.isArray(clients) ? clients : (whmcsData?.clients || []);
+
+  const filteredClients = rawList.filter((c: any) => {
+    if (!c) return false;
+    const status = String(c.status || 'ACTIVE').toUpperCase();
     const matchesStatus =
       statusTab === 'ALL' ||
-      (statusTab === 'ACTIVE' && c.status === 'ACTIVE') ||
-      (statusTab === 'SUSPENDED' && c.status === 'SUSPENDED') ||
-      (statusTab === 'PENDING' && ['PENDING', 'PENDING_VERIFICATION'].includes(c.status));
+      (statusTab === 'ACTIVE' && status === 'ACTIVE') ||
+      (statusTab === 'SUSPENDED' && (status === 'SUSPENDED' || status === 'INACTIVE' || status === 'CLOSED')) ||
+      (statusTab === 'PENDING' && (status.includes('PENDING') || status === 'WAITING'));
 
-    const email = c.email?.toLowerCase() || '';
-    const name = `${c.profile?.first_name || ''} ${c.profile?.last_name || ''}`.toLowerCase();
-    const query = searchQuery.toLowerCase();
-    const matchesSearch = !query || email.includes(query) || name.includes(query) || c.id?.includes(query);
+    const email = String(c.email || '').toLowerCase();
+    const name = `${c.profile?.first_name || c.name || c.firstname || ''} ${c.profile?.last_name || c.lastname || ''}`.toLowerCase();
+    const company = String(c.profile?.company_name || c.company || c.companyname || '').toLowerCase();
+    const query = String(searchQuery || '').trim().toLowerCase();
+    const idStr = String(c.id || '');
+
+    const matchesSearch =
+      !query ||
+      email.includes(query) ||
+      name.includes(query) ||
+      company.includes(query) ||
+      idStr.includes(query);
 
     return matchesStatus && matchesSearch;
   });
@@ -75,7 +98,9 @@ export default function AdminClientsPage() {
             <span>&gt;</span>
             <span className="text-[#333] font-semibold">View/Search Clients</span>
           </div>
-          <h1 className="text-xl font-normal text-[#333] mt-1">View / Search Clients</h1>
+          <h1 className="text-xl font-normal text-[#333] mt-1">
+            View / Search Clients ({rawList.length})
+          </h1>
         </div>
 
         <div className="flex items-center space-x-2">
@@ -109,7 +134,7 @@ export default function AdminClientsPage() {
                 statusTab === 'ALL' ? 'bg-[#1A4D80] text-white' : 'bg-[#eee] text-[#555] hover:bg-[#ddd]'
               }`}
             >
-              All Clients ({clients.length})
+              All Clients ({rawList.length})
             </button>
             <button
               onClick={() => setStatusTab('ACTIVE')}
@@ -125,7 +150,7 @@ export default function AdminClientsPage() {
                 statusTab === 'SUSPENDED' ? 'bg-[#d9534f] text-white' : 'bg-[#eee] text-[#555] hover:bg-[#ddd]'
               }`}
             >
-              Suspended
+              Suspended / Closed
             </button>
             <button
               onClick={() => setStatusTab('PENDING')}
@@ -168,7 +193,7 @@ export default function AdminClientsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#eee]">
-              {loading ? (
+              {loading && rawList.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="p-8 text-center text-[#999]">
                     <div className="w-6 h-6 border-2 border-[#1A4D80] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
@@ -186,61 +211,65 @@ export default function AdminClientsPage() {
                   </td>
                 </tr>
               ) : (
-                filteredClients.map((client, idx) => (
-                  <tr key={client.id} className="hover:bg-[#eff2f9] transition-colors">
-                    <td className="p-3 font-mono font-bold text-[#1A4D80]">
-                      #{client.id?.substring(0, 8) || idx + 1}
-                    </td>
+                filteredClients.map((client: any, idx: number) => {
+                  const idStr = String(client.id || idx + 1);
+                  const firstName = client.profile?.first_name || (client.name ? client.name.split(' ')[0] : (client.firstname || '—'));
+                  const lastName = client.profile?.last_name || (client.name ? client.name.split(' ').slice(1).join(' ') : (client.lastname || '—'));
+                  const company = client.profile?.company_name || client.company || client.companyname || 'Individual';
+                  const email = client.email || '—';
+                  const status = String(client.status || 'ACTIVE').toUpperCase();
+                  const dateStr = client.created_at || client.dateCreated || client.datecreated;
 
-                    <td className="p-3 font-medium text-[#333]">
-                      {client.profile?.first_name || '—'}
-                    </td>
+                  return (
+                    <tr key={idStr} className="hover:bg-[#eff2f9] transition-colors">
+                      <td className="p-3 font-mono font-bold text-[#1A4D80]">
+                        #{idStr.length > 8 ? idStr.substring(0, 8) : idStr}
+                      </td>
 
-                    <td className="p-3 font-medium text-[#333]">
-                      {client.profile?.last_name || '—'}
-                    </td>
+                      <td className="p-3 font-medium text-[#333]">{firstName}</td>
 
-                    <td className="p-3 text-[#666]">
-                      {client.profile?.company_name || 'Individual'}
-                    </td>
+                      <td className="p-3 font-medium text-[#333]">{lastName}</td>
 
-                    <td className="p-3">
-                      <Link
-                        href={`/admin/clients/${client.id}`}
-                        className="font-bold text-[#1A4D80] hover:underline"
-                      >
-                        {client.email}
-                      </Link>
-                    </td>
+                      <td className="p-3 text-[#666]">{company}</td>
 
-                    <td className="p-3 text-[#666]">
-                      {new Date(client.created_at || Date.now()).toLocaleDateString()}
-                    </td>
+                      <td className="p-3">
+                        <Link
+                          href={`/admin/clients/${idStr}`}
+                          className="font-bold text-[#1A4D80] hover:underline"
+                        >
+                          {email}
+                        </Link>
+                      </td>
 
-                    <td className="p-3">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded text-white ${
-                          client.status === 'ACTIVE'
-                            ? 'bg-[#5cb85c]'
-                            : client.status === 'SUSPENDED'
-                            ? 'bg-[#d9534f]'
-                            : 'bg-[#f0ad4e]'
-                        }`}
-                      >
-                        {client.status || 'ACTIVE'}
-                      </span>
-                    </td>
+                      <td className="p-3 text-[#666]">
+                        {dateStr ? new Date(dateStr).toLocaleDateString() : '—'}
+                      </td>
 
-                    <td className="p-3 text-right">
-                      <Link
-                        href={`/admin/clients/${client.id}`}
-                        className="bg-[#1A4D80] hover:bg-[#143d66] text-white text-xs font-semibold px-2.5 py-1 rounded transition-colors"
-                      >
-                        Client Summary &raquo;
-                      </Link>
-                    </td>
-                  </tr>
-                ))
+                      <td className="p-3">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded text-white ${
+                            status === 'ACTIVE'
+                              ? 'bg-[#5cb85c]'
+                              : status === 'SUSPENDED' || status === 'INACTIVE' || status === 'CLOSED'
+                              ? 'bg-[#d9534f]'
+                              : 'bg-[#f0ad4e]'
+                          }`}
+                        >
+                          {status}
+                        </span>
+                      </td>
+
+                      <td className="p-3 text-right">
+                        <Link
+                          href={`/admin/clients/${idStr}`}
+                          className="bg-[#1A4D80] hover:bg-[#143d66] text-white text-xs font-semibold px-2.5 py-1 rounded transition-colors inline-block"
+                        >
+                          Client Summary &raquo;
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

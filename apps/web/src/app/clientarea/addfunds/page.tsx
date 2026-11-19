@@ -3,15 +3,46 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ClientHeader } from '@/components/ClientHeader';
-import { CreditCard, Wallet, CheckCircle2, ArrowRight } from 'lucide-react';
+import { CreditCard, Wallet, CheckCircle2, ArrowRight, RefreshCw, AlertCircle } from 'lucide-react';
 
 export default function ClientAddFundsPage() {
   const [amount, setAmount] = useState('1000');
   const [gateway, setGateway] = useState('piprapay');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleDeposit = (e: React.FormEvent) => {
+  const handleDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Initiating ৳${amount} deposit via ${gateway === 'piprapay' ? 'PipraPay (bKash/Nagad/Rocket)' : 'Bank Transfer'}...`);
+    if (!amount || Number(amount) < 10) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const res = await fetch('/api/payment/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoiceId: `DEP-${Date.now().toString().slice(-6)}`,
+          amount: Number(amount),
+          fullName: 'SoftCents Customer',
+          email: 'billing@softcents.com',
+          phone: '01700000000',
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.pp_url) {
+        window.location.href = data.pp_url;
+      } else {
+        setError(data.error || 'Failed to connect to PipraPay payment gateway.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Payment initiation error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -36,10 +67,17 @@ export default function ClientAddFundsPage() {
               <div className="text-2xl font-bold text-emerald-700 font-mono mt-0.5">৳0.00 BDT</div>
             </div>
             <div className="text-right text-xs text-slate-500">
-              <div>Min Deposit: <strong>৳100.00</strong></div>
+              <div>Min Deposit: <strong>৳10.00</strong></div>
               <div>Max Deposit: <strong>৳50,000.00</strong></div>
             </div>
           </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded text-xs flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+              <span>{error}</span>
+            </div>
+          )}
 
           <form onSubmit={handleDeposit} className="space-y-4 text-xs">
             <div>
@@ -50,7 +88,7 @@ export default function ClientAddFundsPage() {
                 <span className="absolute left-3 top-2.5 font-bold text-slate-500">৳</span>
                 <input
                   type="number"
-                  min="100"
+                  min="10"
                   max="50000"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
@@ -70,17 +108,27 @@ export default function ClientAddFundsPage() {
                 className="w-full bg-slate-50 border border-slate-300 rounded p-2 font-semibold focus:outline-none focus:border-[#1A4D80]"
               >
                 <option value="piprapay">PipraPay (bKash / Nagad / Rocket Auto-Gateway)</option>
-                <option value="bank">Bank Transfer (City Bank / EBL)</option>
+                <option value="bank">Bank Transfer (City Bank / BRAC Bank)</option>
               </select>
             </div>
 
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full bg-[#5cb85c] hover:bg-[#4cae4c] text-white py-2.5 rounded font-bold text-xs transition-colors flex items-center justify-center space-x-1.5 shadow-sm"
+                disabled={loading}
+                className="w-full bg-[#5cb85c] hover:bg-[#4cae4c] disabled:opacity-50 text-white py-2.5 rounded font-bold text-xs transition-colors flex items-center justify-center space-x-1.5 shadow-sm"
               >
-                <span>Proceed to Payment</span>
-                <ArrowRight className="w-4 h-4" />
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Redirecting to PipraPay...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Proceed to PipraPay Checkout</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </div>
           </form>

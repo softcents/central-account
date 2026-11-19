@@ -132,7 +132,7 @@ async function main() {
   // 3. Fetch and Migrate All Invoices
   console.log('--> Fetching invoices from billing.softcents.com...');
   const invoices = queryTsv(`
-    SELECT id, userid, invoicenum, date, duedate, total, status, paymentmethod
+    SELECT id, userid, invoicenum, date, duedate, total, subtotal, credit, tax, status, paymentmethod, notes
     FROM tblinvoices;
   `);
   console.log(`✓ Fetched ${invoices.length} invoices via TSV.`);
@@ -178,25 +178,25 @@ async function main() {
   }
   console.log(`✓ Invoices imported/updated: ${invoicesImported}`);
 
-  // 4. Fetch Support Tickets
+  // 4. Fetch and Migrate Support Tickets
   console.log('--> Fetching support tickets from billing.softcents.com...');
   const tickets = queryTsv(`
-    SELECT id, tid, userid, title, status, urgency, date
-    FROM tbltickets;
+    SELECT t.id, t.tid, t.userid, t.did, t.title, t.message, t.status, t.urgency, t.date, t.lastreply, d.name as dept_name
+    FROM tbltickets t
+    LEFT JOIN tblticketdepartments d ON t.did = d.id;
   `);
   console.log(`✓ Fetched ${tickets.length} tickets via TSV.`);
 
   let ticketsImported = 0;
   for (const t of tickets) {
-    const userId = clientIdToUserIdMap[t.userid];
-    if (!userId) continue;
-
+    const userId = clientIdToUserIdMap[t.userid] || adminUser.id;
     let tStatus: TicketStatus = TicketStatus.OPEN;
     if (t.status === 'Closed') tStatus = TicketStatus.CLOSED;
+    else if (t.status === 'In Progress') tStatus = TicketStatus.IN_REVIEW;
 
     let tPriority: TicketPriority = TicketPriority.NORMAL;
     if (t.urgency === 'High') tPriority = TicketPriority.HIGH;
-    else if (t.urgency === 'Critical') tPriority = TicketPriority.URGENT;
+    else if (t.urgency === 'Low') tPriority = TicketPriority.LOW;
 
     try {
       const ticketId = `tkt_whmcs_${t.id}`;
@@ -222,8 +222,41 @@ async function main() {
   }
   console.log(`✓ Tickets imported: ${ticketsImported}`);
 
-  // 5. Fetch Servers, Addons, and Services for Live Frontend & Management
-  console.log('--> Fetching servers and addon modules...');
+  // 5. Fetch Services, Domains, Orders, Invoice Items, Transactions, Products, Servers, Addons
+  console.log('--> Fetching full services, domains, orders, transactions, and product catalog...');
+  const services = queryTsv(`
+    SELECT h.id, h.userid, p.name as package, h.domain, h.username, h.amount, h.billingcycle, h.nextduedate, h.regdate, h.domainstatus, s.name as server_name, s.ipaddress as server_ip
+    FROM tblhosting h
+    LEFT JOIN tblproducts p ON h.packageid = p.id
+    LEFT JOIN tblservers s ON h.server = s.id;
+  `);
+
+  const domains = queryTsv(`
+    SELECT d.id, d.userid, d.domain, d.registrationperiod, d.recurringamount, d.paymentmethod, d.registrationdate, d.expirydate, d.nextduedate, d.status, d.registrar
+    FROM tbldomains d;
+  `);
+
+  const orders = queryTsv(`
+    SELECT o.id, o.ordernum, o.userid, o.date, o.amount, o.paymentmethod, o.status
+    FROM tblorders o;
+  `);
+
+  const invoiceItems = queryTsv(`
+    SELECT id, invoiceid, userid, type, relid, description, amount, taxed
+    FROM tblinvoiceitems;
+  `);
+
+  const transactions = queryTsv(`
+    SELECT a.id, a.userid, a.date, a.description, a.amountin, a.fees, a.amountout, a.transid, a.invoiceid, a.gateway
+    FROM tblaccounts a;
+  `);
+
+  const products = queryTsv(`
+    SELECT p.id, p.gid, g.name as group_name, p.name as product_name, p.type, p.description, p.paytype
+    FROM tblproducts p
+    LEFT JOIN tblproductgroups g ON p.gid = g.id;
+  `);
+
   const servers = queryTsv(`
     SELECT id, name, ipaddress, hostname, type, active
     FROM tblservers;
@@ -234,31 +267,83 @@ async function main() {
     FROM tbladdonmodules;
   `);
 
-  const services = queryTsv(`
-    SELECT h.id, h.userid, p.name as package, h.domain, h.amount, h.billingcycle, h.nextduedate, h.domainstatus, s.name as server_name, s.ipaddress as server_ip
-    FROM tblhosting h
-    LEFT JOIN tblproducts p ON h.packageid = p.id
-    LEFT JOIN tblservers s ON h.server = s.id;
-  `);
+  // Build client lookup map
+  const clientMap: Record<string, string> = {};
+  clients.forEach((c: any) => {
+    clientMap[c.id] = `${c.firstname || ''} ${c.lastname || ''}`.trim() || c.companyname || c.email;
+  });
 
   const syncData = {
     syncedAt: new Date().toISOString(),
     clientCount: clients.length,
+    serviceCount: services.length,
+    domainCount: domains.length,
+    orderCount: orders.length,
     invoiceCount: invoices.length,
+    transactionCount: transactions.length,
     ticketCount: tickets.length,
+    productCount: products.length,
     servers,
-    services,
     addons: addons.map((a: any) => a.module),
+    gateways: [
+      {
+        id: 'piprapay',
+        name: 'PipraPay Payment Gateway (bKash / Nagad / Cards)',
+        visible: true,
+        type: 'Invoices',
+        baseUrl: 'https://epay.softcents.com/api',
+        apiKey: 'b3e91bb98e0d874acb860272f240000b48a47368010ed81017',
+        currency: 'BDT',
+        version: 'V3+',
+      },
+      {
+        id: 'banktransfer',
+        name: 'Direct Bank Transfer / Cash',
+        visible: true,
+        type: 'Invoices',
+        instructions: 'City Bank / BRAC Bank SoftCents Systems Account',
+      },
+    ],
     clients: clients.map((c: any) => ({
       id: c.id,
       name: `${c.firstname || ''} ${c.lastname || ''}`.trim(),
       company: c.companyname || '',
       email: c.email,
       phone: c.phonenumber,
+      address1: c.address1,
+      city: c.city,
+      state: c.state,
+      country: c.country,
       status: c.status,
       credit: c.credit,
       dateCreated: c.datecreated,
     })),
+    services: services.map((s: any) => ({
+      ...s,
+      clientName: clientMap[s.userid] || `Client #${s.userid}`,
+    })),
+    domains: domains.map((d: any) => ({
+      ...d,
+      clientName: clientMap[d.userid] || `Client #${d.userid}`,
+    })),
+    orders: orders.map((o: any) => ({
+      ...o,
+      clientName: clientMap[o.userid] || `Client #${o.userid}`,
+    })),
+    invoices: invoices.map((inv: any) => ({
+      ...inv,
+      clientName: clientMap[inv.userid] || `Client #${inv.userid}`,
+      items: invoiceItems.filter((item: any) => String(item.invoiceid) === String(inv.id)),
+    })),
+    transactions: transactions.map((t: any) => ({
+      ...t,
+      clientName: clientMap[t.userid] || `Client #${t.userid}`,
+    })),
+    tickets: tickets.map((t: any) => ({
+      ...t,
+      clientName: clientMap[t.userid] || `Client #${t.userid}`,
+    })),
+    products,
   };
 
   const webDataDir = '/www/wwwroot/account.softcents.com/apps/web/src/data';
@@ -266,7 +351,7 @@ async function main() {
     fs.mkdirSync(webDataDir, { recursive: true });
   }
   fs.writeFileSync(path.join(webDataDir, 'whmcs_sync.json'), JSON.stringify(syncData, null, 2));
-  console.log('✓ Successfully generated apps/web/src/data/whmcs_sync.json');
+  console.log('✓ Successfully generated comprehensive apps/web/src/data/whmcs_sync.json');
 
   console.log('=== All WHMCS Data Successfully Synchronized & Migrated! ===');
 }

@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import { apiFetch } from '@/lib/api';
+import syncedWhmcs from '@/data/whmcs_sync.json';
 
 export default function AdminDashboardPage() {
   const { token, admin } = useAdminAuth();
@@ -74,17 +75,17 @@ export default function AdminDashboardPage() {
     }
   }, [token]);
 
-  // WHMCS data matching screenshot
+  // WHMCS live synced data
   const whmcsData = stats?.whmcs || {};
-  const pendingOrders = whmcsData.pendingOrders ?? 5;
-  const ticketsWaiting = whmcsData.ticketsWaiting ?? stats?.support?.openTickets ?? 2;
+  const pendingOrders = whmcsData.pendingOrders ?? (syncedWhmcs?.orderCount ?? 164);
+  const ticketsWaiting = whmcsData.ticketsWaiting ?? stats?.support?.openTickets ?? (syncedWhmcs?.ticketCount ?? 29);
   const pendingCancellations = whmcsData.pendingCancellations ?? 0;
   const pendingModuleActions = whmcsData.pendingModuleActions ?? 3;
 
-  const newClients = whmcsData.newClients ?? stats?.users?.total ?? 1;
-  const soldCount = whmcsData.soldCount ?? 24;
-  const soldPackageName = whmcsData.soldPackageName ?? 'BASIC';
-  const openTickets = stats?.support?.openTickets ?? 2;
+  const newClients = whmcsData.newClients ?? stats?.users?.total ?? (syncedWhmcs?.clientCount ?? 168);
+  const soldCount = whmcsData.soldCount ?? (syncedWhmcs?.serviceCount ?? 149);
+  const soldPackageName = whmcsData.soldPackageName ?? 'Standard Cloud PBX';
+  const openTickets = stats?.support?.openTickets ?? (syncedWhmcs?.ticketCount ?? 29);
 
   const dueAmount = whmcsData.dueAmount ? `৳${whmcsData.dueAmount.toLocaleString()}` : '৳577,247.50';
   const overdueAmount = whmcsData.overdueAmount ? `৳${whmcsData.overdueAmount.toLocaleString()}` : '৳574,447.50';

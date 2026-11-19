@@ -24,9 +24,12 @@ export default function AdminWhmcsSyncPage() {
   const stats = {
     syncedAt: whmcsData?.syncedAt || new Date().toISOString(),
     clientCount: whmcsData?.clientCount || 168,
+    serviceCount: whmcsData?.serviceCount || 149,
+    domainCount: whmcsData?.domainCount || 10,
+    orderCount: whmcsData?.orderCount || 164,
     invoiceCount: whmcsData?.invoiceCount || 464,
-    ticketCount: whmcsData?.ticketCount || 28,
-    serviceCount: whmcsData?.services?.length || 149,
+    transactionCount: whmcsData?.transactionCount || 269,
+    ticketCount: whmcsData?.ticketCount || 29,
     serverCount: whmcsData?.servers?.length || 6,
     addonCount: whmcsData?.addons?.length || 24,
   };

@@ -17,16 +17,9 @@ fi
 
 echo "[$TIMESTAMP] Health check failed! WEB_STATUS=$WEB_STATUS, API_STATUS=$API_STATUS. Restarting account.softcents.com..." >> "$LOG_FILE"
 
-# Restart via aaPanel Node.js project manager
-/www/server/panel/pyenv/bin/python -c '
-import sys
-sys.path.append("/www/server/panel/class")
-import public
-from projectModel import nodejsModel
-m = nodejsModel.main()
-get = public.dict_obj()
-get.project_name = "account.softcents.com"
-m.restart_project(get)
-' >> "$LOG_FILE" 2>&1
+# Restart cleanly without affecting other services
+fuser -k 3000/tcp 4000/tcp >> "$LOG_FILE" 2>&1
+sleep 2
+su - www -s /bin/bash -c "bash /www/server/nodejs/vhost/scripts/account.softcents.com.sh" >> "$LOG_FILE" 2>&1
 
 echo "[$TIMESTAMP] Restart command issued." >> "$LOG_FILE"

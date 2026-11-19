@@ -18,6 +18,34 @@ import {
 export default function ShoppingCartPage() {
   const [selectedGroup, setSelectedGroup] = useState('hosting');
   const [cart, setCart] = useState<any[]>([]);
+  const [loadingPay, setLoadingPay] = useState(false);
+
+  const handleCheckout = async () => {
+    try {
+      setLoadingPay(true);
+      const res = await fetch('/api/payment/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoiceId: `ORD-${Date.now().toString().slice(-6)}`,
+          amount: cartTotal,
+          fullName: 'SoftCents Customer',
+          email: 'billing@softcents.com',
+          phone: '01700000000',
+        }),
+      });
+      const data = await res.json();
+      if (data.pp_url) {
+        window.location.href = data.pp_url;
+      } else {
+        alert(data.error || 'Failed to initiate PipraPay checkout');
+      }
+    } catch (e: any) {
+      alert(e.message || 'Payment initiation error');
+    } finally {
+      setLoadingPay(false);
+    }
+  };
 
   const productGroups = [
     { id: 'hosting', name: 'USA Linux Shared Hosting', icon: Server },
@@ -330,11 +358,12 @@ export default function ShoppingCartPage() {
               </div>
 
               <button
-                onClick={() => alert(`Placing order for ৳${cartTotal.toFixed(2)}... Invoice created!`)}
-                className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-6 py-2.5 rounded font-bold text-xs transition-colors shadow-sm flex items-center space-x-2"
+                onClick={handleCheckout}
+                disabled={loadingPay}
+                className="bg-[#5cb85c] hover:bg-[#4cae4c] disabled:opacity-50 text-white px-6 py-2.5 rounded font-bold text-xs transition-colors shadow-sm flex items-center space-x-2"
               >
                 <CreditCard className="w-4 h-4" />
-                <span>Complete Checkout & Pay &rarr;</span>
+                <span>{loadingPay ? 'Connecting to PipraPay...' : 'Complete Checkout & Pay \u2192'}</span>
               </button>
             </div>
           </div>

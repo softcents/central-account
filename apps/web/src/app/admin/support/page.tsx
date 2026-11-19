@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   LifeBuoy,
@@ -16,328 +16,227 @@ import {
   CheckCircle,
   AlertTriangle,
 } from 'lucide-react';
-import { useAdminAuth } from '@/context/AdminAuthContext';
-import { apiFetch } from '@/lib/api';
+import whmcsData from '@/data/whmcs_sync.json';
 
 export default function SupportTicketsPage() {
-  const { token, admin } = useAdminAuth();
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [tickets] = useState<any[]>(whmcsData?.tickets || []);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [search, setSearch] = useState('');
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
-  const [activeTab, setActiveTab] = useState<'reply' | 'note'>('reply');
-  const [replyMessage, setReplyMessage] = useState('');
-
-  const sampleTickets = [
-    {
-      id: '29',
-      tid: 'TID-492104',
-      dept: 'Technical Support',
-      subject: 'rDNS and PTR record setup request for VPS IP 138.252.125.207',
-      client: 'Raju Ahmed',
-      clientId: 'c1',
-      status: 'Open',
-      priority: 'High',
-      lastReply: '2026-11-19 22:15',
-    },
-    {
-      id: '28',
-      tid: 'TID-492103',
-      dept: 'Billing & Accounts',
-      subject: 'Bank transfer payment receipt attached for invoice #462',
-      client: 'Tanvir Hasan',
-      clientId: 'c3',
-      status: 'Customer-Reply',
-      priority: 'Medium',
-      lastReply: '2026-11-19 18:30',
-    },
-    {
-      id: '27',
-      tid: 'TID-492102',
-      dept: 'Domain Registrations',
-      subject: 'EPP Auth Code for outbound transfer confirmation',
-      client: 'SoftCents Host',
-      clientId: 'c2',
-      status: 'Answered',
-      priority: 'Low',
-      lastReply: '2026-11-18 14:10',
-    },
-    {
-      id: '26',
-      tid: 'TID-492101',
-      dept: 'Technical Support',
-      subject: 'SSL Certificate issuance verification delay',
-      client: 'Abir Chowdhury',
-      clientId: 'c4',
-      status: 'Closed',
-      priority: 'Medium',
-      lastReply: '2026-11-17 09:20',
-    },
-  ];
-
-  useEffect(() => {
-    setTickets(sampleTickets);
-  }, []);
 
   const filtered = tickets.filter((t) => {
-    if (statusFilter !== 'ALL' && t.status.toUpperCase() !== statusFilter) return false;
+    if (statusFilter !== 'ALL' && (t.status || '').toUpperCase() !== statusFilter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return (
+        String(t.tid || '').toLowerCase().includes(q) ||
+        String(t.id).includes(q) ||
+        (t.title || '').toLowerCase().includes(q) ||
+        (t.clientName || '').toLowerCase().includes(q) ||
+        (t.dept_name || '').toLowerCase().includes(q)
+      );
+    }
     return true;
   });
 
-  const handleReply = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!replyMessage.trim() || !selectedTicket) return;
-    alert(`Reply sent to client on ${selectedTicket.tid}!`);
-    setReplyMessage('');
-  };
+  const openCount = tickets.filter((t) => t.status === 'Open').length;
+  const inProgressCount = tickets.filter((t) => t.status === 'In Progress' || t.status === 'Customer-Reply').length;
+  const closedCount = tickets.filter((t) => t.status === 'Closed').length;
 
   return (
     <div className="p-4 space-y-4 max-w-[1600px] mx-auto text-slate-800">
+      {/* Breadcrumb */}
       <div className="flex items-center space-x-2 text-xs border-b border-slate-200 pb-2">
         <Link href="/admin/dashboard" className="text-[#1A4D80] hover:underline font-semibold">
           Dashboard
         </Link>
         <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-        <span className="font-bold text-slate-700">Support Tickets</span>
+        <span className="font-bold text-slate-700">Support Tickets ({tickets.length})</span>
       </div>
 
-      <div className="bg-white p-4 rounded border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center space-x-3">
-          <div className="p-2.5 bg-[#1A4D80]/10 rounded text-[#1A4D80]">
-            <img src="/whmcs/icons/tickets.png" className="w-6 h-6 object-contain" alt="" />
-          </div>
-          <div>
-            <h1 className="text-base font-bold text-slate-900 leading-tight">Support Tickets</h1>
-            <p className="text-xs text-slate-500">
-              Manage client inquiries, technical investigations, predefined canned replies, and escalations
-            </p>
-          </div>
+      {/* WHMCS Quick Status Summary Pills */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <button
+          onClick={() => setStatusFilter('ALL')}
+          className={`p-3 rounded border text-left transition-all ${
+            statusFilter === 'ALL'
+              ? 'bg-[#1A4D80] text-white border-[#1A4D80] shadow'
+              : 'bg-white border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <div className="font-semibold">All Tickets</div>
+          <div className="text-xl font-bold mt-1">{tickets.length}</div>
+        </button>
+        <button
+          onClick={() => setStatusFilter('OPEN')}
+          className={`p-3 rounded border text-left transition-all ${
+            statusFilter === 'OPEN'
+              ? 'bg-rose-700 text-white border-rose-700 shadow'
+              : 'bg-white border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <div className="font-semibold text-rose-600">Open Tickets</div>
+          <div className="text-xl font-bold mt-1">{openCount}</div>
+        </button>
+        <button
+          onClick={() => setStatusFilter('IN PROGRESS')}
+          className={`p-3 rounded border text-left transition-all ${
+            statusFilter === 'IN PROGRESS'
+              ? 'bg-amber-600 text-white border-amber-600 shadow'
+              : 'bg-white border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <div className="font-semibold text-amber-600">In Progress / Reply</div>
+          <div className="text-xl font-bold mt-1">{inProgressCount}</div>
+        </button>
+        <button
+          onClick={() => setStatusFilter('CLOSED')}
+          className={`p-3 rounded border text-left transition-all ${
+            statusFilter === 'CLOSED'
+              ? 'bg-slate-700 text-white border-slate-700 shadow'
+              : 'bg-white border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <div className="font-semibold text-slate-600">Closed Tickets</div>
+          <div className="text-xl font-bold mt-1">{closedCount}</div>
+        </button>
+      </div>
+
+      {/* Controls & Search */}
+      <div className="bg-white p-3 rounded border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 absolute left-2.5 top-2 text-slate-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by ticket ID, subject, or client name..."
+            className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-[#1A4D80]"
+          />
         </div>
-
-        <div className="flex items-center space-x-2 text-xs">
-          <Link
-            href="/admin/support/predefined-replies"
-            className="flex items-center space-x-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded font-medium border border-slate-300 shadow-sm"
-          >
-            <img src="/whmcs/icons/ticketspredefined.png" className="w-3.5 h-3.5" alt="" />
-            <span>Predefined Replies</span>
-          </Link>
-          <Link
-            href="/admin/support/open"
-            className="flex items-center space-x-1.5 bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-3 py-1.5 rounded font-semibold shadow-sm"
-          >
-            <img src="/whmcs/icons/ticketsopen.png" className="w-3.5 h-3.5" alt="" />
-            <span>Open New Ticket</span>
-          </Link>
-        </div>
       </div>
 
-      {/* WHMCS Ticket Status Filter Strip */}
-      <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
-        {[
-          { id: 'ALL', label: 'All Tickets', count: 29, color: 'bg-slate-700 text-white' },
-          { id: 'OPEN', label: 'Open', count: 1, color: 'bg-rose-600 text-white' },
-          { id: 'CUSTOMER-REPLY', label: 'Customer-Reply', count: 1, color: 'bg-amber-600 text-white' },
-          { id: 'ANSWERED', label: 'Answered', count: 8, color: 'bg-emerald-600 text-white' },
-          { id: 'CLOSED', label: 'Closed', count: 19, color: 'bg-slate-500 text-white' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setStatusFilter(tab.id)}
-            className={`px-3 py-1.5 rounded transition-all flex items-center space-x-1.5 ${
-              statusFilter === tab.id
-                ? `${tab.color} shadow-sm font-bold`
-                : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <span>{tab.label}</span>
-            <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                statusFilter === tab.id ? 'bg-black/20 text-white' : 'bg-slate-100 text-slate-600'
-              }`}
-            >
-              {tab.count}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Main View: Table + Ticket Conversation Detail */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Tickets Table (Left 7 or 12 cols) */}
-        <div className={selectedTicket ? 'lg:col-span-6' : 'lg:col-span-12'}>
-          <div className="bg-white border border-slate-200 rounded shadow-sm overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-[#eef3f7] border-b border-slate-200 text-slate-700 font-bold">
-                  <th className="py-2.5 px-3">Ticket ID</th>
-                  <th className="py-2.5 px-3">Department</th>
-                  <th className="py-2.5 px-3">Subject</th>
-                  <th className="py-2.5 px-3">Submitter</th>
-                  <th className="py-2.5 px-3 text-center">Status</th>
-                  <th className="py-2.5 px-3 text-center">Priority</th>
-                  <th className="py-2.5 px-3 text-right">Last Reply</th>
+      {/* Tickets Table */}
+      <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-[#f5f7f8] text-slate-700 font-bold border-b border-slate-200">
+              <tr>
+                <th className="py-2.5 px-3">Ticket ID</th>
+                <th className="py-2.5 px-3">Department</th>
+                <th className="py-2.5 px-3">Subject</th>
+                <th className="py-2.5 px-3">Client</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 px-3">Priority</th>
+                <th className="py-2.5 px-3">Created Date</th>
+                <th className="py-2.5 px-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-slate-500">
+                    No tickets found matching your search.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filtered.map((t, idx) => (
-                  <tr
-                    key={t.id}
-                    onClick={() => setSelectedTicket(t)}
-                    className={`cursor-pointer hover:bg-[#f0f4f8] transition-colors ${
-                      selectedTicket?.id === t.id
-                        ? 'bg-blue-50/70 border-l-4 border-l-[#1A4D80]'
-                        : idx % 2 === 1
-                        ? 'bg-[#fbfcfd]'
-                        : 'bg-white'
-                    }`}
-                  >
+              ) : (
+                filtered.map((t) => (
+                  <tr key={t.id} className="hover:bg-slate-50 transition-colors">
                     <td className="py-2.5 px-3 font-mono font-bold text-[#1A4D80]">
-                      #{t.id}
+                      #{t.tid || t.id}
                     </td>
-                    <td className="py-2.5 px-3 text-slate-600">{t.dept}</td>
-                    <td className="py-2.5 px-3 font-semibold text-slate-800">{t.subject}</td>
-                    <td className="py-2.5 px-3 text-slate-700">{t.client}</td>
-                    <td className="py-2.5 px-3 text-center">
+                    <td className="py-2.5 px-3 text-slate-600">{t.dept_name || 'Technical Support'}</td>
+                    <td className="py-2.5 px-3">
+                      <div className="font-semibold text-slate-900 line-clamp-1">{t.title}</div>
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <Link
+                        href={`/admin/clients/${t.userid}`}
+                        className="text-[#1A4D80] hover:underline font-semibold"
+                      >
+                        {t.clientName}
+                      </Link>
+                    </td>
+                    <td className="py-2.5 px-3">
                       <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                        className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                           t.status === 'Open'
                             ? 'bg-rose-100 text-rose-800'
-                            : t.status === 'Customer-Reply'
-                            ? 'bg-amber-100 text-amber-800'
-                            : t.status === 'Answered'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-slate-100 text-slate-600'
+                            : t.status === 'Closed'
+                            ? 'bg-slate-100 text-slate-600'
+                            : 'bg-emerald-100 text-emerald-800'
                         }`}
                       >
                         {t.status}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-center">
+                    <td className="py-2.5 px-3">
                       <span
-                        className={`inline-block px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                          t.priority === 'High'
-                            ? 'text-rose-700 bg-rose-50 border border-rose-200'
-                            : t.priority === 'Medium'
-                            ? 'text-blue-700 bg-blue-50 border border-blue-200'
-                            : 'text-slate-600'
+                        className={`font-semibold ${
+                          t.urgency === 'High' ? 'text-rose-600 font-bold' : 'text-slate-600'
                         }`}
                       >
-                        {t.priority}
+                        {t.urgency || 'Medium'}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-right text-slate-500 whitespace-nowrap">
-                      {t.lastReply}
+                    <td className="py-2.5 px-3 text-slate-600">{t.date}</td>
+                    <td className="py-2.5 px-3 text-right">
+                      <button
+                        onClick={() => setSelectedTicket(t)}
+                        className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-2 py-1 rounded text-[11px] font-medium"
+                      >
+                        View Ticket
+                      </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
+      </div>
 
-        {/* Selected Ticket Thread & Reply Box (Right 6 cols) */}
-        {selectedTicket && (
-          <div className="lg:col-span-6 bg-white border border-slate-200 rounded shadow-sm flex flex-col h-[750px] overflow-hidden">
-            {/* Header */}
-            <div className="bg-[#1A4D80] text-white p-3 flex items-center justify-between">
+      {/* Ticket Modal */}
+      {selectedTicket && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+            <div className="flex items-center justify-between border-b pb-3">
               <div>
-                <div className="font-bold text-sm">
-                  #{selectedTicket.id} - {selectedTicket.subject}
-                </div>
-                <div className="text-[11px] text-white/80">
-                  Client: {selectedTicket.client} | Dept: {selectedTicket.dept}
+                <span className="font-mono text-[#1A4D80] font-bold">#{selectedTicket.tid || selectedTicket.id}</span>
+                <h3 className="text-base font-bold text-slate-900 mt-1">{selectedTicket.title}</h3>
+                <div className="text-slate-500 mt-0.5">
+                  Client: <strong>{selectedTicket.clientName}</strong> • Dept: <strong>{selectedTicket.dept_name || 'Technical'}</strong>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedTicket(null)}
-                className="text-white/80 hover:text-white text-xs font-bold px-2 py-1 bg-white/10 rounded"
+                className="text-slate-400 hover:text-slate-600 font-bold text-lg"
               >
-                &times; Close
+                ✕
               </button>
             </div>
 
-            {/* Conversation Log */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-[#f6f6f6] text-xs">
-              {/* Client initial message */}
-              <div className="bg-white p-3 rounded border border-slate-200 shadow-sm space-y-1">
-                <div className="flex items-center justify-between text-slate-500 pb-1 border-b">
-                  <span className="font-bold text-[#1A4D80]">{selectedTicket.client} (Client)</span>
-                  <span>{selectedTicket.lastReply}</span>
-                </div>
-                <p className="text-slate-800 leading-relaxed pt-1">
-                  Hello, please update the reverse DNS (PTR) for our primary mail server IP. The desired hostname is mail.domain.com. Thank you!
-                </p>
-              </div>
-
-              {/* Staff response placeholder */}
-              <div className="bg-blue-50/70 p-3 rounded border border-blue-200 shadow-sm space-y-1">
-                <div className="flex items-center justify-between text-slate-500 pb-1 border-b border-blue-200">
-                  <span className="font-bold text-slate-900">Support Staff (raju)</span>
-                  <span>2026-11-19 22:20</span>
-                </div>
-                <p className="text-slate-800 leading-relaxed pt-1">
-                  Dear Client, we have submitted the PTR delegation to our network uplink. It typically propagates within 1 to 2 hours.
-                </p>
-              </div>
+            <div className="bg-slate-50 p-4 rounded border text-slate-800 whitespace-pre-wrap leading-relaxed">
+              {selectedTicket.message || 'No additional message body provided.'}
             </div>
 
-            {/* Reply / Note Tabs */}
-            <div className="border-t border-slate-200 bg-white p-3">
-              <div className="flex items-center space-x-2 text-xs mb-2">
-                <button
-                  onClick={() => setActiveTab('reply')}
-                  className={`px-3 py-1 rounded font-bold ${
-                    activeTab === 'reply'
-                      ? 'bg-[#1A4D80] text-white'
-                      : 'bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  Reply to Client
-                </button>
-                <button
-                  onClick={() => setActiveTab('note')}
-                  className={`px-3 py-1 rounded font-bold ${
-                    activeTab === 'note'
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  Add Internal Staff Note
-                </button>
-              </div>
-
-              <form onSubmit={handleReply} className="space-y-2">
-                <textarea
-                  rows={3}
-                  value={replyMessage}
-                  onChange={(e) => setReplyMessage(e.target.value)}
-                  placeholder={
-                    activeTab === 'reply'
-                      ? 'Type response to client...'
-                      : 'Type internal staff note (never visible to client)...'
-                  }
-                  className="w-full text-xs p-2 border border-slate-300 rounded focus:outline-none focus:border-[#1A4D80]"
-                />
-                <div className="flex items-center justify-between">
-                  <select className="p-1 border border-slate-300 rounded text-xs bg-white">
-                    <option value="keep">Keep Current Status</option>
-                    <option value="answered">Set Answered</option>
-                    <option value="closed">Close Ticket</option>
-                  </select>
-                  <button
-                    type="submit"
-                    className="flex items-center space-x-1.5 bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-1.5 rounded font-bold text-xs"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Send {activeTab === 'reply' ? 'Reply' : 'Note'}</span>
-                  </button>
-                </div>
-              </form>
+            <div className="flex justify-end space-x-2 pt-2">
+              <button
+                onClick={() => setSelectedTicket(null)}
+                className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded font-semibold"
+              >
+                Close
+              </button>
+              <Link
+                href={`/admin/clients/${selectedTicket.userid}?tab=tickets`}
+                className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-4 py-2 rounded font-semibold"
+              >
+                Open in Client Profile
+              </Link>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
