@@ -102,7 +102,7 @@ export class AdminController {
       search,
       status,
       page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 20,
+      limit ? parseInt(limit, 10) : 500,
     );
   }
 
