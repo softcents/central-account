@@ -26,12 +26,13 @@ export function AdminSidebar() {
 
   const navItems = [
     { label: 'Overview', href: '/admin/dashboard', icon: LayoutDashboard },
-    { label: 'Users Directory', href: '/admin/users', icon: Users },
+    { label: 'Clients & Users', href: '/admin/users', icon: Users },
+    { label: 'Billing & Invoices', href: '/admin/billing', icon: CreditCard },
+    { label: 'Support Desk', href: '/admin/support', icon: HelpCircle },
     { label: 'KYC Reviews', href: '/admin/kyc', icon: UserCheck },
     { label: 'KYB Reviews', href: '/admin/kyb', icon: Building2 },
     { label: 'SaaS Tenants', href: '/admin/tenants', icon: Boxes },
     { label: 'BullMQ Queues', href: '/admin/queues', icon: Cpu },
-    { label: 'Support Desk', href: '/admin/support', icon: HelpCircle },
     { label: 'OAuth Clients', href: '/admin/oauth', icon: KeyRound },
     { label: 'Audit Logs', href: '/admin/audit', icon: FileText },
     { label: 'Team & Roles', href: '/admin/settings', icon: Settings },

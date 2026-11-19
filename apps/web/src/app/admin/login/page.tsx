@@ -9,7 +9,6 @@ import { apiFetch } from '@/lib/api';
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [mfaCode, setMfaCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { login } = useAdminAuth();
@@ -23,7 +22,7 @@ export default function AdminLoginPage() {
     try {
       const res = await apiFetch<any>('/admin/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password, mfaCode: mfaCode || undefined }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!res.ok) {
@@ -104,20 +103,6 @@ export default function AdminLoginPage() {
                   className="w-full bg-white border border-slate-300 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                MFA / TOTP Code <span className="text-slate-400 font-normal">(Optional)</span>
-              </label>
-              <input
-                type="text"
-                maxLength={6}
-                value={mfaCode}
-                onChange={(e) => setMfaCode(e.target.value)}
-                placeholder="6-digit code if MFA active"
-                className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-all text-center tracking-widest font-mono"
-              />
             </div>
 
             <button

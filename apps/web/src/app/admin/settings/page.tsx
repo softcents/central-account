@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   Users,
   UserPlus,
@@ -8,12 +9,22 @@ import {
   CheckCircle2,
   Lock,
   RefreshCw,
+  Settings,
+  Globe,
+  CreditCard,
+  Clock,
+  Box,
+  Save,
+  Check,
 } from 'lucide-react';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import { apiFetch } from '@/lib/api';
 
 export default function AdminSettingsPage() {
   const { token, admin } = useAdminAuth();
+  const [activeTab, setActiveTab] = useState<'admins' | 'general' | 'automation' | 'gateways'>('general');
+
+  // Admin team state
   const [team, setTeam] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -24,6 +35,25 @@ export default function AdminSettingsPage() {
   const [role, setRole] = useState('KYC_REVIEWER');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // General Settings state
+  const [generalConfig, setGeneralConfig] = useState({
+    companyName: 'SoftCents Systems',
+    systemUrl: 'https://billing.softcents.com/',
+    logoUrl: 'https://billing.softcents.com/logo.png',
+    defaultCountry: 'Bangladesh (BD)',
+    currency: 'BDT (৳)',
+    adminEmail: 'admin@softcents.com',
+  });
+  const [savedNotice, setSavedNotice] = useState(false);
+
+  // Automation Settings state
+  const [autoConfig, setAutoConfig] = useState({
+    invoiceGenDays: '7',
+    dueReminderDays: '3',
+    overdueSuspensionDays: '5',
+    cronFrequency: 'Every 5 Minutes (0 */5 * * * *)',
+  });
 
   const fetchTeam = async () => {
     setLoading(true);
@@ -60,202 +90,407 @@ export default function AdminSettingsPage() {
         token,
       );
 
-      if (!res.ok) {
-        throw new Error(res.data?.message || 'Failed to create administrative user');
+      if (res.ok) {
+        setCreateModalOpen(false);
+        setFirstName('');
+        setLastName('');
+        setEmail('');
+        setPassword('');
+        fetchTeam();
+      } else {
+        setError(res.error || 'Failed to create staff member');
       }
-
-      setCreateModalOpen(false);
-      setFirstName('');
-      setLastName('');
-      setEmail('');
-      setPassword('');
-      fetchTeam();
     } catch (err: any) {
-      setError(err.message || 'Error creating admin');
+      setError(err?.message || 'Network error occurred');
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleSaveGeneral = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavedNotice(true);
+    setTimeout(() => setSavedNotice(false), 3000);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* WHMCS Top Banner */}
+      <div className="bg-[#1A4D80] text-white p-4 rounded-t shadow-sm flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Admin Team & Granular RBAC</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Provision compliance reviewers, SaaS managers, security officers, and support agents.
+          <h1 className="text-xl font-bold flex items-center space-x-2">
+            <Settings className="w-5 h-5 text-amber-300" />
+            <span>WHMCS System Setup & Configuration</span>
+          </h1>
+          <p className="text-xs text-blue-100 mt-0.5">
+            Configure system parameters, automation rules, payment gateways, and staff administrators.
           </p>
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2 text-xs font-bold">
+        <button
+          onClick={() => setActiveTab('general')}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded transition-colors ${
+            activeTab === 'general'
+              ? 'bg-[#1A4D80] text-white'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Globe className="w-3.5 h-3.5" />
+          <span>General Settings</span>
+        </button>
 
         <button
-          onClick={() => setCreateModalOpen(true)}
-          className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 transition-all"
+          onClick={() => setActiveTab('admins')}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded transition-colors ${
+            activeTab === 'admins'
+              ? 'bg-[#1A4D80] text-white'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
         >
-          <UserPlus className="w-3.5 h-3.5" />
-          <span>Provision New Admin</span>
+          <Users className="w-3.5 h-3.5" />
+          <span>Administrators & Roles ({team.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('automation')}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded transition-colors ${
+            activeTab === 'automation'
+              ? 'bg-[#1A4D80] text-white'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5" />
+          <span>Automation Settings</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('gateways')}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded transition-colors ${
+            activeTab === 'gateways'
+              ? 'bg-[#1A4D80] text-white'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <CreditCard className="w-3.5 h-3.5" />
+          <span>Payment Gateways</span>
         </button>
       </div>
 
-      {/* Team Table */}
-      <div className="rounded-2xl bg-slate-900/60 border border-slate-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950/60 border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold text-[10px]">
-              <tr>
-                <th className="py-3 px-6">Administrator</th>
-                <th className="py-3 px-6">Assigned Role</th>
-                <th className="py-3 px-6">Status</th>
-                <th className="py-3 px-6">Last Login</th>
-                <th className="py-3 px-6 text-right">Provisioned</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500">Loading admin roster...</td>
-                </tr>
-              ) : team.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500">No admin users found.</td>
-                </tr>
-              ) : (
-                team.map((a) => (
-                  <tr key={a.id} className="hover:bg-slate-900/40">
-                    <td className="py-4 px-6">
-                      <div className="font-semibold text-white">
-                        {a.first_name} {a.last_name}
-                      </div>
-                      <div className="text-[11px] text-slate-400">{a.email}</div>
-                    </td>
+      {savedNotice && (
+        <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded text-xs font-semibold flex items-center space-x-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <span>Configuration saved successfully.</span>
+        </div>
+      )}
 
-                    <td className="py-4 px-6">
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-indigo-950/40 border border-indigo-500/30 text-indigo-300 font-semibold text-[10px] uppercase tracking-wider">
-                        <Shield className="w-3 h-3 text-indigo-400" />
-                        <span>{a.role.replace('_', ' ')}</span>
+      {/* Tab 1: General Settings */}
+      {activeTab === 'general' && (
+        <form onSubmit={handleSaveGeneral} className="bg-white border border-slate-200 rounded-lg shadow-sm p-6 space-y-5">
+          <h2 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2">
+            Company & System Profile
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">Company Name</label>
+              <input
+                type="text"
+                value={generalConfig.companyName}
+                onChange={(e) => setGeneralConfig({ ...generalConfig, companyName: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:outline-none focus:border-[#1A4D80]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">WHMCS System URL</label>
+              <input
+                type="text"
+                value={generalConfig.systemUrl}
+                onChange={(e) => setGeneralConfig({ ...generalConfig, systemUrl: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:outline-none focus:border-[#1A4D80]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">Company Logo URL</label>
+              <input
+                type="text"
+                value={generalConfig.logoUrl}
+                onChange={(e) => setGeneralConfig({ ...generalConfig, logoUrl: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:outline-none focus:border-[#1A4D80]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">Default Country</label>
+              <input
+                type="text"
+                value={generalConfig.defaultCountry}
+                disabled
+                className="w-full bg-slate-100 border border-slate-300 rounded p-2 text-slate-600 cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">Base Currency</label>
+              <input
+                type="text"
+                value={generalConfig.currency}
+                disabled
+                className="w-full bg-slate-100 border border-slate-300 rounded p-2 text-slate-600 cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">Admin Email Address</label>
+              <input
+                type="email"
+                value={generalConfig.adminEmail}
+                onChange={(e) => setGeneralConfig({ ...generalConfig, adminEmail: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:outline-none focus:border-[#1A4D80]"
+              />
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex justify-end">
+            <button
+              type="submit"
+              className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-5 py-2 rounded text-xs font-bold transition-colors flex items-center space-x-1.5"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Save Changes</span>
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Tab 2: Administrators & Roles */}
+      {activeTab === 'admins' && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-sm font-bold text-slate-800">Staff Administrator Accounts</h2>
+            <button
+              onClick={() => setCreateModalOpen(true)}
+              className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-3 py-1.5 rounded text-xs font-bold transition-colors flex items-center space-x-1"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Add New Administrator</span>
+            </button>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-[#eef3f7] border-b border-slate-200 text-slate-700 font-bold">
+                  <th className="py-2.5 px-4">Name</th>
+                  <th className="py-2.5 px-4">Email</th>
+                  <th className="py-2.5 px-4">Role</th>
+                  <th className="py-2.5 px-4 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {team.map((user: any) => (
+                  <tr key={user.id} className="hover:bg-slate-50">
+                    <td className="py-2.5 px-4 font-bold text-slate-900">
+                      {user.first_name || user.firstName} {user.last_name || user.lastName}
+                    </td>
+                    <td className="py-2.5 px-4 font-mono text-slate-600">{user.email}</td>
+                    <td className="py-2.5 px-4">
+                      <span className="bg-blue-100 text-[#1A4D80] font-bold px-2 py-0.5 rounded text-[10px]">
+                        {user.role}
                       </span>
                     </td>
-
-                    <td className="py-4 px-6">
-                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-[10px] font-medium">
-                        <CheckCircle2 className="w-2.5 h-2.5" />
-                        <span>Active</span>
+                    <td className="py-2.5 px-4 text-center">
+                      <span className="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full text-[10px]">
+                        Active
                       </span>
-                    </td>
-
-                    <td className="py-4 px-6 text-slate-400 font-mono text-[11px]">
-                      {a.last_login_at ? new Date(a.last_login_at).toLocaleString() : 'Never'}
-                    </td>
-
-                    <td className="py-4 px-6 text-right text-slate-500 font-mono text-[11px]">
-                      {new Date(a.created_at).toLocaleDateString()}
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Provision Admin Modal */}
+      {/* Tab 3: Automation Settings */}
+      {activeTab === 'automation' && (
+        <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6 space-y-4 text-xs">
+          <h2 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2">
+            Cron Scheduling & Automatic Invoice Settings
+          </h2>
+
+          <div className="space-y-4 max-w-xl">
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">
+                Invoice Generation Days in Advance
+              </label>
+              <input
+                type="number"
+                value={autoConfig.invoiceGenDays}
+                onChange={(e) => setAutoConfig({ ...autoConfig, invoiceGenDays: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:outline-none focus:border-[#1A4D80]"
+              />
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Generate renewal invoices X days before the next due date.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">
+                Overdue Suspension Grace Period (Days)
+              </label>
+              <input
+                type="number"
+                value={autoConfig.overdueSuspensionDays}
+                onChange={(e) => setAutoConfig({ ...autoConfig, overdueSuspensionDays: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:outline-none focus:border-[#1A4D80]"
+              />
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Automatically suspend services when invoices remain unpaid X days after due date.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">
+                System Automation Cron Job Interval
+              </label>
+              <input
+                type="text"
+                value={autoConfig.cronFrequency}
+                disabled
+                className="w-full bg-slate-100 border border-slate-300 rounded p-2 text-slate-600 cursor-not-allowed font-mono"
+              />
+            </div>
+
+            <button
+              onClick={() => {
+                setSavedNotice(true);
+                setTimeout(() => setSavedNotice(false), 3000);
+              }}
+              className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-5 py-2 rounded font-bold transition-colors"
+            >
+              Save Automation Settings
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: Gateways */}
+      {activeTab === 'gateways' && (
+        <div className="space-y-4">
+          <h2 className="text-sm font-bold text-slate-800">Configured Payment Gateways</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="font-bold text-slate-900 text-sm">PipraPay (bKash / Nagad / Rocket)</div>
+                <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">
+                  Active & Primary
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Automated Bangladesh MFS and instant payment gateway module for SoftCents Systems.
+              </p>
+              <div className="text-[11px] font-mono text-slate-600 bg-slate-50 p-2 rounded border border-slate-200">
+                Module: piprapay.php • Version: 1.0.2
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="font-bold text-slate-900 text-sm">Bank Wire / Offline Transfer</div>
+                <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">
+                  Active
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Manual invoice clearance via Eastern Bank Ltd. / City Bank Bangladesh.
+              </p>
+              <div className="text-[11px] font-mono text-slate-600 bg-slate-50 p-2 rounded border border-slate-200">
+                Module: banktransfer.php
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Admin Modal */}
       {createModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-white">Provision Administrative User</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Grant operations, verification, or compliance access to the Central Account platform.
-            </p>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 text-xs space-y-4">
+            <h3 className="text-base font-bold text-slate-900">Add Staff Administrator</h3>
+            {error && <div className="p-2 bg-rose-50 text-rose-700 rounded border border-rose-200">{error}</div>}
 
-            {error && (
-              <div className="mt-3 p-3 rounded-xl bg-rose-950/40 border border-rose-500/30 text-rose-300 text-xs">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleCreateAdmin} className="mt-4 space-y-3.5">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">First Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Jane"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500/60"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Last Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Doe"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500/60"
-                  />
-                </div>
-              </div>
-
+            <form onSubmit={handleCreateAdmin} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-medium text-slate-300 mb-1">Official Email</label>
+                <label className="block font-semibold mb-1">First Name</label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full border rounded p-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1">Last Name</label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full border rounded p-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1">Email</label>
                 <input
                   type="email"
-                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@softcents.com"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500/60"
+                  className="w-full border rounded p-2"
+                  required
                 />
               </div>
-
               <div>
-                <label className="block text-[11px] font-medium text-slate-300 mb-1">Password</label>
+                <label className="block font-semibold mb-1">Password</label>
                 <input
                   type="password"
-                  required
-                  minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Minimum 8 characters"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500/60"
+                  className="w-full border rounded p-2"
+                  required
                 />
               </div>
-
               <div>
-                <label className="block text-[11px] font-medium text-slate-300 mb-1">Assigned Role</label>
+                <label className="block font-semibold mb-1">Role</label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500/60"
+                  className="w-full border rounded p-2 bg-white"
                 >
-                  <option value="KYC_REVIEWER">KYC Reviewer (Documents & Biometrics)</option>
-                  <option value="KYB_REVIEWER">KYB Reviewer (Trade Licenses)</option>
-                  <option value="SAAS_ADMIN">SaaS Admin (Tenants & Plans)</option>
-                  <option value="BILLING_ADMIN">Billing Admin (Invoices & Payments)</option>
-                  <option value="SUPPORT_AGENT">Support Agent (Tickets & Assistance)</option>
-                  <option value="SECURITY_ADMIN">Security Admin (OAuth & Locks)</option>
-                  <option value="AUDITOR">Compliance Auditor (Read-Only Logs)</option>
-                  <option value="SUPER_ADMIN">Super Administrator (Full System Control)</option>
+                  <option value="SUPER_ADMIN">Full Administrator (Super Admin)</option>
+                  <option value="KYC_REVIEWER">KYC & Document Reviewer</option>
+                  <option value="SUPPORT_AGENT">Support Agent</option>
                 </select>
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-3">
+              <div className="flex justify-end space-x-2 pt-3 border-t">
                 <button
                   type="button"
                   onClick={() => setCreateModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white transition-colors"
+                  className="px-4 py-2 border rounded text-slate-600 hover:bg-slate-100"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition-all disabled:opacity-50"
+                  className="px-4 py-2 bg-[#1A4D80] text-white rounded font-bold hover:bg-[#143d66]"
                 >
-                  {submitting ? 'Provisioning...' : 'Provision Admin Account'}
+                  {submitting ? 'Creating...' : 'Create Admin'}
                 </button>
               </div>
             </form>

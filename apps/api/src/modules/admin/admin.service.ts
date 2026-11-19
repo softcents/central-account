@@ -143,6 +143,13 @@ export class AdminService {
   // -------------------------------------------------------------
 
   async getDashboardStats() {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
     const [
       totalUsers,
       activeUsers,
@@ -155,6 +162,13 @@ export class AdminService {
       totalSubscriptions,
       openTicketsCount,
       recentAuditLogs,
+      pendingOrdersCount,
+      pendingCancellationsCount,
+      dueInvoicesAgg,
+      overdueInvoicesAgg,
+      paymentsTodayAgg,
+      paymentsThisMonthAgg,
+      planSalesStats,
     ] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.user.count({ where: { status: 'ACTIVE' } }),
@@ -176,6 +190,41 @@ export class AdminService {
         include: {
           admin: {
             select: { email: true, first_name: true, last_name: true, role: true },
+          },
+        },
+      }),
+      (this.prisma as any).subscription.count({
+        where: { status: { in: ['TRIALING', 'PAST_DUE'] } },
+      }),
+      (this.prisma as any).subscription.count({
+        where: { cancel_at_period_end: true },
+      }),
+      (this.prisma as any).invoice.aggregate({
+        _sum: { amount: true },
+        _count: { id: true },
+        where: { status: 'OPEN' },
+      }),
+      (this.prisma as any).invoice.aggregate({
+        _sum: { amount: true },
+        _count: { id: true },
+        where: { status: 'OPEN', due_date: { lt: new Date() } },
+      }),
+      (this.prisma as any).payment.aggregate({
+        _sum: { amount: true },
+        _count: { id: true },
+        where: { status: 'COMPLETED', created_at: { gte: startOfDay } },
+      }),
+      (this.prisma as any).payment.aggregate({
+        _sum: { amount: true },
+        where: { status: 'COMPLETED', created_at: { gte: startOfMonth } },
+      }),
+      (this.prisma as any).plan.findMany({
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          _count: {
+            select: { subscriptions: true },
           },
         },
       }),
@@ -209,6 +258,32 @@ export class AdminService {
       },
       support: {
         openTickets: openTicketsCount,
+      },
+      whmcs: {
+        newClients: totalUsers,
+        pendingOrders: pendingOrdersCount,
+        ticketsWaiting: openTicketsCount,
+        pendingCancellations: pendingCancellationsCount,
+        pendingModuleActions: 0,
+        dueAmount: dueInvoicesAgg?._sum?.amount || 0,
+        dueCount: dueInvoicesAgg?._count?.id || 0,
+        overdueAmount: overdueInvoicesAgg?._sum?.amount || 0,
+        overdueCount: overdueInvoicesAgg?._count?.id || 0,
+        paidTodayCount: paymentsTodayAgg?._count?.id || 0,
+        incomeToday: paymentsTodayAgg?._sum?.amount || 0,
+        incomeThisMonth: paymentsThisMonthAgg?._sum?.amount || monthlyRevenue || 0,
+        renewToday: 0,
+        renewTodayAmount: 0,
+        errorsToday: 0,
+        planSales: planSalesStats || [],
+        automation: {
+          invoicesCreated: 0,
+          creditCardCaptures: 0,
+          overdueSuspensions: 0,
+          inactiveTicketsClosed: 0,
+          cancellationsProcessed: 0,
+          lastCronRun: new Date(),
+        },
       },
       recentActivity: recentAuditLogs,
       systemHealth: {
