@@ -514,6 +514,15 @@ export function AdminHeader() {
             {activeDropdown === 'utilities' && (
               <div className="absolute left-0 top-full mt-1 w-52 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50">
                 <Link
+                  href="/admin/utilities/whmcs-sync"
+                  onClick={() => setActiveDropdown(null)}
+                  className="flex items-center px-3 py-1.5 hover:bg-slate-100 font-bold text-[#1A4D80]"
+                >
+                  <img src="/whmcs/icons/navrotate.png" className="w-3.5 h-3.5 mr-2" alt="" />
+                  <span>WHMCS Live Sync Console</span>
+                </Link>
+                <div className="border-t border-slate-100 my-1"></div>
+                <Link
                   href="/admin/utilities/automation-status"
                   onClick={() => setActiveDropdown(null)}
                   className="block px-3 py-1.5 hover:bg-slate-100"
@@ -594,7 +603,16 @@ export function AdminHeader() {
               <ChevronDown className="w-3 h-3 opacity-70" />
             </button>
             {activeDropdown === 'addons' && (
-              <div className="absolute left-0 top-full mt-1 w-52 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50">
+              <div className="absolute left-0 top-full mt-1 w-56 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50">
+                <Link
+                  href="/admin/addons"
+                  onClick={() => setActiveDropdown(null)}
+                  className="flex items-center px-3 py-1.5 hover:bg-slate-100 font-bold text-[#1A4D80]"
+                >
+                  <img src="/whmcs/icons/addonmodules.png" className="w-3.5 h-3.5 mr-2" alt="" />
+                  <span>Addon Modules Hub (24)</span>
+                </Link>
+                <div className="border-t border-slate-100 my-1"></div>
                 <Link
                   href="/admin/kyc"
                   onClick={() => setActiveDropdown(null)}
@@ -624,6 +642,61 @@ export function AdminHeader() {
                   className="block px-3 py-1.5 hover:bg-slate-100"
                 >
                   Multi-Tenant Clusters
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Setup / Configuration Dropdown */}
+          <div className="relative hidden xl:block">
+            <button
+              onClick={() => toggleDropdown('setup')}
+              className={`px-2.5 py-1.5 rounded hover:bg-black/20 text-white font-medium flex items-center space-x-1 text-xs transition-colors ${
+                activeDropdown === 'setup' ? 'bg-black/30' : ''
+              }`}
+            >
+              <span>Setup</span>
+              <ChevronDown className="w-3 h-3 opacity-70" />
+            </button>
+            {activeDropdown === 'setup' && (
+              <div className="absolute left-0 top-full mt-1 w-56 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50">
+                <Link
+                  href="/admin/settings"
+                  onClick={() => setActiveDropdown(null)}
+                  className="flex items-center px-3 py-1.5 hover:bg-slate-100 font-bold text-slate-800"
+                >
+                  <img src="/whmcs/icons/config.png" className="w-3.5 h-3.5 mr-2" alt="" />
+                  General Settings
+                </Link>
+                <Link
+                  href="/admin/servers"
+                  onClick={() => setActiveDropdown(null)}
+                  className="flex items-center px-3 py-1.5 hover:bg-slate-100 text-[#1A4D80] font-semibold"
+                >
+                  <img src="/whmcs/icons/income.png" className="w-3.5 h-3.5 mr-2" alt="" />
+                  Servers & Provisioning (6)
+                </Link>
+                <div className="border-t border-slate-100 my-1"></div>
+                <Link
+                  href="/admin/settings"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700"
+                >
+                  Automation Settings
+                </Link>
+                <Link
+                  href="/admin/settings"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700"
+                >
+                  Payment Gateways (PipraPay)
+                </Link>
+                <Link
+                  href="/admin/settings"
+                  onClick={() => setActiveDropdown(null)}
+                  className="block px-3 py-1.5 hover:bg-slate-100 text-slate-700"
+                >
+                  Staff Administrators
                 </Link>
               </div>
             )}
