@@ -70,7 +70,7 @@ async function main() {
   // 2. Fetch and Migrate All Clients
   console.log('--> Fetching all clients from billing.softcents.com...');
   const clients = queryTsv(`
-    SELECT id, firstname, lastname, companyname, email, phonenumber, address1, city, state, postcode, country, status, credit, datecreated
+    SELECT id, firstname, lastname, companyname, email, phonenumber, address1, address2, city, state, postcode, country, status, credit, datecreated, tax_id, defaultgateway, billingcid, language, marketing_emails_opt_in, email_preferences
     FROM tblclients
     ORDER BY id DESC;
   `);
@@ -377,6 +377,35 @@ async function main() {
     FROM tbladdonmodules;
   `);
 
+  console.log('--> Fetching client custom fields from billing.softcents.com...');
+  const clientCustomFields = queryTsv(`
+    SELECT id, fieldname, fieldtype, description, fieldoptions, required, sortorder
+    FROM tblcustomfields
+    WHERE type = 'client' AND (adminonly IS NULL OR adminonly = '' OR adminonly != 'on')
+    ORDER BY sortorder, id;
+  `);
+
+  console.log('--> Fetching client custom field values from billing.softcents.com...');
+  const clientCustomFieldValues = queryTsv(`
+    SELECT v.id, v.fieldid, v.relid as clientid, v.value
+    FROM tblcustomfieldsvalues v
+    JOIN tblcustomfields f ON v.fieldid = f.id
+    WHERE f.type = 'client';
+  `);
+  console.log(`✓ Fetched ${clientCustomFields.length} custom fields and ${clientCustomFieldValues.length} field values.`);
+
+  const customFieldMap: Record<string, Record<string, string>> = {};
+  for (const val of clientCustomFieldValues) {
+    if (!customFieldMap[val.clientid]) {
+      customFieldMap[val.clientid] = {};
+    }
+    const fieldDef = clientCustomFields.find((f: any) => String(f.id) === String(val.fieldid));
+    if (fieldDef) {
+      customFieldMap[val.clientid][fieldDef.fieldname] = val.value || '';
+      customFieldMap[val.clientid][`field_${val.fieldid}`] = val.value || '';
+    }
+  }
+
   // Build client lookup map
   const clientMap: Record<string, string> = {};
   clients.forEach((c: any) => {
@@ -417,6 +446,20 @@ async function main() {
     clients: clients.map((c: any) => {
       const activeSvc = services.filter((s: any) => String(s.userid) === String(c.id) && s.domainstatus === 'Active').length;
       const totalSvc = services.filter((s: any) => String(s.userid) === String(c.id)).length;
+      let emailPrefs = {
+        general: 1,
+        invoice: 1,
+        support: 1,
+        product: 1,
+        domain: 1,
+        affiliate: 1,
+      };
+      if (c.email_preferences) {
+        try {
+          emailPrefs = typeof c.email_preferences === 'string' ? JSON.parse(c.email_preferences) : c.email_preferences;
+        } catch {}
+      }
+
       return {
         id: c.id,
         firstname: c.firstname || '',
@@ -428,9 +471,18 @@ async function main() {
         phone: c.phonenumber || '',
         phonenumber: c.phonenumber || '',
         address1: c.address1 || '',
+        address2: c.address2 || '',
         city: c.city || '',
         state: c.state || '',
+        postcode: c.postcode || '',
         country: c.country || 'BD',
+        tax_id: c.tax_id || '',
+        defaultgateway: c.defaultgateway || '',
+        billingcid: c.billingcid || '0',
+        language: c.language || '',
+        marketing_emails_opt_in: c.marketing_emails_opt_in === '1' || c.marketing_emails_opt_in === 1 || c.marketing_emails_opt_in === true,
+        email_preferences: emailPrefs,
+        customfields: customFieldMap[c.id] || {},
         status: c.status || 'Active',
         credit: c.credit || '0.00',
         dateCreated: c.datecreated || '',
@@ -440,6 +492,7 @@ async function main() {
         services_count: `${activeSvc} (${totalSvc})`,
       };
     }),
+    clientCustomFields,
     services: services.map((s: any) => ({
       ...s,
       clientName: clientMap[s.userid] || `Client #${s.userid}`,
