@@ -252,10 +252,25 @@ function AdminSettingsContent() {
     smtpPassword: '••••••••••••••••',
     smtpSsl: 'ssl',
 
-    // Support
+    // Support Tab (1:1 from screenshot https://prnt.sc/m_9apRirnsE2)
+    supportModule: '',
     ticketMask: '%A%A%A-%n%n%n%n%n%n',
-    ticketAllowedTypes: '.jpg,.gif,.jpeg,.png,.txt,.pdf',
-    ticketRating: true,
+    ticketReplyListOrder: 'ASC',
+    ticketReplyEmailLimit: '10',
+    showClientOnlyDepartments: false,
+    clientTicketsRequireLogin: true,
+    knowledgebaseSuggestions: true,
+    attachmentThumbnailPreviews: true,
+    supportTicketRating: true,
+    autoAddCarbonCopyRecipients: true,
+    preventEmailReopening: false,
+    updateLastReplyTimestamp: 'always',
+    disableReplyEmailLogging: false,
+    ticketAllowedFileTypes: '.jpg,.gif,.jpeg,.png,.txt,.pdf',
+    serviceStatusRequireLogin: true,
+    includeProductDownloads: false,
+    allowInsecureImports: false,
+    reopenExistingTicketsIfImportingFails: true,
 
     // Invoices
     invoiceGenDays: '10',
@@ -2300,31 +2315,353 @@ function AdminSettingsContent() {
             </div>
           )}
 
-          {/* TAB 6: SUPPORT */}
+          {/* TAB 6: SUPPORT (EXACT 1:1 TO SCREENSHOT https://prnt.sc/m_9apRirnsE2) */}
           {activeSubtab === 'support' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
+              {/* Support Module */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Ticket Mask</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Support Module
+                </label>
                 <div className="flex-1">
+                  <select
+                    value={formData.supportModule}
+                    onChange={(e) => handleChange('supportModule', e.target.value)}
+                    className="w-64 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  >
+                    <option value="">WHMCS Built-in System</option>
+                    <option value="kayako">Kayako</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Support Ticket Mask Format */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">
+                  Support Ticket Mask Format
+                </label>
+                <div className="flex-1 space-y-1">
                   <input
                     type="text"
                     value={formData.ticketMask}
                     onChange={(e) => handleChange('ticketMask', e.target.value)}
-                    className="w-60 p-1.5 border border-[#ccc] rounded bg-white text-[12px] font-mono"
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] font-mono focus:outline-none focus:border-[#1A4D80]"
                   />
-                  <span className="text-[11px] text-[#777] ml-2">Default: %A%A%A-%n%n%n%n%n%n</span>
+                  <div className="text-[11px] text-[#777]">
+                    Key: %A - Uppercase letter | %a - Lowercase letter | %n - Number | %y - Year | %m - Month | %d - Day | %i - Ticket ID
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Allowed File Types</label>
+              {/* Ticket Reply List Order */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Ticket Reply List Order
+                </label>
                 <div className="flex-1">
+                  <select
+                    value={formData.ticketReplyListOrder}
+                    onChange={(e) => handleChange('ticketReplyListOrder', e.target.value)}
+                    className="w-64 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  >
+                    <option value="ASC">Ascending (Oldest to Newest)</option>
+                    <option value="DESC">Descending (Newest to Oldest)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Ticket Reply Email Limit */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Ticket Reply Email Limit
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
                   <input
                     type="text"
-                    value={formData.ticketAllowedTypes}
-                    onChange={(e) => handleChange('ticketAllowedTypes', e.target.value)}
-                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    value={formData.ticketReplyEmailLimit}
+                    onChange={(e) => handleChange('ticketReplyEmailLimit', e.target.value)}
+                    className="w-20 p-1.5 border border-[#ccc] rounded bg-white text-[12px] text-center focus:outline-none focus:border-[#1A4D80]"
                   />
+                  <span className="text-[12px] text-[#555]">
+                    Email sending limit per 15 minutes
+                  </span>
+                </div>
+              </div>
+
+              {/* Show Client Only Departments */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Show Client Only Departments
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="show_client_only_depts"
+                    checked={formData.showClientOnlyDepartments}
+                    onChange={(e) => handleChange('showClientOnlyDepartments', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="show_client_only_depts" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to show client only departments to guests (not logged in visitors)
+                  </label>
+                </div>
+              </div>
+
+              {/* Client Tickets Require Login */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Client Tickets Require Login
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="client_tickets_req_login"
+                    checked={formData.clientTicketsRequireLogin}
+                    onChange={(e) => handleChange('clientTicketsRequireLogin', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="client_tickets_req_login" className="text-[12px] text-[#444] cursor-pointer">
+                    Require login by the owning client for viewing tickets assigned to a client
+                  </label>
+                </div>
+              </div>
+
+              {/* Knowledgebase Suggestions */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Knowledgebase Suggestions
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="kb_suggestions"
+                    checked={formData.knowledgebaseSuggestions}
+                    onChange={(e) => handleChange('knowledgebaseSuggestions', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="kb_suggestions" className="text-[12px] text-[#444] cursor-pointer">
+                    Show suggested KB articles to a user as they enter a support ticket message
+                  </label>
+                </div>
+              </div>
+
+              {/* Attachment Thumbnail Previews */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Attachment Thumbnail Previews
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="attachment_thumbnails"
+                    checked={formData.attachmentThumbnailPreviews}
+                    onChange={(e) => handleChange('attachmentThumbnailPreviews', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="attachment_thumbnails" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable thumbnail previews of image attachments (requires GD)
+                  </label>
+                </div>
+              </div>
+
+              {/* Support Ticket Rating */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Support Ticket Rating
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="support_ticket_rating"
+                    checked={formData.supportTicketRating}
+                    onChange={(e) => handleChange('supportTicketRating', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="support_ticket_rating" className="text-[12px] text-[#444] cursor-pointer">
+                    Allow users to rate support ticket replies from staff
+                  </label>
+                </div>
+              </div>
+
+              {/* Auto Add Carbon Copy Recipients */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Auto Add Carbon Copy Recipients
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="auto_add_cc_recipients"
+                    checked={formData.autoAddCarbonCopyRecipients}
+                    onChange={(e) => handleChange('autoAddCarbonCopyRecipients', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="auto_add_cc_recipients" className="text-[12px] text-[#444] cursor-pointer">
+                    Read and add carbon copy recipients from incoming emails for tickets opened via email
+                  </label>
+                </div>
+              </div>
+
+              {/* Prevent Email Reopening */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Prevent Email Reopening
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="prevent_email_reopening"
+                    checked={formData.preventEmailReopening}
+                    onChange={(e) => handleChange('preventEmailReopening', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="prevent_email_reopening" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to prevent email replies from re-opening closed tickets and to send an email advising to open a new ticket or update the existing ticket for clients.
+                  </label>
+                </div>
+              </div>
+
+              {/* Update Last Reply Timestamp */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-0.5">
+                  Update Last Reply Timestamp
+                </label>
+                <div className="flex-1 flex items-center space-x-4">
+                  <label className="inline-flex items-center space-x-1.5 cursor-pointer text-[12px] text-[#444]">
+                    <input
+                      type="radio"
+                      name="update_last_reply"
+                      value="always"
+                      checked={formData.updateLastReplyTimestamp === 'always'}
+                      onChange={() => handleChange('updateLastReplyTimestamp', 'always')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Every time a reply is made (Default)</span>
+                  </label>
+                  <label className="inline-flex items-center space-x-1.5 cursor-pointer text-[12px] text-[#444]">
+                    <input
+                      type="radio"
+                      name="update_last_reply"
+                      value="status_change"
+                      checked={formData.updateLastReplyTimestamp === 'status_change'}
+                      onChange={() => handleChange('updateLastReplyTimestamp', 'status_change')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Every time for staff replies, only on a change of status for clients</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Disable Reply Email Logging */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Disable Reply Email Logging
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="disable_reply_logging"
+                    checked={formData.disableReplyEmailLogging}
+                    onChange={(e) => handleChange('disableReplyEmailLogging', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="disable_reply_logging" className="text-[12px] text-[#444] cursor-pointer">
+                    Do not create email log entry for ticket replies (text is already logged in ticket so saves disk space)
+                  </label>
+                </div>
+              </div>
+
+              {/* Allowed File Attachment Types */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Allowed File Attachment Types
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={formData.ticketAllowedFileTypes}
+                    onChange={(e) => handleChange('ticketAllowedFileTypes', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[11px] text-[#777]">
+                    Seperate multiple extensions with a comma
+                  </span>
+                </div>
+              </div>
+
+              {/* Service Status Require Login */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Service Status Require Login
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="service_status_req_login"
+                    checked={formData.serviceStatusRequireLogin}
+                    onChange={(e) => handleChange('serviceStatusRequireLogin', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="service_status_req_login" className="text-[12px] text-[#444] cursor-pointer">
+                    Require a login to view the server status & network issues pages
+                  </label>
+                </div>
+              </div>
+
+              {/* Include Product Downloads */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Include Product Downloads
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="inc_product_dls"
+                    checked={formData.includeProductDownloads}
+                    onChange={(e) => handleChange('includeProductDownloads', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="inc_product_dls" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to include Product Associated Downloads in the Downloads Directory
+                  </label>
+                </div>
+              </div>
+
+              {/* Allow Insecure Imports */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Allow Insecure Imports
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="allow_insecure_imports"
+                    checked={formData.allowInsecureImports}
+                    onChange={(e) => handleChange('allowInsecureImports', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="allow_insecure_imports" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to allow imports into existing tickets where the sender is unregistered, not added as a CC recipient or not associated with the Client.
+                  </label>
+                </div>
+              </div>
+
+              {/* Reopen Existing Tickets if Importing Fails */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Reopen Existing Tickets if Importing Fails
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="reopen_failed_import"
+                    checked={formData.reopenExistingTicketsIfImportingFails}
+                    onChange={(e) => handleChange('reopenExistingTicketsIfImportingFails', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="reopen_failed_import" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to allow reopening of existing tickets when an unimported reply is received. A notice will be provided in the ticket.
+                  </label>
                 </div>
               </div>
             </div>
