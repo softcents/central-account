@@ -91,7 +91,7 @@ export default function ServiceDetailsPage() {
     );
   }
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || newPassword.length < 8) {
       setPasswordMsg({ type: 'error', text: 'Password must be at least 8 characters long.' });
@@ -101,16 +101,35 @@ export default function ServiceDetailsPage() {
       setPasswordMsg({ type: 'error', text: 'Passwords do not match.' });
       return;
     }
-    setPasswordMsg({
-      type: 'success',
-      text: 'Your service and control panel password has been successfully updated.',
-    });
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => {
-      setPasswordModalOpen(false);
-      setPasswordMsg(null);
-    }, 2500);
+
+    try {
+      const res = await fetch('/api/admin/services/module-command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceId: service.id,
+          command: 'changepw',
+          newPassword,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPasswordMsg({
+          type: 'success',
+          text: data.message || 'Your service and control panel password has been successfully updated on the server.',
+        });
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => {
+          setPasswordModalOpen(false);
+          setPasswordMsg(null);
+        }, 3000);
+      } else {
+        setPasswordMsg({ type: 'error', text: data.error || 'Failed to update password' });
+      }
+    } catch (err: any) {
+      setPasswordMsg({ type: 'error', text: err.message || 'Network error' });
+    }
   };
 
   const handleCancelSubmit = (e: React.FormEvent) => {

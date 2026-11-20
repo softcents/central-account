@@ -271,9 +271,11 @@ async function main() {
       h.bwusage,
       h.bwlimit,
       h.suspendreason,
+      h.server,
       s.name as server_name, 
       s.ipaddress as server_ip,
-      s.hostname as server_hostname
+      s.hostname as server_hostname,
+      s.type as server_type
     FROM tblhosting h
     LEFT JOIN tblproducts p ON h.packageid = p.id
     LEFT JOIN tblproductgroups g ON p.gid = g.id
@@ -367,15 +369,60 @@ async function main() {
     ORDER BY g.order, g.id, p.order, p.id;
   `);
 
-  const servers = queryTsv(`
-    SELECT id, name, ipaddress, hostname, type, active
-    FROM tblservers;
+  console.log('--> Fetching server infrastructure and clusters from billing.softcents.com...');
+  const serversRaw = queryTsv(`
+    SELECT id, name, ipaddress, assignedips, hostname, monthlycost, noc, statusaddress, nameserver1, nameserver1ip, nameserver2, nameserver2ip, nameserver3, nameserver3ip, nameserver4, nameserver4ip, nameserver5, nameserver5ip, maxaccounts, type, username, secure, port, active, disabled
+    FROM tblservers
+    ORDER BY id ASC;
   `);
 
-  const addons = queryTsv(`
-    SELECT DISTINCT module
+  const serverGroupsRaw = queryTsv(`
+    SELECT id, name, filltype
+    FROM tblservergroups;
+  `);
+
+  const serverGroupRels = queryTsv(`
+    SELECT id, groupid, serverid
+    FROM tblservergroupsrel;
+  `);
+
+  const serverGroups = serverGroupsRaw.map((g: any) => ({
+    ...g,
+    servers: serverGroupRels.filter((r: any) => String(r.groupid) === String(g.id)).map((r: any) => r.serverid),
+  }));
+
+  const servers = serversRaw.map((s: any) => {
+    const assignedServices = services.filter((srv: any) => String(srv.server) === String(s.id) || (String(s.id) === '1' && (!srv.server || srv.server === '0')));
+    return {
+      ...s,
+      activeAccounts: assignedServices.length,
+      maxaccounts: s.maxaccounts || '200',
+      port: s.port || (s.secure === 'on' ? (s.type === 'cpanel' ? '2087' : '443') : (s.type === 'cpanel' ? '2086' : '80')),
+    };
+  });
+  console.log(`✓ Fetched ${servers.length} servers and ${serverGroups.length} server groups.`);
+
+  console.log('--> Fetching addon modules from billing.softcents.com...');
+  const addonModulesRaw = queryTsv(`
+    SELECT module, setting, value
     FROM tbladdonmodules;
   `);
+
+  const addonSettingsMap: Record<string, Record<string, string>> = {};
+  for (const row of addonModulesRaw) {
+    if (!addonSettingsMap[row.module]) {
+      addonSettingsMap[row.module] = {};
+    }
+    addonSettingsMap[row.module][row.setting] = row.value || '';
+  }
+
+  const addons = Object.keys(addonSettingsMap).map((moduleName) => ({
+    module: moduleName,
+    settings: addonSettingsMap[moduleName],
+    version: addonSettingsMap[moduleName]['version'] || '1.0',
+    access: addonSettingsMap[moduleName]['access'] || '1,2,3',
+  }));
+  console.log(`✓ Fetched ${addons.length} active addon modules with full configurations.`);
 
   console.log('--> Fetching client custom fields from billing.softcents.com...');
   const clientCustomFields = queryTsv(`
@@ -423,7 +470,9 @@ async function main() {
     ticketCount: tickets.length,
     productCount: products.length,
     servers,
-    addons: addons.map((a: any) => a.module),
+    serverGroups,
+    addons,
+    addonSettingsMap,
     gateways: [
       {
         id: 'piprapay',

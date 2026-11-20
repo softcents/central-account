@@ -18,6 +18,14 @@ import {
   Calendar,
   Layers,
   ArrowUpDown,
+  Terminal,
+  Play,
+  Pause,
+  Trash2,
+  KeyRound,
+  LogIn,
+  CheckCircle2,
+  X,
 } from 'lucide-react';
 import whmcsData from '@/data/whmcs_sync.json';
 
@@ -31,7 +39,7 @@ function formatWhmcsDate(dateStr: string | null | undefined): string {
 }
 
 export default function ServicesListPage() {
-  const [services] = useState<any[]>(whmcsData?.services || []);
+  const [services, setServices] = useState<any[]>(whmcsData?.services || []);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [serverFilter, setServerFilter] = useState('ALL');
   const [search, setSearch] = useState('');
@@ -39,7 +47,53 @@ export default function ServicesListPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
+  // Module command states
+  const [selectedServiceForCmd, setSelectedServiceForCmd] = useState<any | null>(null);
+  const [executingCmd, setExecutingCmd] = useState(false);
+  const [commandToast, setCommandToast] = useState<{ ok: boolean; message: string } | null>(null);
+  const [suspendReasonInput, setSuspendReasonInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+
   const servers = whmcsData?.servers || [];
+
+  const handleExecuteModuleCommand = async (command: string) => {
+    if (!selectedServiceForCmd) return;
+    setExecutingCmd(true);
+    setCommandToast(null);
+
+    try {
+      const res = await fetch('/api/admin/services/module-command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceId: selectedServiceForCmd.id,
+          command,
+          suspendReason: suspendReasonInput || 'Administrative Command',
+          newPassword: passwordInput || 'Pass@' + Math.floor(100000 + Math.random() * 900000),
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setCommandToast({ ok: true, message: data.message });
+        if (data.redirectUrl) {
+          window.open(data.redirectUrl, '_blank');
+        }
+        if (data.newStatus) {
+          setServices((prev) =>
+            prev.map((s) => (s.id === selectedServiceForCmd.id ? { ...s, domainstatus: data.newStatus } : s))
+          );
+          setSelectedServiceForCmd((prev: any) => prev ? { ...prev, domainstatus: data.newStatus } : null);
+        }
+      } else {
+        setCommandToast({ ok: false, message: data.error || 'Command execution failed' });
+      }
+    } catch (err: any) {
+      setCommandToast({ ok: false, message: err.message || 'Network error' });
+    } finally {
+      setExecutingCmd(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     let list = services.filter((s) => {
@@ -282,6 +336,18 @@ export default function ServicesListPage() {
                     </td>
                     <td className="py-2.5 px-3 text-right">
                       <div className="flex items-center justify-end space-x-1.5">
+                        <button
+                          onClick={() => {
+                            setSelectedServiceForCmd(s);
+                            setCommandToast(null);
+                            setSuspendReasonInput(s.suspendreason || '');
+                          }}
+                          className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-2.5 py-1 rounded text-[11px] font-semibold transition-colors border border-slate-300 flex items-center space-x-1"
+                        >
+                          <Terminal className="w-3 h-3" />
+                          <span>Module</span>
+                        </button>
+
                         <Link
                           href={`/admin/clients/${s.userid}?tab=services`}
                           className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
@@ -326,6 +392,166 @@ export default function ServicesListPage() {
           </div>
         )}
       </div>
+
+      {/* WHMCS Module Command Execution Modal */}
+      {selectedServiceForCmd && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-xl w-full overflow-hidden text-xs">
+            <div className="bg-[#1A4D80] text-white px-5 py-3.5 flex items-center justify-between">
+              <h3 className="font-bold text-sm flex items-center space-x-2">
+                <Terminal className="w-4 h-4 text-amber-300" />
+                <span>
+                  Module Commands: #{selectedServiceForCmd.id} - {selectedServiceForCmd.product_name || selectedServiceForCmd.package}
+                </span>
+              </h3>
+              <button
+                onClick={() => setSelectedServiceForCmd(null)}
+                className="text-white hover:text-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Service & Server Context */}
+              <div className="bg-slate-50 p-3 rounded border border-slate-200 grid grid-cols-2 gap-2 text-[11px]">
+                <div>
+                  <span className="text-slate-500 block">Domain / Host:</span>
+                  <span className="font-mono font-bold text-slate-800">{selectedServiceForCmd.domain || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">Username:</span>
+                  <span className="font-mono font-bold text-slate-800">{selectedServiceForCmd.username || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">Assigned Server:</span>
+                  <span className="font-bold text-[#1A4D80]">{selectedServiceForCmd.server_name || 'srv8 cPanel'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">Current Status:</span>
+                  <span className="font-bold uppercase text-emerald-700">{selectedServiceForCmd.domainstatus}</span>
+                </div>
+              </div>
+
+              {/* Toast Result Message */}
+              {commandToast && (
+                <div
+                  className={`p-3 rounded border flex items-start space-x-2 ${
+                    commandToast.ok
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                      : 'bg-rose-50 text-rose-800 border-rose-300'
+                  }`}
+                >
+                  {commandToast.ok ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <X className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  )}
+                  <span className="font-medium leading-relaxed">{commandToast.message}</span>
+                </div>
+              )}
+
+              {/* WHMCS Standard Module Command Actions */}
+              <div className="space-y-2">
+                <span className="font-bold text-slate-700 block">Execute WHMCS Provisioning Command:</span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <button
+                    disabled={executingCmd}
+                    onClick={() => handleExecuteModuleCommand('create')}
+                    className="p-2.5 rounded bg-[#5cb85c] hover:bg-[#4cae4c] text-white font-bold transition-colors flex items-center justify-center space-x-1.5 shadow-sm disabled:opacity-50"
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    <span>Create</span>
+                  </button>
+
+                  <button
+                    disabled={executingCmd}
+                    onClick={() => handleExecuteModuleCommand('suspend')}
+                    className="p-2.5 rounded bg-[#f0ad4e] hover:bg-[#ec971f] text-white font-bold transition-colors flex items-center justify-center space-x-1.5 shadow-sm disabled:opacity-50"
+                  >
+                    <Pause className="w-3.5 h-3.5" />
+                    <span>Suspend</span>
+                  </button>
+
+                  <button
+                    disabled={executingCmd}
+                    onClick={() => handleExecuteModuleCommand('unsuspend')}
+                    className="p-2.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors flex items-center justify-center space-x-1.5 shadow-sm disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Unsuspend</span>
+                  </button>
+
+                  <button
+                    disabled={executingCmd}
+                    onClick={() => {
+                      if (confirm('Are you sure you want to terminate this service from the server? All data will be removed.')) {
+                        handleExecuteModuleCommand('terminate');
+                      }
+                    }}
+                    className="p-2.5 rounded bg-[#d9534f] hover:bg-[#c9302c] text-white font-bold transition-colors flex items-center justify-center space-x-1.5 shadow-sm disabled:opacity-50"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Terminate</span>
+                  </button>
+
+                  <button
+                    disabled={executingCmd}
+                    onClick={() => handleExecuteModuleCommand('changepw')}
+                    className="p-2.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors flex items-center justify-center space-x-1.5 shadow-sm disabled:opacity-50"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>Change PW</span>
+                  </button>
+
+                  <button
+                    disabled={executingCmd}
+                    onClick={() => handleExecuteModuleCommand('loginto')}
+                    className="p-2.5 rounded bg-[#1A4D80] hover:bg-[#143d66] text-white font-bold transition-colors flex items-center justify-center space-x-1.5 shadow-sm disabled:opacity-50"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>Login (SSO)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Optional Parameters for Suspend / Password */}
+              <div className="pt-2 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Suspension Reason (for Suspend)</label>
+                  <input
+                    type="text"
+                    value={suspendReasonInput}
+                    onChange={(e) => setSuspendReasonInput(e.target.value)}
+                    placeholder="e.g. Overdue payment invoice #412"
+                    className="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">New Password (for Change PW)</label>
+                  <input
+                    type="text"
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    placeholder="Leave blank for random strong"
+                    className="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-slate-800"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 px-5 py-3 border-t border-slate-200 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedServiceForCmd(null)}
+                className="px-4 py-1.5 border border-slate-300 rounded text-slate-700 font-semibold hover:bg-slate-100"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

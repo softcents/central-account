@@ -302,10 +302,30 @@ export default function AddonModuleDetailPage() {
     defaultSettings: {},
   };
 
-  const [settings, setSettings] = useState<Record<string, any>>(moduleInfo.defaultSettings);
+  const [settings, setSettings] = useState<Record<string, any>>(() => {
+    const fromSync = (whmcsData as any)?.addonSettingsMap?.[moduleId];
+    return {
+      ...moduleInfo.defaultSettings,
+      ...(fromSync || {}),
+    };
+  });
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/addons')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.addonSettingsMap?.[moduleId]) {
+          setSettings((prev) => ({
+            ...prev,
+            ...data.addonSettingsMap[moduleId],
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [moduleId]);
 
   const handleInputChange = (key: string, value: any) => {
     setSettings((prev) => ({
@@ -315,19 +335,43 @@ export default function AddonModuleDetailPage() {
     setSavedSuccess(false);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 4000);
+    try {
+      const res = await fetch('/api/admin/addons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          module: moduleId,
+          settings,
+        }),
+      });
+      if (res.ok) {
+        setSavedSuccess(true);
+        setTimeout(() => setSavedSuccess(false), 4000);
+      }
+    } catch {}
   };
 
-  const handleTestConnection = () => {
+  const handleTestConnection = async () => {
     setTestingConnection(true);
     setTestResult(null);
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/admin/addons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          module: moduleId,
+          action: 'trigger',
+        }),
+      });
+      const data = await res.json();
+      setTestResult(data.message || 'Diagnostic trigger completed successfully.');
+    } catch (err: any) {
+      setTestResult(`Test failed: ${err.message}`);
+    } finally {
       setTestingConnection(false);
-      setTestResult('Success: Connection to module API endpoint verified. Status 200 OK.');
-    }, 1200);
+    }
   };
 
   const IconComponent = moduleInfo.icon;

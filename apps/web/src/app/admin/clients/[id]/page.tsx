@@ -69,6 +69,40 @@ export default function ClientSummaryPage() {
   const [notes, setNotes] = useState<string[]>([]);
   const [newNote, setNewNote] = useState('');
 
+  const [moduleActionToast, setModuleActionToast] = useState<string | null>(null);
+
+  const handleExecuteModuleCommand = async (serviceId: string, command: string) => {
+    try {
+      const res = await fetch('/api/admin/services/module-command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceId,
+          command,
+          suspendReason: 'Administrative command from Client Details',
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setModuleActionToast(data.message);
+        if (data.redirectUrl) {
+          window.open(data.redirectUrl, '_blank');
+        }
+        if (data.newStatus) {
+          setClientServices((prev) =>
+            prev.map((s) => (s.id === serviceId ? { ...s, domainstatus: data.newStatus } : s))
+          );
+        }
+        setTimeout(() => setModuleActionToast(null), 5000);
+      } else {
+        alert(data.error || 'Module command failed');
+      }
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+    }
+  };
+
   const fetchClient = async () => {
     try {
       setLoading(true);
@@ -765,6 +799,13 @@ export default function ClientSummaryPage() {
               <span>Assigned Products & Services ({clientServices.length})</span>
             </div>
           </div>
+
+          {moduleActionToast && (
+            <div className="m-3 p-2.5 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded text-xs flex items-center space-x-2 font-medium">
+              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{moduleActionToast}</span>
+            </div>
+          )}
           {clientServices.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-500">
               No products or services assigned to this client yet.
@@ -815,9 +856,24 @@ export default function ClientSummaryPage() {
                           {srv.domainstatus || 'Active'}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-right">
-                        <button className="bg-[#1A4D80] text-white px-2.5 py-1 rounded text-[11px] hover:bg-[#143d66]">
-                          Manage
+                      <td className="py-2.5 px-3 text-right space-x-1 whitespace-nowrap">
+                        <button
+                          onClick={() => handleExecuteModuleCommand(srv.id, 'sso')}
+                          className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-2 py-0.5 rounded text-[11px] font-semibold border border-slate-300 transition-colors"
+                        >
+                          Login (SSO)
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleExecuteModuleCommand(srv.id, srv.domainstatus === 'Active' ? 'suspend' : 'unsuspend')
+                          }
+                          className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors ${
+                            srv.domainstatus === 'Active'
+                              ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                              : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                          }`}
+                        >
+                          {srv.domainstatus === 'Active' ? 'Suspend' : 'Unsuspend'}
                         </button>
                       </td>
                     </tr>
