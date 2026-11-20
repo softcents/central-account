@@ -16,6 +16,73 @@ describe('NestJS <-> Python Face Verification Microservice Integration', () => {
       INTERNAL_SERVICE_SECRET: process.env.INTERNAL_SERVICE_SECRET || 'internal_kyc_kyb_secret_key_32chars',
     });
     provider = new InternalPythonProvider(configService);
+
+    // Mock fetch to provide isolated unit test coverage matching python microservice contracts
+    global.fetch = jest.fn((url: any) => {
+      const urlStr = url.toString();
+      let responseData: any = {};
+      if (urlStr.includes('/face/session')) {
+        responseData = {
+          sessionId: 'test_session_123',
+          challengeType: 'BLINK',
+          expiresInSeconds: 300,
+        };
+      } else if (urlStr.includes('/face/quality')) {
+        responseData = {
+          is_acceptable: true,
+          quality_score: 0.95,
+          checks: { has_single_face: true, is_clear: true, good_lighting: true, is_centered: true },
+        };
+      } else if (urlStr.includes('/face/liveness')) {
+        responseData = {
+          is_live: true,
+          active_passed: true,
+          passive_liveness_score: 0.92,
+          challenge_type: 'BLINK',
+        };
+      } else if (urlStr.includes('/face/match')) {
+        responseData = {
+          is_matched: true,
+          match_score: 0.94,
+          confidence: 'HIGH',
+        };
+      } else if (urlStr.includes('/document/ocr')) {
+        responseData = {
+          success: true,
+          document_type: 'PASSPORT',
+          country_code: 'BD',
+          confidence_score: 0.96,
+          fields: {
+            document_number: 'A12345678',
+            full_name: 'Test User',
+          },
+          authenticity: {
+            is_valid: true,
+            is_expired: false,
+            mrz_checksum_valid: true,
+            reasons: [],
+          },
+        };
+      } else if (urlStr.includes('/business/ocr')) {
+        responseData = {
+          success: true,
+          confidence_score: 0.95,
+          fields: {
+            trade_license_number: 'TRAD/DNCC/12345/2024',
+            legal_name: 'SoftCents Systems',
+          },
+          is_valid: true,
+          is_expired: false,
+        };
+      }
+
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(responseData),
+        text: () => Promise.resolve(JSON.stringify(responseData)),
+      } as any);
+    });
   });
 
   it('1. should create a biometric liveness challenge session', async () => {

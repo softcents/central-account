@@ -138,7 +138,7 @@ describe('KycDecisionEngineService', () => {
       },
       faceMatch: {
         isMatched: false,
-        matchScore: 0.35,
+        matchScore: 0.45,
       },
       liveness: {
         isLive: true,

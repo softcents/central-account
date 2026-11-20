@@ -53,7 +53,7 @@ describe('MfaService (Unit Tests)', () => {
       expect(result.secret).toBeDefined();
       expect(result.qrCodeDataUrl).toContain('data:image/png;base64');
       expect(result.backupCodes).toHaveLength(10);
-      expect(result.otpAuthUrl).toContain('Central%20Identity%20Platform');
+      expect(result.otpAuthUrl).toContain('Central%20Account%20Platform');
     });
   });
 
