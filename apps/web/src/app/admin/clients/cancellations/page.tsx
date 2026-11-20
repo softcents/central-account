@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   XCircle,
@@ -10,35 +10,64 @@ import {
   AlertTriangle,
   CheckCircle,
   ExternalLink,
+  Trash2,
 } from 'lucide-react';
+import whmcsData from '@/data/whmcs_sync.json';
 
 export default function CancellationRequestsPage() {
   const [filter, setFilter] = useState<'PENDING' | 'COMPLETED' | 'ALL'>('PENDING');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const dummyRequests = [
-    {
-      id: 1,
-      date: '2026-11-18 14:22',
-      serviceId: 88,
-      service: 'cPanel NVMe Web Hosting - Starter (mysite.com)',
-      client: 'Imran Kabir',
-      clientId: 'c5',
-      reason: 'Migrated project to a self-hosted VPS server.',
-      type: 'Immediate',
+  // Load real cancellation requests from sync
+  const initialRequests = useMemo(() => {
+    return (whmcsData?.cancellationRequests || []).map((c: any) => ({
+      id: c.id,
+      date: c.date,
+      serviceId: c.relid,
+      service: `${c.product_name || 'Service'} ${c.domain ? `(${c.domain})` : `#${c.relid}`}`,
+      client: c.client_name || `Client #${c.userid}`,
+      clientId: c.userid,
+      reason: c.reason || 'No reason provided',
+      type: c.type || 'Immediate',
       status: 'Pending',
-    },
-    {
-      id: 2,
-      date: '2026-11-15 09:10',
-      serviceId: 92,
-      service: 'Standard Cloud VPS - 2 vCPU (app.dev)',
-      client: 'Nahid Hossain',
-      clientId: 'c6',
-      reason: 'Project contract ended.',
-      type: 'End of Billing Period',
-      status: 'Pending',
-    },
-  ];
+    }));
+  }, []);
+
+  const [requestsList, setRequestsList] = useState<any[]>(initialRequests);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
+
+  const filtered = useMemo(() => {
+    return requestsList.filter((req) => {
+      const matchSearch =
+        (req.service || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (req.client || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (req.reason || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchFilter =
+        filter === 'ALL'
+          ? true
+          : filter === 'PENDING'
+          ? req.status === 'Pending'
+          : req.status === 'Completed';
+      return matchSearch && matchFilter;
+    });
+  }, [requestsList, filter, searchTerm]);
+
+  const handleComplete = (id: string | number) => {
+    setRequestsList((prev) =>
+      prev.map((r) => (String(r.id) === String(id) ? { ...r, status: 'Completed' } : r))
+    );
+    setActionNotice(`Cancellation request #${id} marked as Completed & Terminated.`);
+    setTimeout(() => setActionNotice(null), 3500);
+  };
+
+  const handleDismiss = (id: string | number) => {
+    setRequestsList((prev) => prev.filter((r) => String(r.id) !== String(id)));
+    setActionNotice(`Cancellation request #${id} dismissed.`);
+    setTimeout(() => setActionNotice(null), 3500);
+  };
+
+  const pendingCount = requestsList.filter((r) => r.status === 'Pending').length;
+  const completedCount = requestsList.filter((r) => r.status === 'Completed').length;
 
   return (
     <div className="p-4 space-y-4 max-w-[1600px] mx-auto text-slate-800">
@@ -57,10 +86,10 @@ export default function CancellationRequestsPage() {
           </div>
           <div>
             <h1 className="text-base font-bold text-slate-900 leading-tight">
-              Cancellation Requests
+              Cancellation Requests ({requestsList.length})
             </h1>
             <p className="text-xs text-slate-500">
-              Review and process service cancellation requests submitted by clients
+              Review and process service cancellation requests submitted by clients via WHMCS
             </p>
           </div>
         </div>
@@ -75,7 +104,7 @@ export default function CancellationRequestsPage() {
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            Pending Requests (2)
+            Pending ({pendingCount})
           </button>
           <button
             onClick={() => setFilter('COMPLETED')}
@@ -85,7 +114,7 @@ export default function CancellationRequestsPage() {
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            Completed Requests
+            Completed ({completedCount})
           </button>
           <button
             onClick={() => setFilter('ALL')}
@@ -95,9 +124,28 @@ export default function CancellationRequestsPage() {
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            All
+            All ({requestsList.length})
           </button>
         </div>
+      </div>
+
+      {actionNotice && (
+        <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded text-xs font-semibold flex items-center space-x-2">
+          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{actionNotice}</span>
+        </div>
+      )}
+
+      {/* Search Filter */}
+      <div className="bg-white p-3 rounded border border-slate-200 flex items-center max-w-sm text-xs">
+        <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+        <input
+          type="text"
+          placeholder="Search by client, service, or reason..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full focus:outline-none"
+        />
       </div>
 
       <div className="bg-white border border-slate-200 rounded shadow-sm overflow-x-auto">
@@ -114,56 +162,85 @@ export default function CancellationRequestsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {dummyRequests.map((req, idx) => (
-              <tr
-                key={req.id}
-                className={`hover:bg-[#f0f4f8] transition-colors ${
-                  idx % 2 === 1 ? 'bg-[#fbfcfd]' : 'bg-white'
-                }`}
-              >
-                <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">{req.date}</td>
-                <td className="py-2.5 px-3 font-semibold text-slate-800">{req.service}</td>
-                <td className="py-2.5 px-3">
-                  <Link
-                    href={`/admin/clients/${req.clientId}`}
-                    className="text-[#1A4D80] hover:underline font-medium"
-                  >
-                    {req.client}
-                  </Link>
-                </td>
-                <td className="py-2.5 px-3">
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                      req.type === 'Immediate'
-                        ? 'bg-rose-100 text-rose-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}
-                  >
-                    {req.type}
-                  </span>
-                </td>
-                <td className="py-2.5 px-3 text-slate-600 italic max-w-xs">{req.reason}</td>
-                <td className="py-2.5 px-3 text-center">
-                  <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
-                    {req.status}
-                  </span>
-                </td>
-                <td className="py-2.5 px-3 text-right space-x-1.5 whitespace-nowrap">
-                  <button
-                    type="button"
-                    className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-2 py-1 rounded text-[11px] font-semibold"
-                  >
-                    Complete & Terminate
-                  </button>
-                  <button
-                    type="button"
-                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded text-[11px] font-medium"
-                  >
-                    Dismiss
-                  </button>
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-8 text-center text-slate-500">
+                  No cancellation requests found matching your filter.
                 </td>
               </tr>
-            ))}
+            ) : (
+              filtered.map((req, idx) => (
+                <tr
+                  key={req.id}
+                  className={`hover:bg-[#f0f4f8] transition-colors ${
+                    idx % 2 === 1 ? 'bg-[#fbfcfd]' : 'bg-white'
+                  }`}
+                >
+                  <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap font-mono">
+                    {req.date}
+                  </td>
+                  <td className="py-2.5 px-3 font-semibold text-slate-800">
+                    <Link
+                      href={`/clientarea/services/${req.serviceId}`}
+                      className="text-[#1A4D80] hover:underline"
+                    >
+                      {req.service}
+                    </Link>
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <Link
+                      href={`/admin/clients/${req.clientId}`}
+                      className="text-[#1A4D80] hover:underline font-medium"
+                    >
+                      {req.client}
+                    </Link>
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                        req.type === 'Immediate'
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}
+                    >
+                      {req.type}
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-600 italic max-w-xs">
+                    {req.reason}
+                  </td>
+                  <td className="py-2.5 px-3 text-center">
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                        req.status === 'Completed'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {req.status}
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-3 text-right space-x-1.5 whitespace-nowrap">
+                    {req.status === 'Pending' && (
+                      <button
+                        type="button"
+                        onClick={() => handleComplete(req.id)}
+                        className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-2 py-1 rounded text-[11px] font-semibold"
+                      >
+                        Complete &amp; Terminate
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleDismiss(req.id)}
+                      className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded text-[11px] font-medium"
+                    >
+                      Dismiss
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

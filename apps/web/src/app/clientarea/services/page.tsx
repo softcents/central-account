@@ -152,14 +152,12 @@ function ClientServicesContent() {
                       Activated: {s.regdate_display || formatWhmcsDate(s.regdate)}
                     </div>
                   </div>
-                  <a
-                    href="https://srv8.softcents.com:2083"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-[#1A4D80] text-white px-3 py-1 rounded font-semibold text-xs transition-colors shrink-0"
+                  <Link
+                    href={`/clientarea/services/${s.id}${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
+                    className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-3 py-1 rounded font-semibold text-xs transition-colors shrink-0"
                   >
                     Manage &rarr;
-                  </a>
+                  </Link>
                 </div>
               </div>
             ))
@@ -232,14 +230,12 @@ function ClientServicesContent() {
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <a
-                        href="https://srv8.softcents.com:2083"
-                        target="_blank"
-                        rel="noreferrer"
+                      <Link
+                        href={`/clientarea/services/${s.id}${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
                         className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold transition-colors border border-slate-300 inline-block"
                       >
                         Manage &rarr;
-                      </a>
+                      </Link>
                     </td>
                   </tr>
                 ))

@@ -42,7 +42,13 @@ function ClientInvoicesContent() {
             Review billing history, payment receipts, and settle outstanding dues via PipraPay.
           </p>
         </div>
-        <div>
+        <div className="flex items-center space-x-2">
+          <Link
+            href={`/clientarea/masspay${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
+            className="w-full sm:w-auto text-center bg-[#1A4D80] hover:bg-[#143d66] text-white px-4 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
+          >
+            Mass Payment
+          </Link>
           <Link
             href="/clientarea/addfunds"
             className="w-full sm:w-auto text-center bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"

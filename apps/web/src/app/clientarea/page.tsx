@@ -51,6 +51,18 @@ function ClientAreaHomeContent() {
       router.replace(`/clientarea/profile${impQuery}`);
     } else if (action === 'affiliates') {
       router.replace(`/clientarea/affiliates${impQuery}`);
+    } else if (action === 'emails') {
+      router.replace(`/clientarea/emails${impQuery}`);
+    } else if (action === 'contacts') {
+      router.replace(`/clientarea/contacts${impQuery}`);
+    } else if (action === 'masspay') {
+      router.replace(`/clientarea/masspay${impQuery}`);
+    } else if (action === 'productdetails') {
+      const id = searchParams.get('id');
+      router.replace(`/clientarea/services/${id || ''}${impQuery}`);
+    } else if (action === 'domaindetails') {
+      const id = searchParams.get('id');
+      router.replace(`/clientarea/domains/${id || ''}${impQuery}`);
     }
   }, [action, impQuery, router]);
 
@@ -377,7 +389,7 @@ function ClientAreaHomeContent() {
                       <span className="text-slate-400 ml-1">({s.billingcycle || 'Monthly'})</span>
                     </div>
                     <Link
-                      href={`/clientarea/services?search=${encodeURIComponent(s.domain || s.product_name || s.id)}${impersonateParam ? `&impersonate=${encodeURIComponent(impersonateParam)}` : ''}`}
+                      href={`/clientarea/services/${s.id}${impersonateParam ? `?impersonate=${encodeURIComponent(impersonateParam)}` : ''}`}
                       className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-2.5 py-1 rounded text-[11px] font-semibold transition-colors"
                     >
                       Manage
@@ -458,7 +470,7 @@ function ClientAreaHomeContent() {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <Link
-                          href={`/clientarea/services?search=${encodeURIComponent(s.domain || s.product_name || s.id)}${impersonateParam ? `&impersonate=${encodeURIComponent(impersonateParam)}` : ''}`}
+                          href={`/clientarea/services/${s.id}${impersonateParam ? `?impersonate=${encodeURIComponent(impersonateParam)}` : ''}`}
                           className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-3 py-1 rounded text-[11px] font-semibold transition-colors inline-block"
                         >
                           Manage

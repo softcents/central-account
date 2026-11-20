@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { apiFetch, API_URL } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import whmcsData from '@/data/whmcs_sync.json';
 
 export default function TicketDetailPage() {
   const router = useRouter();
@@ -37,27 +38,67 @@ export default function TicketDetailPage() {
 
   const threadEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isLoading, router]);
-
   const loadTicket = async () => {
-    if (!accessToken || !ticketId) return;
     setLoading(true);
-    try {
-      const res = await apiFetch<any>(`/support/tickets/${ticketId}`, {}, accessToken);
-      if (res.ok && res.data) {
-        setTicket(res.data);
-      } else {
-        setError('Failed to load support ticket');
-      }
-    } catch {
-      setError('An error occurred loading ticket details');
-    } finally {
+    setError(null);
+
+    // 1. Check if it's a WHMCS ticket
+    const whmcsTicket = (whmcsData?.tickets || []).find(
+      (t: any) =>
+        String(t.id) === String(ticketId) ||
+        String(t.tid) === String(ticketId) ||
+        ticketId === `tkt_whmcs_${t.id}`
+    );
+
+    if (whmcsTicket) {
+      const messages = [
+        {
+          id: `msg_init_${whmcsTicket.id}`,
+          sender_type: 'CUSTOMER',
+          message: whmcsTicket.message || whmcsTicket.title,
+          created_at: whmcsTicket.date,
+          sender_name: whmcsTicket.clientName || 'Customer',
+        },
+        ...(whmcsTicket.replies || []).map((r: any) => ({
+          id: `msg_rep_${r.id}`,
+          sender_type: r.admin ? 'ADMIN' : 'CUSTOMER',
+          message: r.message,
+          created_at: r.date,
+          sender_name: r.admin || r.name || 'Support Staff',
+        })),
+      ];
+
+      setTicket({
+        id: whmcsTicket.id,
+        ticket_number: whmcsTicket.tid || whmcsTicket.id,
+        subject: whmcsTicket.title,
+        category: whmcsTicket.dept_name || 'TECHNICAL_SUPPORT',
+        status: (whmcsTicket.status || 'OPEN').toUpperCase().replace(' ', '_'),
+        priority: (whmcsTicket.urgency || 'NORMAL').toUpperCase(),
+        created_at: whmcsTicket.date,
+        messages,
+        isWhmcs: true,
+      });
       setLoading(false);
+      return;
     }
+
+    // 2. Otherwise load from NestJS API
+    if (accessToken) {
+      try {
+        const res = await apiFetch<any>(`/support/tickets/${ticketId}`, {}, accessToken);
+        if (res.ok && res.data) {
+          setTicket(res.data);
+        } else {
+          setError('Failed to load support ticket');
+        }
+      } catch {
+        setError('An error occurred loading ticket details');
+      }
+    } else {
+      setError('Please login to view this support ticket');
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -105,6 +146,25 @@ export default function TicketDetailPage() {
 
     setSubmitting(true);
     setError(null);
+
+    if (ticket?.isWhmcs) {
+      const newMsg = {
+        id: `msg_local_${Date.now()}`,
+        sender_type: 'CUSTOMER',
+        message: replyText.trim(),
+        created_at: new Date().toISOString(),
+        sender_name: user?.name || 'Customer',
+      };
+      setTicket((prev: any) => ({
+        ...prev,
+        status: 'CUSTOMER_REPLY',
+        messages: [...(prev.messages || []), newMsg],
+      }));
+      setReplyText('');
+      setReplyAttachments([]);
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const res = await apiFetch<any>(

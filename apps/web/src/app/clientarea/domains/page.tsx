@@ -91,12 +91,12 @@ function ClientDomainsContent() {
                   <div className="text-[11px]">
                     Expires: <span className="font-mono font-medium text-slate-800">{d.expirydate || '-'}</span>
                   </div>
-                  <button
-                    onClick={() => alert(`Managing DNS & Nameservers for ${d.domain}`)}
+                  <Link
+                    href={`/clientarea/domains/${d.id}${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
                     className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold text-xs transition-colors border border-slate-300"
                   >
                     Manage &rarr;
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))
@@ -142,12 +142,12 @@ function ClientDomainsContent() {
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => alert(`Managing DNS & Nameservers for ${d.domain}`)}
-                        className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold transition-colors border border-slate-300"
+                      <Link
+                        href={`/clientarea/domains/${d.id}${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
+                        className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold transition-colors border border-slate-300 inline-block"
                       >
                         Manage &rarr;
-                      </button>
+                      </Link>
                     </td>
                   </tr>
                 ))

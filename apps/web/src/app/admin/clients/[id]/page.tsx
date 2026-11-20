@@ -57,6 +57,7 @@ export default function ClientSummaryPage() {
   const [clientInvoices, setClientInvoices] = useState<any[]>([]);
   const [clientTransactions, setClientTransactions] = useState<any[]>([]);
   const [clientTickets, setClientTickets] = useState<any[]>([]);
+  const [clientEmails, setClientEmails] = useState<any[]>([]);
 
   // Settings toggles
   const [taxExempt, setTaxExempt] = useState('No');
@@ -85,12 +86,14 @@ export default function ClientSummaryPage() {
       const inv = (whmcsData?.invoices || []).filter((item: any) => String(item.userid) === numId);
       const txn = (whmcsData?.transactions || []).filter((item: any) => String(item.userid) === numId);
       const tkt = (whmcsData?.tickets || []).filter((item: any) => String(item.userid) === numId);
+      const em = (whmcsData?.emails || []).filter((item: any) => String(item.userid) === numId);
 
       setClientServices(s);
       setClientDomains(d);
       setClientInvoices(inv);
       setClientTransactions(txn);
       setClientTickets(tkt);
+      setClientEmails(em);
 
       // Try fetching API user
       const res = await apiFetch<any>(`/admin/users/${clientId}`, {}, token).catch(() => null);
@@ -333,6 +336,11 @@ export default function ClientSummaryPage() {
             id: 'tickets',
             label: `Tickets (${clientTickets.length})`,
             icon: '/whmcs/icons/tickets.png',
+          },
+          {
+            id: 'emails',
+            label: `Emails (${clientEmails.length})`,
+            icon: null,
           },
           {
             id: 'kyc',
@@ -1045,6 +1053,44 @@ export default function ClientSummaryPage() {
                       </td>
                       <td className="py-2.5 px-3">{tkt.urgency || 'Medium'}</td>
                       <td className="py-2.5 px-3 text-slate-600">{tkt.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB CONTENT: EMAILS */}
+      {activeTab === 'emails' && (
+        <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-[#f5f7f8] px-4 py-3 border-b border-slate-200 font-bold text-sm text-slate-800 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Mail className="w-4 h-4 text-[#1A4D80]" />
+              <span>Client Email History ({clientEmails.length})</span>
+            </div>
+          </div>
+          {clientEmails.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-500">
+              No email log records found for this client.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                  <tr>
+                    <th className="py-2.5 px-3">Date Sent</th>
+                    <th className="py-2.5 px-3">Subject</th>
+                    <th className="py-2.5 px-3">Recipient</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {clientEmails.map((em) => (
+                    <tr key={em.id} className="hover:bg-slate-50">
+                      <td className="py-2.5 px-3 font-mono text-slate-600 whitespace-nowrap">{em.date}</td>
+                      <td className="py-2.5 px-3 font-semibold text-slate-900">{em.subject}</td>
+                      <td className="py-2.5 px-3 text-slate-600 font-mono text-[11px]">{em.recipient || '-'}</td>
                     </tr>
                   ))}
                 </tbody>

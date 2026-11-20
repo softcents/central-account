@@ -182,12 +182,29 @@ async function main() {
 
   // 4. Fetch and Migrate Support Tickets
   console.log('--> Fetching support tickets from billing.softcents.com...');
-  const tickets = queryTsv(`
-    SELECT t.id, t.tid, t.userid, t.did, t.title, t.message, t.status, t.urgency, t.date, t.lastreply, d.name as dept_name
+  const ticketsRaw = queryTsv(`
+    SELECT t.id, t.tid, t.userid, t.did, t.title, HEX(t.message) as msg_hex, t.status, t.urgency, t.date, t.lastreply, d.name as dept_name
     FROM tbltickets t
     LEFT JOIN tblticketdepartments d ON t.did = d.id;
   `);
-  console.log(`✓ Fetched ${tickets.length} tickets via TSV.`);
+  console.log(`✓ Fetched ${ticketsRaw.length} tickets via TSV.`);
+
+  const tickets = ticketsRaw.map((t: any) => ({
+    ...t,
+    message: t.msg_hex ? Buffer.from(t.msg_hex, 'hex').toString('utf-8') : '',
+  }));
+
+  console.log('--> Fetching ticket replies from billing.softcents.com...');
+  const ticketRepliesRaw = queryTsv(`
+    SELECT r.id, r.tid, r.userid, r.name, r.email, r.date, r.admin, HEX(r.message) as msg_hex, r.attachment
+    FROM tblticketreplies r
+    ORDER BY r.date ASC;
+  `);
+  const ticketReplies = ticketRepliesRaw.map((r: any) => ({
+    ...r,
+    message: r.msg_hex ? Buffer.from(r.msg_hex, 'hex').toString('utf-8') : '',
+  }));
+  console.log(`✓ Fetched ${ticketReplies.length} ticket replies via TSV.`);
 
   let ticketsImported = 0;
   for (const t of tickets) {
@@ -210,7 +227,7 @@ async function main() {
             user_id: userId,
             category: TicketCategory.GENERAL_SUPPORT,
             subject: t.title || 'Technical Inquiry',
-            description: t.title || 'Support ticket imported from WHMCS',
+            description: t.message || t.title || 'Support ticket imported from WHMCS',
             status: tStatus,
             priority: tPriority,
             created_at: t.date ? new Date(t.date) : new Date(),
@@ -224,8 +241,8 @@ async function main() {
   }
   console.log(`✓ Tickets imported: ${ticketsImported}`);
 
-  // 5. Fetch Services, Domains, Orders, Invoice Items, Transactions, Products, Servers, Addons
-  console.log('--> Fetching full services, domains, orders, transactions, and product catalog...');
+  // 5. Fetch Services, Domains, Orders, Invoice Items, Transactions, Products, Servers, Addons, Cancellations, Contacts, Emails
+  console.log('--> Fetching full services, domains, orders, transactions, product catalog, cancellations, contacts, emails...');
   const services = queryTsv(`
     SELECT 
       h.id, 
@@ -239,12 +256,24 @@ async function main() {
       h.domain, 
       h.username, 
       h.amount, 
+      h.firstpaymentamount,
       h.billingcycle, 
       h.nextduedate, 
       h.regdate, 
       h.domainstatus, 
+      h.paymentmethod,
+      h.dedicatedip,
+      h.assignedips,
+      h.ns1,
+      h.ns2,
+      h.diskusage,
+      h.disklimit,
+      h.bwusage,
+      h.bwlimit,
+      h.suspendreason,
       s.name as server_name, 
-      s.ipaddress as server_ip
+      s.ipaddress as server_ip,
+      s.hostname as server_hostname
     FROM tblhosting h
     LEFT JOIN tblproducts p ON h.packageid = p.id
     LEFT JOIN tblproductgroups g ON p.gid = g.id
@@ -253,9 +282,36 @@ async function main() {
   `);
 
   const domains = queryTsv(`
-    SELECT d.id, d.userid, d.domain, d.registrationperiod, d.recurringamount, d.paymentmethod, d.registrationdate, d.expirydate, d.nextduedate, d.status, d.registrar
+    SELECT d.id, d.userid, d.domain, d.registrationperiod, d.firstpaymentamount, d.recurringamount, d.paymentmethod, d.registrationdate, d.expirydate, d.nextduedate, d.status, d.registrar, d.dnsmanagement, d.emailforwarding, d.idprotection, d.donotrenew
     FROM tbldomains d;
   `);
+
+  const cancellationRequests = queryTsv(`
+    SELECT c.id, c.date, c.relid, c.reason, c.type, h.userid, h.domain, p.name as product_name, CONCAT(cl.firstname, ' ', cl.lastname) as client_name
+    FROM tblcancelrequests c
+    LEFT JOIN tblhosting h ON c.relid = h.id
+    LEFT JOIN tblproducts p ON h.packageid = p.id
+    LEFT JOIN tblclients cl ON h.userid = cl.id
+    ORDER BY c.id DESC;
+  `);
+
+  const contacts = queryTsv(`
+    SELECT id, userid, firstname, lastname, companyname, email, address1, address2, city, state, postcode, country, phonenumber, subaccount, permissions
+    FROM tblcontacts;
+  `);
+
+  console.log('--> Fetching client email history from billing.softcents.com...');
+  const emailsRaw = queryTsv(`
+    SELECT e.id, e.userid, e.subject, e.date, e.to as recipient, HEX(e.message) as msg_hex
+    FROM tblemails e
+    ORDER BY e.id DESC
+    LIMIT 500;
+  `);
+  const emails = emailsRaw.map((e: any) => ({
+    ...e,
+    message: e.msg_hex ? Buffer.from(e.msg_hex, 'hex').toString('utf-8') : '',
+  }));
+  console.log(`✓ Fetched ${emails.length} client emails.`);
 
   const orders = queryTsv(`
     SELECT o.id, o.ordernum, o.userid, o.date, o.amount, o.paymentmethod, o.status
@@ -408,7 +464,12 @@ async function main() {
     tickets: tickets.map((t: any) => ({
       ...t,
       clientName: clientMap[t.userid] || `Client #${t.userid}`,
+      replies: ticketReplies.filter((r: any) => String(r.tid) === String(t.id)),
     })),
+    ticketReplies,
+    cancellationRequests,
+    contacts,
+    emails,
     productGroups,
     products,
   };

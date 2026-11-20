@@ -21,6 +21,7 @@ import {
   Search,
   Phone,
   Share2,
+  Mail,
 } from 'lucide-react';
 import whmcsData from '@/data/whmcs_sync.json';
 
@@ -221,6 +222,14 @@ export function ClientHeader() {
                     My Invoices
                   </Link>
                   <Link
+                    href={`/clientarea/masspay${impQuery}`}
+                    onClick={() => setDropdown(null)}
+                    className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-700"
+                  >
+                    <CreditCard className="w-4 h-4 mr-2 text-blue-600" />
+                    Mass Payment
+                  </Link>
+                  <Link
                     href={`/clientarea/addfunds${impQuery}`}
                     onClick={() => setDropdown(null)}
                     className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-700"
@@ -314,6 +323,22 @@ export function ClientHeader() {
                 >
                   <User className="w-3.5 h-3.5 mr-2 text-slate-500" />
                   Account Details
+                </Link>
+                <Link
+                  href={`/clientarea/contacts${impQuery}`}
+                  onClick={() => setDropdown(null)}
+                  className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-700"
+                >
+                  <User className="w-3.5 h-3.5 mr-2 text-slate-500" />
+                  Contacts / Sub-Accounts
+                </Link>
+                <Link
+                  href={`/clientarea/emails${impQuery}`}
+                  onClick={() => setDropdown(null)}
+                  className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-700"
+                >
+                  <Mail className="w-3.5 h-3.5 mr-2 text-slate-500" />
+                  Email History
                 </Link>
                 <Link
                   href={`/clientarea/security${impQuery}`}

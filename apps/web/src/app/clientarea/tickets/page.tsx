@@ -95,12 +95,12 @@ function ClientTicketsContent() {
                   <div className="text-[11px] text-slate-500 font-mono">
                     {t.date || '-'}
                   </div>
-                  <button
-                    onClick={() => alert(`Ticket #${t.tid || t.id}: ${t.title}\n\n${t.message || 'No additional details'}`)}
+                  <Link
+                    href={`/support/${t.id}${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
                     className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold text-xs transition-colors border border-slate-300"
                   >
                     View &rarr;
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))
@@ -152,12 +152,12 @@ function ClientTicketsContent() {
                       {t.date}
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => alert(`Ticket #${t.tid || t.id}: ${t.title}\n\n${t.message || 'No additional details'}`)}
-                        className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold transition-colors border border-slate-300"
+                      <Link
+                        href={`/support/${t.id}${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
+                        className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold transition-colors border border-slate-300 inline-block"
                       >
                         View &rarr;
-                      </button>
+                      </Link>
                     </td>
                   </tr>
                 ))
