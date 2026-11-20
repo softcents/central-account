@@ -16,12 +16,23 @@ import {
   Settings,
   PlusCircle,
   FileText,
+  Menu,
+  X,
+  Search,
+  Phone,
+  Share2,
 } from 'lucide-react';
 import whmcsData from '@/data/whmcs_sync.json';
 
 export function ClientHeader() {
   const pathname = usePathname();
   const [dropdown, setDropdown] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
+  const [mobileDomainsOpen, setMobileDomainsOpen] = useState(false);
+  const [mobileBillingOpen, setMobileBillingOpen] = useState(false);
+  const [mobileSupportOpen, setMobileSupportOpen] = useState(false);
+
   const [impQuery, setImpQuery] = useState('');
   const [userName, setUserName] = useState('Softcents Customer');
   const [companyName, setCompanyName] = useState('SoftCents Systems Ltd.');
@@ -30,6 +41,12 @@ export function ClientHeader() {
   const toggle = (name: string) => {
     setDropdown(dropdown === name ? null : name);
   };
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setDropdown(null);
+  }, [pathname]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -89,15 +106,15 @@ export function ClientHeader() {
       <div className="max-w-[1240px] mx-auto px-4 h-16 flex items-center justify-between">
         {/* Left: Logo & Nav items */}
         <div className="flex items-center space-x-6">
-          <Link href={`/clientarea${impQuery}`} className="flex items-center">
+          <Link href={`/clientarea${impQuery}`} className="flex items-center shrink-0">
             <img
               src="/whmcs/logo.png"
               alt="SoftCents Systems"
-              className="h-8 w-auto object-contain"
+              className="h-7 sm:h-8 w-auto object-contain"
             />
           </Link>
 
-          {/* Twenty-One Main Menu */}
+          {/* Twenty-One Desktop Main Menu */}
           <nav className="hidden md:flex items-center space-x-1 text-[13px] font-semibold text-slate-700">
             <Link
               href={`/clientarea${impQuery}`}
@@ -246,6 +263,14 @@ export function ClientHeader() {
                     <PlusCircle className="w-4 h-4 mr-2 text-slate-400" />
                     Open New Ticket
                   </Link>
+                  <Link
+                    href="/knowledgebase"
+                    onClick={() => setDropdown(null)}
+                    className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-700"
+                  >
+                    <FileText className="w-4 h-4 mr-2 text-slate-400" />
+                    Knowledgebase
+                  </Link>
                 </div>
               )}
             </div>
@@ -253,7 +278,7 @@ export function ClientHeader() {
         </div>
 
         {/* Right Header items */}
-        <div className="flex items-center space-x-3 text-xs">
+        <div className="flex items-center space-x-2 sm:space-x-3 text-xs">
           {/* Cart button */}
           <Link
             href="/cart"
@@ -273,14 +298,14 @@ export function ClientHeader() {
               <div className="w-7 h-7 rounded-full bg-[#1A4D80] text-white flex items-center justify-center font-bold text-xs uppercase">
                 {avatarLetter}
               </div>
-              <span className="hidden sm:inline">{userName}</span>
-              <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+              <span className="hidden sm:inline max-w-[120px] truncate">{userName}</span>
+              <ChevronDown className="w-3.5 h-3.5 opacity-60 hidden sm:inline" />
             </button>
             {dropdown === 'user' && (
               <div className="absolute right-0 top-full mt-1 w-56 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50">
                 <div className="px-3 py-2 border-b border-slate-100">
-                  <div className="font-bold text-slate-900">{userName}</div>
-                  <div className="text-[11px] text-slate-500">{companyName}</div>
+                  <div className="font-bold text-slate-900 truncate">{userName}</div>
+                  <div className="text-[11px] text-slate-500 truncate">{companyName}</div>
                 </div>
                 <Link
                   href={`/clientarea/profile${impQuery}`}
@@ -322,8 +347,276 @@ export function ClientHeader() {
               </div>
             )}
           </div>
+
+          {/* Mobile Hamburger Toggle Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 text-slate-700 hover:text-[#1A4D80] hover:bg-slate-100 rounded md:hidden transition-colors"
+            aria-label="Toggle Mobile Menu"
+          >
+            {mobileMenuOpen ? (
+              <X className="w-5 h-5 text-slate-800" />
+            ) : (
+              <Menu className="w-5 h-5 text-slate-800" />
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Slide-down Accordion Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white border-t border-slate-200 shadow-xl px-4 py-3 space-y-3 max-h-[calc(100vh-64px)] overflow-y-auto">
+          {/* Mobile Navigation List */}
+          <div className="space-y-1 text-sm font-semibold text-slate-700">
+            {/* Home */}
+            <Link
+              href={`/clientarea${impQuery}`}
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-3 py-2 rounded-lg transition-colors ${
+                pathname === '/clientarea'
+                  ? 'text-[#1A4D80] bg-slate-100 font-bold'
+                  : 'hover:bg-slate-50'
+              }`}
+            >
+              Home
+            </Link>
+
+            {/* Services Accordion */}
+            <div>
+              <button
+                onClick={() => setMobileServicesOpen(!mobileServicesOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 text-left"
+              >
+                <span className="flex items-center">
+                  <Box className="w-4 h-4 mr-2.5 text-[#007bff]" />
+                  Services
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 text-slate-400 transition-transform ${
+                    mobileServicesOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {mobileServicesOpen && (
+                <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
+                  <Link
+                    href={`/clientarea/services${impQuery}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-slate-700 hover:text-[#1A4D80]"
+                  >
+                    My Products &amp; Services
+                  </Link>
+                  <Link
+                    href="/cart"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-emerald-700 font-semibold hover:text-emerald-800"
+                  >
+                    + Order New Services
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Domains Accordion */}
+            <div>
+              <button
+                onClick={() => setMobileDomainsOpen(!mobileDomainsOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 text-left"
+              >
+                <span className="flex items-center">
+                  <Globe className="w-4 h-4 mr-2.5 text-[#28a745]" />
+                  Domains
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 text-slate-400 transition-transform ${
+                    mobileDomainsOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {mobileDomainsOpen && (
+                <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
+                  <Link
+                    href={`/clientarea/domains${impQuery}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-slate-700 hover:text-[#1A4D80]"
+                  >
+                    My Domains
+                  </Link>
+                  <Link
+                    href="/cart?a=add&domain=register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-slate-700 hover:text-[#1A4D80]"
+                  >
+                    + Register New Domain
+                  </Link>
+                  <Link
+                    href="/domainchecker"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-slate-700 hover:text-[#1A4D80]"
+                  >
+                    Domain Search
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Billing Accordion */}
+            <div>
+              <button
+                onClick={() => setMobileBillingOpen(!mobileBillingOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 text-left"
+              >
+                <span className="flex items-center">
+                  <CreditCard className="w-4 h-4 mr-2.5 text-[#f39c12]" />
+                  Billing
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 text-slate-400 transition-transform ${
+                    mobileBillingOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {mobileBillingOpen && (
+                <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
+                  <Link
+                    href={`/clientarea/invoices${impQuery}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-slate-700 hover:text-[#1A4D80]"
+                  >
+                    My Invoices
+                  </Link>
+                  <Link
+                    href={`/clientarea/addfunds${impQuery}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-emerald-700 font-semibold hover:text-emerald-800"
+                  >
+                    + Add Funds Deposit
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Support Accordion */}
+            <div>
+              <button
+                onClick={() => setMobileSupportOpen(!mobileSupportOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 text-left"
+              >
+                <span className="flex items-center">
+                  <HelpCircle className="w-4 h-4 mr-2.5 text-[#d9534f]" />
+                  Support
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 text-slate-400 transition-transform ${
+                    mobileSupportOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {mobileSupportOpen && (
+                <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
+                  <Link
+                    href={`/clientarea/tickets${impQuery}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-slate-700 hover:text-[#1A4D80]"
+                  >
+                    Support Tickets
+                  </Link>
+                  <Link
+                    href="/support/new"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-slate-700 hover:text-[#1A4D80]"
+                  >
+                    + Open New Ticket
+                  </Link>
+                  <Link
+                    href="/knowledgebase"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-slate-700 hover:text-[#1A4D80]"
+                  >
+                    Knowledgebase
+                  </Link>
+                  <Link
+                    href="/announcements"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-slate-700 hover:text-[#1A4D80]"
+                  >
+                    Announcements
+                  </Link>
+                  <Link
+                    href="/downloads"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-slate-700 hover:text-[#1A4D80]"
+                  >
+                    Downloads
+                  </Link>
+                  <Link
+                    href="/networkissues"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-1.5 text-slate-700 hover:text-[#1A4D80]"
+                  >
+                    Network Status
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Affiliates */}
+            <Link
+              href={`/clientarea/affiliates${impQuery}`}
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-700"
+            >
+              <Share2 className="w-4 h-4 mr-2.5 text-indigo-600" />
+              Affiliates
+            </Link>
+
+            {/* Contact */}
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-700"
+            >
+              <Phone className="w-4 h-4 mr-2.5 text-teal-600" />
+              Contact Us
+            </Link>
+          </div>
+
+          {/* Customer Profile Card on Mobile */}
+          <div className="pt-3 border-t border-slate-200">
+            <div className="flex items-center space-x-3 p-2 bg-slate-50 rounded-lg">
+              <div className="w-9 h-9 rounded-full bg-[#1A4D80] text-white flex items-center justify-center font-bold text-sm uppercase shrink-0">
+                {avatarLetter}
+              </div>
+              <div className="overflow-hidden flex-1">
+                <div className="font-bold text-slate-900 truncate text-xs">{userName}</div>
+                <div className="text-[11px] text-slate-500 truncate">{companyName}</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+              <Link
+                href={`/clientarea/profile${impQuery}`}
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 border border-slate-200 rounded text-center font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Account Details
+              </Link>
+              <Link
+                href={`/clientarea/security${impQuery}`}
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 border border-slate-200 rounded text-center font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Security Settings
+              </Link>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full mt-2 p-2 rounded text-center text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

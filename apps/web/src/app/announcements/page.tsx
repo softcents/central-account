@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { ClientHeader } from '@/components/ClientHeader';
 import { Megaphone, Calendar, Share2, Twitter, Facebook, ArrowRight } from 'lucide-react';
 
 export default function AnnouncementsPage() {
@@ -31,6 +32,7 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] text-slate-800">
+      <ClientHeader />
       {/* Top Breadcrumb & Header */}
       <div className="bg-white border-b border-slate-200 py-6">
         <div className="max-w-[1240px] mx-auto px-4">

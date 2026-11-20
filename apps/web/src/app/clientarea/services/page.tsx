@@ -18,7 +18,7 @@ function formatWhmcsDate(dateStr: string | null | undefined): string {
 
 function ClientServicesContent() {
   const searchParams = useSearchParams();
-  const impersonate = searchParams.get('impersonate');
+  const impersonate = searchParams.get('impersonate') || searchParams.get('userid');
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
@@ -50,13 +50,13 @@ function ClientServicesContent() {
     });
 
   return (
-    <main className="max-w-[1240px] mx-auto px-4 py-8 space-y-6">
+    <main className="max-w-[1240px] mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
       {/* Header Breadcrumb */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center space-x-2">
-            <Box className="w-6 h-6 text-[#007bff]" />
-            <span>My Products & Services ({rawServices.length})</span>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
+            <Box className="w-5 h-5 sm:w-6 sm:h-6 text-[#007bff]" />
+            <span>My Products &amp; Services ({rawServices.length})</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             View and manage active web hosting, cloud VPS, PBX, and provisioned services.
@@ -65,7 +65,7 @@ function ClientServicesContent() {
         <div>
           <Link
             href="/cart"
-            className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-2 rounded text-xs font-bold shadow-sm transition-colors"
+            className="w-full sm:w-auto text-center bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
           >
             + Order New Services
           </Link>
@@ -73,9 +73,9 @@ function ClientServicesContent() {
       </div>
 
       {/* Filters and Search Bar */}
-      <div className="bg-white p-3 rounded border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-sm text-xs">
-        <div className="flex items-center space-x-2 flex-1 max-w-sm">
-          <Search className="w-4 h-4 text-slate-400" />
+      <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm text-xs">
+        <div className="flex items-center space-x-2 flex-1 w-full sm:max-w-sm">
+          <Search className="w-4 h-4 text-slate-400 shrink-0" />
           <input
             type="text"
             placeholder="Search by product, domain, or date..."
@@ -85,12 +85,12 @@ function ClientServicesContent() {
           />
         </div>
 
-        <div className="flex items-center space-x-2">
-          <span className="text-slate-500">Status:</span>
+        <div className="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-start">
+          <span className="text-slate-500 font-medium">Status:</span>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="p-1.5 border border-slate-200 rounded bg-white text-xs font-semibold focus:outline-none"
+            className="p-1.5 border border-slate-200 rounded bg-white text-xs font-semibold focus:outline-none flex-1 sm:flex-initial"
           >
             <option value="ALL">All ({rawServices.length})</option>
             <option value="ACTIVE">Active</option>
@@ -102,35 +102,20 @@ function ClientServicesContent() {
         </div>
       </div>
 
-      {/* Services Table in WHMCS Style */}
+      {/* Services Container */}
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-        <table className="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr className="bg-[#eef3f7] border-b border-slate-200 text-slate-700 font-bold">
-              <th className="py-3 px-4 w-10 text-center">SSL</th>
-              <th className="py-3 px-4">Product / Service</th>
-              <th className="py-3 px-4 text-center">Activation Date</th>
-              <th className="py-3 px-4 text-right">Pricing</th>
-              <th className="py-3 px-4 text-center">Next Due Date</th>
-              <th className="py-3 px-4 text-center">Status</th>
-              <th className="py-3 px-4 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="py-8 text-center text-slate-500">
-                  No services found matching your criteria.
-                </td>
-              </tr>
-            ) : (
-              filtered.slice(0, 50).map((s: any) => (
-                <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3.5 px-4 text-center">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600 inline-block" title="Active" />
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <div className="font-bold text-slate-900 text-sm">
+        {/* Mobile View: Cards (< sm) */}
+        <div className="block sm:hidden divide-y divide-slate-100">
+          {filtered.length === 0 ? (
+            <div className="py-8 text-center text-slate-500 text-xs px-4">
+              No services found matching your criteria.
+            </div>
+          ) : (
+            filtered.slice(0, 50).map((s: any) => (
+              <div key={s.id} className="p-3.5 space-y-2 hover:bg-slate-50 transition-colors">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-slate-900 text-xs truncate">
                       {s.product_name || s.package || 'SoftCents Cloud PBX'}
                     </div>
                     {s.group_name && (
@@ -138,50 +123,130 @@ function ClientServicesContent() {
                         {s.group_name}
                       </div>
                     )}
-                    <div className="text-slate-500 flex items-center space-x-1 mt-0.5">
-                      <span className="font-mono text-[#1A4D80]">{s.domain || s.username || `Service #${s.id}`}</span>
+                    <div className="text-[11px] text-[#1A4D80] font-mono mt-0.5 truncate">
+                      {s.domain || s.username || `Service #${s.id}`}
                     </div>
-                  </td>
-                  <td className="py-3.5 px-4 text-center font-mono font-semibold text-[#1A4D80] bg-slate-50/50">
-                    {s.regdate_display || formatWhmcsDate(s.regdate)}
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <span className="font-bold text-slate-900 font-mono">৳{parseFloat(s.amount || '0').toFixed(2)}</span>
-                    <div className="text-[11px] text-slate-500">{s.billingcycle || 'Monthly'}</div>
-                  </td>
-                  <td className="py-3.5 px-4 text-center font-mono text-slate-700">
-                    {s.nextduedate_display || formatWhmcsDate(s.nextduedate)}
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <span
-                      className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
-                        s.domainstatus === 'Active'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : s.domainstatus === 'Suspended'
-                          ? 'bg-rose-100 text-rose-800'
-                          : s.domainstatus === 'Pending'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {s.domainstatus || 'Active'}
+                  </div>
+                  <span
+                    className={`font-bold px-2 py-0.5 rounded-full text-[10px] shrink-0 ${
+                      s.domainstatus === 'Active'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : s.domainstatus === 'Suspended'
+                        ? 'bg-rose-100 text-rose-800'
+                        : s.domainstatus === 'Pending'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {s.domainstatus || 'Active'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-slate-600 pt-2 border-t border-slate-50">
+                  <div>
+                    <span className="font-mono font-bold text-slate-900">
+                      ৳{parseFloat(s.amount || '0').toFixed(2)}
                     </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <a
-                      href="https://srv8.softcents.com:2083"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold transition-colors border border-slate-300"
-                    >
-                      Manage &rarr;
-                    </a>
+                    <span className="text-slate-400 ml-1">({s.billingcycle || 'Monthly'})</span>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                      Activated: {s.regdate_display || formatWhmcsDate(s.regdate)}
+                    </div>
+                  </div>
+                  <a
+                    href="https://srv8.softcents.com:2083"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-[#1A4D80] text-white px-3 py-1 rounded font-semibold text-xs transition-colors shrink-0"
+                  >
+                    Manage &rarr;
+                  </a>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop View: Full Responsive Table (>= sm) */}
+        <div className="hidden sm:block overflow-x-auto w-full">
+          <table className="w-full text-left text-xs border-collapse min-w-[680px]">
+            <thead>
+              <tr className="bg-[#eef3f7] border-b border-slate-200 text-slate-700 font-bold">
+                <th className="py-3 px-4 w-10 text-center">SSL</th>
+                <th className="py-3 px-4">Product / Service</th>
+                <th className="py-3 px-4 text-center">Activation Date</th>
+                <th className="py-3 px-4 text-right">Pricing</th>
+                <th className="py-3 px-4 text-center">Next Due Date</th>
+                <th className="py-3 px-4 text-center">Status</th>
+                <th className="py-3 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-slate-500">
+                    No services found matching your criteria.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filtered.slice(0, 50).map((s: any) => (
+                  <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 px-4 text-center">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 inline-block" title="Active" />
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-slate-900 text-sm">
+                        {s.product_name || s.package || 'SoftCents Cloud PBX'}
+                      </div>
+                      {s.group_name && (
+                        <div className="text-[10px] text-slate-500 font-medium">
+                          {s.group_name}
+                        </div>
+                      )}
+                      <div className="text-slate-500 flex items-center space-x-1 mt-0.5">
+                        <span className="font-mono text-[#1A4D80]">{s.domain || s.username || `Service #${s.id}`}</span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-mono font-semibold text-[#1A4D80] bg-slate-50/50">
+                      {s.regdate_display || formatWhmcsDate(s.regdate)}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <span className="font-bold text-slate-900 font-mono">৳{parseFloat(s.amount || '0').toFixed(2)}</span>
+                      <div className="text-[11px] text-slate-500">{s.billingcycle || 'Monthly'}</div>
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-mono text-slate-700">
+                      {s.nextduedate_display || formatWhmcsDate(s.nextduedate)}
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
+                      <span
+                        className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
+                          s.domainstatus === 'Active'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : s.domainstatus === 'Suspended'
+                            ? 'bg-rose-100 text-rose-800'
+                            : s.domainstatus === 'Pending'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {s.domainstatus || 'Active'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <a
+                        href="https://srv8.softcents.com:2083"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold transition-colors border border-slate-300 inline-block"
+                      >
+                        Manage &rarr;
+                      </a>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </main>
   );

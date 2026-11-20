@@ -221,11 +221,11 @@ export default function ShoppingCartPage() {
     <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans">
       <ClientHeader />
 
-      <main className="max-w-[1240px] mx-auto px-4 py-8 space-y-8">
-        <div className="border-b border-slate-200 pb-4 flex flex-wrap items-center justify-between gap-4">
+      <main className="max-w-[1240px] mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-6 sm:space-y-8">
+        <div className="border-b border-slate-200 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center space-x-2">
-              <ShoppingBag className="w-6 h-6 text-[#1A4D80]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
+              <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-[#1A4D80]" />
               <span>Order New Services & Products</span>
             </h1>
             <p className="text-xs text-slate-500 mt-1">

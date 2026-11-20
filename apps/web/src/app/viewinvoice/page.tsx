@@ -68,7 +68,7 @@ function InvoiceContent() {
   };
 
   return (
-    <div className="max-w-[850px] mx-auto bg-white border border-slate-300 rounded shadow-md p-8 sm:p-12 space-y-6 relative overflow-hidden">
+    <div className="max-w-[850px] mx-auto bg-white border border-slate-300 rounded shadow-md p-4 sm:p-8 md:p-12 space-y-6 relative overflow-hidden">
       {/* Status Stamp / Watermark */}
       <div className="absolute top-8 right-8 text-right pointer-events-none select-none">
         {status === 'UNPAID' ? (

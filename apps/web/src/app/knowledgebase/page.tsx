@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { ClientHeader } from '@/components/ClientHeader';
 import {
   BookOpen,
   Search,
@@ -130,6 +131,7 @@ export default function KnowledgebasePage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] text-slate-800">
+      <ClientHeader />
       {/* Top Header & Search Hero */}
       <div className="bg-[#1A4D80] text-white py-12 px-4 shadow-sm">
         <div className="max-w-[1000px] mx-auto text-center space-y-4">

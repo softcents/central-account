@@ -6,8 +6,22 @@ import { usePathname } from 'next/navigation';
 export function Footer() {
   const pathname = usePathname();
 
-  // Hide consumer footer inside admin portal
-  if (pathname.startsWith('/admin')) {
+  // Hide consumer footer inside admin portal and WHMCS portal
+  if (
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/clientarea') ||
+    pathname?.startsWith('/support') ||
+    pathname?.startsWith('/announcements') ||
+    pathname?.startsWith('/knowledgebase') ||
+    pathname?.startsWith('/downloads') ||
+    pathname?.startsWith('/networkissues') ||
+    pathname?.startsWith('/serverstatus') ||
+    pathname?.startsWith('/domainchecker') ||
+    pathname?.startsWith('/viewinvoice') ||
+    pathname?.startsWith('/cart') ||
+    pathname?.startsWith('/contact') ||
+    pathname?.startsWith('/pwreset')
+  ) {
     return null;
   }
 

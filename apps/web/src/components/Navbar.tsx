@@ -10,8 +10,22 @@ export function Navbar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  // The Admin Portal has its own dedicated shell and navigation. Hide consumer navbar completely.
-  if (pathname?.startsWith('/admin')) {
+  // The Admin Portal and WHMCS client portal have their own dedicated navigation headers
+  if (
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/clientarea') ||
+    pathname?.startsWith('/support') ||
+    pathname?.startsWith('/announcements') ||
+    pathname?.startsWith('/knowledgebase') ||
+    pathname?.startsWith('/downloads') ||
+    pathname?.startsWith('/networkissues') ||
+    pathname?.startsWith('/serverstatus') ||
+    pathname?.startsWith('/domainchecker') ||
+    pathname?.startsWith('/viewinvoice') ||
+    pathname?.startsWith('/cart') ||
+    pathname?.startsWith('/contact') ||
+    pathname?.startsWith('/pwreset')
+  ) {
     return null;
   }
 

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { ClientHeader } from '@/components/ClientHeader';
 import { DownloadCloud, Folder, FileCode, FileText, Download, ShieldCheck } from 'lucide-react';
 
 export default function DownloadsPage() {
@@ -63,6 +64,7 @@ export default function DownloadsPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] text-slate-800">
+      <ClientHeader />
       <div className="bg-white border-b border-slate-200 py-6">
         <div className="max-w-[1240px] mx-auto px-4">
           <div className="text-xs text-slate-500 mb-1">

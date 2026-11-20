@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { ClientHeader } from '@/components/ClientHeader';
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle2, MessageSquare } from 'lucide-react';
 
 export default function ContactPage() {
@@ -26,6 +27,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] text-slate-800">
+      <ClientHeader />
       <div className="bg-white border-b border-slate-200 py-6">
         <div className="max-w-[1240px] mx-auto px-4">
           <div className="text-xs text-slate-500 mb-1">

@@ -83,10 +83,10 @@ export default function ClientProfilePage() {
     <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans">
       <ClientHeader />
 
-      <main className="max-w-[1000px] mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-[1000px] mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
         <div className="border-b border-slate-200 pb-4">
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center space-x-2">
-            <User className="w-6 h-6 text-[#1A4D80]" />
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
+            <User className="w-5 h-5 sm:w-6 sm:h-6 text-[#1A4D80]" />
             <span>My Account Details</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -96,12 +96,12 @@ export default function ClientProfilePage() {
 
         {saved && (
           <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded text-xs font-semibold flex items-center space-x-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>Your account details have been saved successfully.</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-lg shadow-sm p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-lg shadow-sm p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div>
               <label className="block text-slate-700 font-semibold mb-1">First Name</label>

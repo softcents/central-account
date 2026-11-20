@@ -49,10 +49,10 @@ export default function ClientAddFundsPage() {
     <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans">
       <ClientHeader />
 
-      <main className="max-w-[800px] mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-[800px] mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
         <div className="border-b border-slate-200 pb-4">
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center space-x-2">
-            <Wallet className="w-6 h-6 text-[#1A4D80]" />
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
+            <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-[#1A4D80]" />
             <span>Add Funds to Account</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">

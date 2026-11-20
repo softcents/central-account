@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ClientHeader } from '@/components/ClientHeader';
 import { Globe, Search, CheckCircle2, XCircle, ShoppingCart, ArrowRight } from 'lucide-react';
 
 export default function DomainCheckerPage() {
@@ -55,6 +56,7 @@ export default function DomainCheckerPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] text-slate-800">
+      <ClientHeader />
       {/* Header & Hero */}
       <div className="bg-[#1A4D80] text-white py-12 px-4 shadow-sm">
         <div className="max-w-[1000px] mx-auto text-center space-y-4">

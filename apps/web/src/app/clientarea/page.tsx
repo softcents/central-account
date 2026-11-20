@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Server,
   CheckCircle2,
+  ChevronRight,
 } from 'lucide-react';
 import whmcsData from '@/data/whmcs_sync.json';
 
@@ -187,21 +188,21 @@ function ClientAreaHomeContent() {
     <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans">
       <ClientHeader />
 
-      <main className="max-w-[1240px] mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-[1240px] mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Welcome Banner */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">
               Welcome Back, {clientInfo.name}!
             </h1>
             <p className="text-xs text-slate-500">
               {clientInfo.company} &bull; Client Portal &amp; Management Console
             </p>
           </div>
-          <div className="text-xs font-semibold">
+          <div>
             <Link
               href="/cart"
-              className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-2 rounded shadow-sm inline-block transition-colors"
+              className="w-full sm:w-auto text-center bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-3 sm:px-4 py-2 rounded shadow-sm text-xs font-bold inline-block transition-colors"
             >
               + Order New Services
             </Link>
@@ -209,19 +210,19 @@ function ClientAreaHomeContent() {
         </div>
 
         {/* 4 WHMCS Twenty-One Tiles (Services, Domains, Tickets, Invoices) */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Services Tile */}
           <Link
             href={`/clientarea/services${impQuery}`}
-            className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
+            className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
           >
-            <div className="flex items-center justify-between mb-2">
-              <Box className="w-7 h-7 text-[#007bff]" />
-              <div className="text-2xl font-bold text-slate-900">
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <Box className="w-6 h-6 sm:w-7 sm:h-7 text-[#007bff]" />
+              <div className="text-xl sm:text-2xl font-bold text-slate-900">
                 {activeServices.length > 0 ? activeServices.length : clientServices.length}
               </div>
             </div>
-            <div className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+            <div className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wide">
               Services
             </div>
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#007bff]"></div>
@@ -230,13 +231,13 @@ function ClientAreaHomeContent() {
           {/* Domains Tile */}
           <Link
             href={`/clientarea/domains${impQuery}`}
-            className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
+            className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
           >
-            <div className="flex items-center justify-between mb-2">
-              <Globe className="w-7 h-7 text-[#28a745]" />
-              <div className="text-2xl font-bold text-slate-900">{clientDomains.length}</div>
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <Globe className="w-6 h-6 sm:w-7 sm:h-7 text-[#28a745]" />
+              <div className="text-xl sm:text-2xl font-bold text-slate-900">{clientDomains.length}</div>
             </div>
-            <div className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+            <div className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wide">
               Domains
             </div>
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#28a745]"></div>
@@ -245,13 +246,13 @@ function ClientAreaHomeContent() {
           {/* Tickets Tile */}
           <Link
             href={`/clientarea/tickets${impQuery}`}
-            className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
+            className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
           >
-            <div className="flex items-center justify-between mb-2">
-              <MessageSquare className="w-7 h-7 text-[#dc3545]" />
-              <div className="text-2xl font-bold text-slate-900">{openTicketsCount}</div>
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7 text-[#dc3545]" />
+              <div className="text-xl sm:text-2xl font-bold text-slate-900">{openTicketsCount}</div>
             </div>
-            <div className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+            <div className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wide">
               Tickets
             </div>
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#dc3545]"></div>
@@ -260,13 +261,13 @@ function ClientAreaHomeContent() {
           {/* Invoices Tile */}
           <Link
             href={`/clientarea/invoices${impQuery}`}
-            className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
+            className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
           >
-            <div className="flex items-center justify-between mb-2">
-              <CreditCard className="w-7 h-7 text-[#f0ad4e]" />
-              <div className="text-2xl font-bold text-slate-900">{unpaidInvoices.length}</div>
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <CreditCard className="w-6 h-6 sm:w-7 sm:h-7 text-[#f0ad4e]" />
+              <div className="text-xl sm:text-2xl font-bold text-slate-900">{unpaidInvoices.length}</div>
             </div>
-            <div className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+            <div className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wide">
               Unpaid Invoices
             </div>
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#f0ad4e]"></div>
@@ -275,21 +276,21 @@ function ClientAreaHomeContent() {
 
         {/* Unpaid Invoice Alert Banner */}
         {unpaidInvoices.length > 0 && (
-          <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center space-x-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+          <div className="bg-amber-50 border-l-4 border-amber-500 p-3 sm:p-4 rounded-r shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-start sm:items-center space-x-2.5 sm:space-x-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
               <div>
                 <span className="font-bold text-amber-900">
                   You have {unpaidInvoices.length} unpaid invoice{unpaidInvoices.length > 1 ? 's' : ''} (Invoice #{unpaidInvoices[0].id} due on {unpaidInvoices[0].duedate || '-'}).
                 </span>
-                <span className="text-amber-800 ml-1">
-                  Pay now to avoid service disruption or automatic suspension.
+                <span className="text-amber-800 ml-1 block sm:inline">
+                  Pay now to avoid service disruption.
                 </span>
               </div>
             </div>
             <Link
               href={`/viewinvoice.php?id=${unpaidInvoices[0].id}`}
-              className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-1.5 rounded font-bold transition-colors inline-block"
+              className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-3 sm:px-4 py-1.5 rounded font-bold transition-colors text-center shrink-0"
             >
               Pay Now (৳{parseFloat(unpaidInvoices[0].total || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })} BDT) &rarr;
             </Link>
@@ -297,22 +298,22 @@ function ClientAreaHomeContent() {
         )}
 
         {/* Domain Search Banner */}
-        <div className="bg-[#1A4D80] text-white p-6 rounded-lg shadow-sm">
-          <h2 className="text-base font-bold mb-1">Find your new domain name</h2>
+        <div className="bg-[#1A4D80] text-white p-4 sm:p-6 rounded-lg shadow-sm">
+          <h2 className="text-sm sm:text-base font-bold mb-1">Find your new domain name</h2>
           <p className="text-xs text-white/80 mb-3">
             Register .com, .net, .org, or .com.bd domains with instant DNS provisioning
           </p>
-          <form onSubmit={handleDomainSubmit} className="flex max-w-xl bg-white rounded overflow-hidden p-1">
+          <form onSubmit={handleDomainSubmit} className="flex flex-col sm:flex-row max-w-xl bg-white rounded overflow-hidden p-1 gap-1 sm:gap-0">
             <input
               type="text"
               value={domainSearch}
               onChange={(e) => setDomainSearch(e.target.value)}
               placeholder="Enter your desired domain name..."
-              className="flex-1 px-3 py-2 text-xs text-slate-800 focus:outline-none"
+              className="flex-1 px-3 py-2 text-xs text-slate-800 focus:outline-none w-full"
             />
             <button
               type="submit"
-              className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-5 py-2 rounded text-xs font-bold transition-colors"
+              className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-5 py-2 rounded text-xs font-bold transition-colors w-full sm:w-auto text-center"
             >
               Search
             </button>
@@ -321,7 +322,7 @@ function ClientAreaHomeContent() {
 
         {/* Active Products & Services */}
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-          <div className="bg-[#f5f7f8] px-4 py-3 border-b border-slate-200 font-bold text-xs text-slate-800 flex items-center justify-between">
+          <div className="bg-[#f5f7f8] px-3 sm:px-4 py-3 border-b border-slate-200 font-bold text-xs text-slate-800 flex items-center justify-between">
             <span className="flex items-center space-x-1.5">
               <Box className="w-4 h-4 text-[#007bff]" />
               <span>Your Active Products/Services ({displayServices.length})</span>
@@ -333,8 +334,74 @@ function ClientAreaHomeContent() {
               View All &rarr;
             </Link>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+
+          {/* Mobile Card Layout (visible on small mobile screens < sm) */}
+          <div className="block sm:hidden divide-y divide-slate-100">
+            {displayServices.length > 0 ? (
+              displayServices.map((s: any) => (
+                <div key={s.id} className="p-3 space-y-2 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-slate-800 text-xs truncate">
+                        {s.package || s.product_name}
+                      </div>
+                      {s.group_name && (
+                        <div className="text-[10px] text-slate-500 font-medium">
+                          {s.group_name}
+                        </div>
+                      )}
+                      <div className="text-[11px] text-[#1A4D80] font-mono mt-0.5 truncate">
+                        {s.domain || s.server_name || (s.username ? `User: ${s.username}` : 'Direct Service')}
+                      </div>
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                        (s.domainstatus || '').toLowerCase() === 'active'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : (s.domainstatus || '').toLowerCase() === 'suspended'
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {s.domainstatus || 'Active'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-50">
+                    <div>
+                      <span className="font-mono font-bold text-slate-900">
+                        {s.billingcycle === 'Free Account' || parseFloat(s.amount || '0') === 0
+                          ? 'Free'
+                          : `৳${parseFloat(s.amount || '0').toFixed(2)}`}
+                      </span>
+                      <span className="text-slate-400 ml-1">({s.billingcycle || 'Monthly'})</span>
+                    </div>
+                    <Link
+                      href={`/clientarea/services?search=${encodeURIComponent(s.domain || s.product_name || s.id)}${impersonateParam ? `&impersonate=${encodeURIComponent(impersonateParam)}` : ''}`}
+                      className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-2.5 py-1 rounded text-[11px] font-semibold transition-colors"
+                    >
+                      Manage
+                    </Link>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="py-8 text-center text-slate-500 px-4">
+                <Box className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="font-semibold text-slate-700 text-xs">No active products or services found.</p>
+                <Link
+                  href="/cart"
+                  className="mt-3 inline-block bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-1.5 rounded text-xs font-bold"
+                >
+                  + Order New Service
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop & Tablet Table Layout (visible on >= sm screens) */}
+          <div className="hidden sm:block overflow-x-auto w-full">
+            <table className="w-full text-left text-xs border-collapse min-w-[620px]">
               <thead>
                 <tr className="bg-[#eef3f7] border-b border-slate-200 text-slate-700 font-bold">
                   <th className="py-2.5 px-4">Product / Service</th>
@@ -419,6 +486,19 @@ function ClientAreaHomeContent() {
           </div>
         </div>
       </main>
+
+      {/* WHMCS Client Area Responsive Footer */}
+      <footer className="border-t border-slate-200 mt-12 py-6 text-center text-xs text-slate-500 bg-white">
+        <div className="max-w-[1240px] mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div>&copy; {new Date().getFullYear()} SoftCents Systems Ltd. All Rights Reserved.</div>
+          <div className="flex items-center space-x-4 text-[11px] text-slate-600">
+            <Link href="/contact" className="hover:text-[#1A4D80]">Contact Us</Link>
+            <Link href="/knowledgebase" className="hover:text-[#1A4D80]">Knowledgebase</Link>
+            <Link href="/networkissues" className="hover:text-[#1A4D80]">Network Status</Link>
+            <Link href="/clientarea/affiliates" className="hover:text-[#1A4D80]">Affiliates</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
