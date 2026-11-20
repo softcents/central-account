@@ -37,24 +37,48 @@ const nextConfig = {
         destination: '/register',
       },
       {
+        source: '/pwreset.php',
+        destination: '/pwreset',
+      },
+      {
         source: '/supporttickets.php',
         destination: '/clientarea/tickets',
       },
       {
         source: '/contact.php',
-        destination: '/support/new',
+        destination: '/contact',
       },
       {
         source: '/knowledgebase.php',
-        destination: '/admin/support/kb',
+        destination: '/knowledgebase',
       },
       {
         source: '/announcements.php',
-        destination: '/admin/support/announcements',
+        destination: '/announcements',
       },
       {
         source: '/downloads.php',
-        destination: '/admin/support/downloads',
+        destination: '/downloads',
+      },
+      {
+        source: '/networkissues.php',
+        destination: '/networkissues',
+      },
+      {
+        source: '/serverstatus.php',
+        destination: '/networkissues',
+      },
+      {
+        source: '/domainchecker.php',
+        destination: '/domainchecker',
+      },
+      {
+        source: '/affiliates.php',
+        destination: '/clientarea/affiliates',
+      },
+      {
+        source: '/aff.php',
+        destination: '/clientarea/affiliates',
       },
       {
         source: '/admin/configgeneral.php',
