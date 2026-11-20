@@ -374,11 +374,29 @@ export default function AdminSetupPage() {
     },
     {
       id: 'openid-connect',
-      name: 'OpenID Connect Credentials',
-      description: 'Create and manage OpenID Connect API Credentials',
+      name: 'OpenID Connect',
+      description: 'Manage OpenID API Credentials',
       category: 'security',
       icon: KeyRound,
       href: '/admin/oauth',
+    },
+
+    // --- ROW 10 (Screenshot 4: Storage Settings & Database Backups) ---
+    {
+      id: 'storage-settings',
+      name: 'Storage Settings',
+      description: 'Configure where and how file assets are stored',
+      category: 'system',
+      icon: Database,
+      href: '/admin/utilities/cleanup',
+    },
+    {
+      id: 'database-backups',
+      name: 'Database Backups',
+      description: 'Manage automated backups',
+      category: 'system',
+      icon: Server,
+      href: '/admin/utilities/database',
     },
   ];
 
@@ -516,6 +534,21 @@ export default function AdminSetupPage() {
               </Link>
             );
           })}
+        </div>
+        {/* WHMCS Footer Bar */}
+        <div className="pt-8 pb-3 text-[11px] text-[#777] border-t border-[#ddd] flex flex-wrap items-center justify-between gap-2 mt-6">
+          <div>Copyright © WHMCS 2026. All Rights Reserved.</div>
+          <div className="flex items-center space-x-3">
+            <a href="https://docs.whmcs.com" target="_blank" rel="noreferrer" className="text-[#1A4D80] hover:underline">
+              Documentation
+            </a>
+            <span>|</span>
+            <Link href="/admin/support" className="text-[#1A4D80] hover:underline">
+              Contact Us
+            </Link>
+            <span>|</span>
+            <span className="text-slate-400">Report a Bug</span>
+          </div>
         </div>
       </div>
     </div>
