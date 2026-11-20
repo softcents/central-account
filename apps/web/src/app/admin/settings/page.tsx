@@ -309,11 +309,14 @@ function AdminSettingsContent() {
     automaticCreditUse: false,
     creditOnDowngrade: false,
 
-    // Affiliates
+    // Affiliates Tab (1:1 from screenshot https://prnt.sc/XyO2ltHynBVM)
     affiliateEnabled: true,
-    affiliatePayout: '5000.00',
     affiliatePercent: '0',
     affiliateBonus: '0.00',
+    affiliatePayout: '5000.00',
+    affiliateCommissionDelay: '0',
+    payoutRequestDepartment: 'none',
+    affiliateLinks: '',
 
     // Security
     twoFactorClient: true,
@@ -3294,32 +3297,139 @@ function AdminSettingsContent() {
             </div>
           )}
 
-          {/* TAB 9: AFFILIATES */}
+          {/* TAB 9: AFFILIATES (EXACT 1:1 TO SCREENSHOT https://prnt.sc/XyO2ltHynBVM) */}
           {activeSubtab === 'affiliates' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="aff_enable"
-                  checked={formData.affiliateEnabled}
-                  onChange={(e) => handleChange('affiliateEnabled', e.target.checked)}
-                  className="w-4 h-4 text-[#1A4D80]"
-                />
-                <label htmlFor="aff_enable" className="font-semibold text-[#444] cursor-pointer">
-                  Enable Affiliate System
+              {/* Enable/Disable */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Enable/Disable
                 </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="aff_enable"
+                    checked={formData.affiliateEnabled}
+                    onChange={(e) => handleChange('affiliateEnabled', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="aff_enable" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable the affiliate system
+                  </label>
+                </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Affiliate Payout Amount</label>
-                <div className="flex-1">
+              {/* Affiliate Earning Percentage */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Affiliate Earning Percentage
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={formData.affiliatePercent}
+                    onChange={(e) => handleChange('affiliatePercent', e.target.value)}
+                    className="w-20 p-1.5 border border-[#ccc] rounded bg-white text-[12px] text-center focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] font-bold text-[#555]">%</span>
+                  <span className="text-[12px] text-[#555] pl-1">
+                    Enter the percentage of each payment you want affiliates to receive
+                  </span>
+                </div>
+              </div>
+
+              {/* Affiliate Bonus Deposit */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Affiliate Bonus Deposit
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={formData.affiliateBonus}
+                    onChange={(e) => handleChange('affiliateBonus', e.target.value)}
+                    className="w-24 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    Enter the amount you want affiliates to receive in their account after signing up
+                  </span>
+                </div>
+              </div>
+
+              {/* Affiliate Payout Amount */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Affiliate Payout Amount
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
                   <input
                     type="text"
                     value={formData.affiliatePayout}
                     onChange={(e) => handleChange('affiliatePayout', e.target.value)}
-                    className="w-32 p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    className="w-24 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   />
-                  <span className="text-[11px] text-[#777] ml-2">Minimum withdrawal limit in BDT</span>
+                  <span className="text-[12px] text-[#555]">
+                    Enter the minimum amount affiliates have to reach before making a withdrawal
+                  </span>
+                </div>
+              </div>
+
+              {/* Affiliate Commission Delay */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Affiliate Commission Delay
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={formData.affiliateCommissionDelay}
+                    onChange={(e) => handleChange('affiliateCommissionDelay', e.target.value)}
+                    className="w-20 p-1.5 border border-[#ccc] rounded bg-white text-[12px] text-center focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    Enter the number of days to delay commission payments - then only pays if account is still active
+                  </span>
+                </div>
+              </div>
+
+              {/* Payout Request Department */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Payout Request Department
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <select
+                    value={formData.payoutRequestDepartment}
+                    onChange={(e) => handleChange('payoutRequestDepartment', e.target.value)}
+                    className="w-48 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  >
+                    <option value="none">None</option>
+                    <option value="1">Sales Department</option>
+                    <option value="2">Technical Support</option>
+                    <option value="3">Site Migration</option>
+                  </select>
+                  <span className="text-[12px] text-[#555]">
+                    Select the support department to use for affiliate withdrawal requests
+                  </span>
+                </div>
+              </div>
+
+              {/* Affiliate Links */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">
+                  Affiliate Links
+                </label>
+                <div className="flex-1 space-y-1">
+                  <textarea
+                    rows={8}
+                    value={formData.affiliateLinks}
+                    onChange={(e) => handleChange('affiliateLinks', e.target.value)}
+                    className="w-full sm:max-w-2xl p-2 border border-[#ccc] rounded bg-white text-[12px] font-mono focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <div className="text-[11px] text-[#777] space-y-0.5">
+                    <div>Enter [AffiliateLinkCode] where the affiliate&#39;s customised link code should be inserted</div>
+                    <div>Use &lt;( for open brackets and )&gt; for close brackets in HTML or else the HTML will be executed on the page</div>
+                  </div>
                 </div>
               </div>
             </div>
