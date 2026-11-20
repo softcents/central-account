@@ -272,7 +272,30 @@ function AdminSettingsContent() {
     allowInsecureImports: false,
     reopenExistingTicketsIfImportingFails: true,
 
-    // Invoices
+    // Invoices Tab (1:1 from screenshot https://prnt.sc/6Yn7ouyDcIoO)
+    continuousInvoiceGeneration: false,
+    enableMetricUsageInvoicing: true,
+    enablePdfInvoices: true,
+    pdfPaperSize: 'A4',
+    pdfFontFamily: 'helvetica',
+    pdfCustomFont: '',
+    storeClientDataSnapshot: false,
+    enableMassPayment: true,
+    clientsChooseGateway: true,
+    groupSimilarLineItems: true,
+    cancellationRequestHandling: true,
+    automaticSubscriptionManagement: false,
+    enableProformaInvoicing: false,
+    sequentialPaidInvoiceNumbering: false,
+    sequentialInvoiceNumberFormat: '{NUMBER}',
+    nextPaidInvoiceNumber: '1',
+    lateFeeType: 'Percentage',
+    lateFeeAmount: '10.00',
+    lateFeeMinimum: '0.00',
+    acceptedCreditCardTypes: ['Visa', 'MasterCard', 'Discover', 'American Express', 'JCB', 'Diners Club'],
+    issueNumberStartDate: false,
+    invoiceIncrement: '1',
+    invoiceStartingNumber: '',
     invoiceGenDays: '10',
     dueReminderDays: '7',
     lateFeeDays: '4',
@@ -2667,45 +2690,466 @@ function AdminSettingsContent() {
             </div>
           )}
 
-          {/* TAB 7: INVOICES */}
+          {/* TAB 7: INVOICES (EXACT 1:1 TO SCREENSHOT https://prnt.sc/6Yn7ouyDcIoO) */}
           {activeSubtab === 'invoices' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
+              {/* Continuous Invoice Generation */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Invoice Generation Days</label>
-                <div className="flex-1">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Continuous Invoice Generation
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
                   <input
-                    type="number"
-                    value={formData.invoiceGenDays}
-                    onChange={(e) => handleChange('invoiceGenDays', e.target.value)}
-                    className="w-24 p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    type="checkbox"
+                    id="continuous_inv"
+                    checked={formData.continuousInvoiceGeneration}
+                    onChange={(e) => handleChange('continuousInvoiceGeneration', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
                   />
-                  <span className="text-[11px] text-[#777] ml-2">Days before due date to generate recurring invoice</span>
+                  <label htmlFor="continuous_inv" className="text-[12px] text-[#444] cursor-pointer">
+                    If enabled, invoices will be generated for each cycle even if the previous invoice remains unpaid
+                  </label>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Payment Due Reminder</label>
-                <div className="flex-1">
+              {/* Enable Metric Usage Invoicing */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Enable Metric Usage Invoicing
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
                   <input
-                    type="number"
-                    value={formData.dueReminderDays}
-                    onChange={(e) => handleChange('dueReminderDays', e.target.value)}
-                    className="w-24 p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    type="checkbox"
+                    id="metric_usage_inv"
+                    checked={formData.enableMetricUsageInvoicing}
+                    onChange={(e) => handleChange('enableMetricUsageInvoicing', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
                   />
-                  <span className="text-[11px] text-[#777] ml-2">Days before due date to send reminder email</span>
+                  <label htmlFor="metric_usage_inv" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable invoicing of metric usage for all priced product metrics
+                  </label>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Add Late Fee Days</label>
-                <div className="flex-1">
+              {/* Enable PDF Invoices */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Enable PDF Invoices
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
                   <input
-                    type="number"
-                    value={formData.lateFeeDays}
-                    onChange={(e) => handleChange('lateFeeDays', e.target.value)}
-                    className="w-24 p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    type="checkbox"
+                    id="enable_pdf_inv"
+                    checked={formData.enablePdfInvoices}
+                    onChange={(e) => handleChange('enablePdfInvoices', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
                   />
-                  <span className="text-[11px] text-[#777] ml-2">Days after due date before adding late fee</span>
+                  <label htmlFor="enable_pdf_inv" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to send PDF versions of invoices along with invoice emails
+                  </label>
+                </div>
+              </div>
+
+              {/* PDF Paper Size */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  PDF Paper Size
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <select
+                    value={formData.pdfPaperSize}
+                    onChange={(e) => handleChange('pdfPaperSize', e.target.value)}
+                    className="w-36 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  >
+                    <option value="A4">A4</option>
+                    <option value="Letter">Letter</option>
+                  </select>
+                  <span className="text-[12px] text-[#555]">
+                    Choose the paper format to use when generating PDF files
+                  </span>
+                </div>
+              </div>
+
+              {/* PDF Font Family */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  PDF Font Family
+                </label>
+                <div className="flex-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[#444]">
+                  {['courier', 'freesans', 'helvetica', 'times', 'dejavusans'].map((font) => (
+                    <label key={font} className="inline-flex items-center space-x-1.5 cursor-pointer capitalize">
+                      <input
+                        type="radio"
+                        name="pdf_font_family"
+                        value={font}
+                        checked={formData.pdfFontFamily === font}
+                        onChange={() => handleChange('pdfFontFamily', font)}
+                        className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                      />
+                      <span>{font === 'helvetica' ? 'Helvetica' : font === 'dejavusans' ? 'Dejavusans' : font === 'freesans' ? 'Freesans' : font.charAt(0).toUpperCase() + font.slice(1)}</span>
+                    </label>
+                  ))}
+                  <label className="inline-flex items-center space-x-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="pdf_font_family"
+                      value="custom"
+                      checked={formData.pdfFontFamily === 'custom'}
+                      onChange={() => handleChange('pdfFontFamily', 'custom')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Custom</span>
+                  </label>
+                  {formData.pdfFontFamily === 'custom' && (
+                    <input
+                      type="text"
+                      placeholder="Font name"
+                      value={formData.pdfCustomFont}
+                      onChange={(e) => handleChange('pdfCustomFont', e.target.value)}
+                      className="w-32 p-1 border border-[#ccc] rounded bg-white text-[11px]"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Store Client Data Snapshot */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Store Client Data Snapshot
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="client_data_snapshot"
+                    checked={formData.storeClientDataSnapshot}
+                    onChange={(e) => handleChange('storeClientDataSnapshot', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="client_data_snapshot" className="text-[12px] text-[#444] cursor-pointer">
+                    Preserve client details upon invoice generation to prevent profile changes for existing invoices
+                  </label>
+                </div>
+              </div>
+
+              {/* Enable Mass Payment */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Enable Mass Payment
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="enable_mass_pay"
+                    checked={formData.enableMassPayment}
+                    onChange={(e) => handleChange('enableMassPayment', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="enable_mass_pay" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable the multiple invoice payment options on the client area homepage
+                  </label>
+                </div>
+              </div>
+
+              {/* Clients Choose Gateway */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Clients Choose Gateway
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="clients_choose_gateway"
+                    checked={formData.clientsChooseGateway}
+                    onChange={(e) => handleChange('clientsChooseGateway', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="clients_choose_gateway" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to allow clients to choose the gateway they pay with
+                  </label>
+                </div>
+              </div>
+
+              {/* Group Similar Line Items */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Group Similar Line Items
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="group_similar_items"
+                    checked={formData.groupSimilarLineItems}
+                    onChange={(e) => handleChange('groupSimilarLineItems', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="group_similar_items" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable automatically grouping identical line items into a quantity x description format
+                  </label>
+                </div>
+              </div>
+
+              {/* Cancellation Request Handling */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Cancellation Request Handling
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="cancellation_req_handling"
+                    checked={formData.cancellationRequestHandling}
+                    onChange={(e) => handleChange('cancellationRequestHandling', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="cancellation_req_handling" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to automatically cancel outstanding unpaid invoices when a cancellation request is submitted
+                  </label>
+                </div>
+              </div>
+
+              {/* Automatic Subscription Management */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Automatic Subscription Management
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="auto_sub_mgmt"
+                    checked={formData.automaticSubscriptionManagement}
+                    onChange={(e) => handleChange('automaticSubscriptionManagement', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="auto_sub_mgmt" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to auto-cancel existing subscription agreements (eg. PayPal Subscriptions) on Upgrade or Cancellation.
+                  </label>
+                </div>
+              </div>
+
+              {/* Enable Proforma Invoicing */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Enable Proforma Invoicing
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="enable_proforma_inv"
+                    checked={formData.enableProformaInvoicing}
+                    onChange={(e) => handleChange('enableProformaInvoicing', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="enable_proforma_inv" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable proforma invoicing for unpaid invoices
+                  </label>
+                </div>
+              </div>
+
+              {/* Sequential Paid Invoice Numbering */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Sequential Paid Invoice Numbering
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="seq_paid_inv_num"
+                    checked={formData.sequentialPaidInvoiceNumbering}
+                    onChange={(e) => handleChange('sequentialPaidInvoiceNumbering', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="seq_paid_inv_num" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable automatic sequential numbering of paid invoices
+                  </label>
+                </div>
+              </div>
+
+              {/* Sequential Invoice Number Format */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Sequential Invoice Number Format
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={formData.sequentialInvoiceNumberFormat}
+                    onChange={(e) => handleChange('sequentialInvoiceNumberFormat', e.target.value)}
+                    className="w-48 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    Available auto-insert tags are: &#123;YEAR&#125; &#123;MONTH&#125; &#123;DAY&#125; &#123;NUMBER&#125;
+                  </span>
+                </div>
+              </div>
+
+              {/* Next Paid Invoice Number */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Next Paid Invoice Number
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={formData.nextPaidInvoiceNumber}
+                    onChange={(e) => handleChange('nextPaidInvoiceNumber', e.target.value)}
+                    className="w-24 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    The next invoice number that will be assigned
+                  </span>
+                </div>
+              </div>
+
+              {/* Late Fee Type */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Late Fee Type
+                </label>
+                <div className="flex-1 flex items-center space-x-4">
+                  <label className="inline-flex items-center space-x-1.5 cursor-pointer text-[12px] text-[#444]">
+                    <input
+                      type="radio"
+                      name="late_fee_type"
+                      value="Percentage"
+                      checked={formData.lateFeeType === 'Percentage'}
+                      onChange={() => handleChange('lateFeeType', 'Percentage')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Percentage</span>
+                  </label>
+                  <label className="inline-flex items-center space-x-1.5 cursor-pointer text-[12px] text-[#444]">
+                    <input
+                      type="radio"
+                      name="late_fee_type"
+                      value="Fixed Amount"
+                      checked={formData.lateFeeType === 'Fixed Amount'}
+                      onChange={() => handleChange('lateFeeType', 'Fixed Amount')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Fixed Amount</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Late Fee Amount */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Late Fee Amount
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={formData.lateFeeAmount}
+                    onChange={(e) => handleChange('lateFeeAmount', e.target.value)}
+                    className="w-24 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    Enter the amount (percentage or monetary value) to apply to late invoices (set to 0 to disable)
+                  </span>
+                </div>
+              </div>
+
+              {/* Late Fee Minimum */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Late Fee Minimum
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={formData.lateFeeMinimum}
+                    onChange={(e) => handleChange('lateFeeMinimum', e.target.value)}
+                    className="w-24 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    Enter the minimum amount to charge in cases where the calculated late fee falls below this figure
+                  </span>
+                </div>
+              </div>
+
+              {/* Accepted Credit Card Types */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">
+                  Accepted Credit Card Types
+                </label>
+                <div className="flex-1 space-y-1">
+                  <select
+                    multiple
+                    size={6}
+                    value={formData.acceptedCreditCardTypes}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.selectedOptions, (option) => option.value);
+                      handleChange('acceptedCreditCardTypes', selected);
+                    }}
+                    className="w-64 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  >
+                    <option value="Visa">Visa</option>
+                    <option value="MasterCard">MasterCard</option>
+                    <option value="Discover">Discover</option>
+                    <option value="American Express">American Express</option>
+                    <option value="JCB">JCB</option>
+                    <option value="EnRoute">EnRoute</option>
+                    <option value="Diners Club">Diners Club</option>
+                  </select>
+                  <div className="text-[11px] text-[#777]">
+                    Use Ctrl+Click to select Multiple Card Types
+                  </div>
+                </div>
+              </div>
+
+              {/* Issue Number/Start Date */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Issue Number/Start Date
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="issue_number_start"
+                    checked={formData.issueNumberStartDate}
+                    onChange={(e) => handleChange('issueNumberStartDate', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="issue_number_start" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to show these fields for credit card payments
+                  </label>
+                </div>
+              </div>
+
+              {/* Invoice # Incrementation */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Invoice # Incrementation
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={formData.invoiceIncrement}
+                    onChange={(e) => handleChange('invoiceIncrement', e.target.value)}
+                    className="w-20 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    Enter the desired difference between generated invoice numbers (Default: 1, Maximum: 999)
+                  </span>
+                </div>
+              </div>
+
+              {/* Invoice Starting # */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Invoice Starting #
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={formData.invoiceStartingNumber}
+                    onChange={(e) => handleChange('invoiceStartingNumber', e.target.value)}
+                    placeholder=""
+                    className="w-36 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    Enter a value to set the next invoice number (Minimum: 607, Maximum: 499,999,999). Blank for no change
+                  </span>
                 </div>
               </div>
             </div>
