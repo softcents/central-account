@@ -346,11 +346,26 @@ function AdminSettingsContent() {
     twoFactorAdmin: true,
     adminSessionTimeout: '15',
 
-    // Social
-    facebookUrl: 'https://facebook.com/softcents',
-    twitterUrl: 'https://twitter.com/softcents',
-    linkedinUrl: 'https://linkedin.com/company/softcents',
-    youtubeUrl: 'https://youtube.com/@softcents',
+    // Social (Tab 11)
+    socialBitBucket: '',
+    socialDiscord: '',
+    socialFacebook: '',
+    socialFlickr: '',
+    socialGitHub: '',
+    socialGitter: '',
+    socialInstagram: '',
+    socialLinkedIn: '',
+    socialReddit: '',
+    socialSkype: '',
+    socialSlack: '',
+    socialTwitter: '',
+    socialViber: '',
+    socialVimeo: '',
+    socialWhatsApp: '',
+    socialYouTube: '',
+    announcementsTweet: false,
+    announcementsFBRecommend: false,
+    announcementsFBComments: false,
   });
 
   const handleChange = (field: string, value: any) => {
@@ -4004,42 +4019,315 @@ function AdminSettingsContent() {
             </div>
           )}
 
-          {/* TAB 11: SOCIAL */}
+          {/* TAB 11: SOCIAL (EXACT 1:1 TO WHMCS) */}
           {activeSubtab === 'social' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
+              {/* BitBucket */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Facebook URL</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  BitBucket
+                </label>
                 <div className="flex-1">
                   <input
                     type="text"
-                    value={formData.facebookUrl}
-                    onChange={(e) => handleChange('facebookUrl', e.target.value)}
-                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    value={formData.socialBitBucket}
+                    onChange={(e) => handleChange('socialBitBucket', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Twitter / X URL</label>
+              {/* Discord */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Discord
+                </label>
+                <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
+                  <input
+                    type="text"
+                    value={formData.socialDiscord}
+                    onChange={(e) => handleChange('socialDiscord', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    Since Discord is invite based, you must generate a permenent invite URL and enter the part after https://discord.gg/ here
+                  </span>
+                </div>
+              </div>
+
+              {/* Facebook */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Facebook
+                </label>
                 <div className="flex-1">
                   <input
                     type="text"
-                    value={formData.twitterUrl}
-                    onChange={(e) => handleChange('twitterUrl', e.target.value)}
-                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    value={formData.socialFacebook}
+                    onChange={(e) => handleChange('socialFacebook', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">LinkedIn URL</label>
+              {/* Flickr */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Flickr
+                </label>
                 <div className="flex-1">
                   <input
                     type="text"
-                    value={formData.linkedinUrl}
-                    onChange={(e) => handleChange('linkedinUrl', e.target.value)}
-                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    value={formData.socialFlickr}
+                    onChange={(e) => handleChange('socialFlickr', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   />
+                </div>
+              </div>
+
+              {/* GitHub */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  GitHub
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.socialGitHub}
+                    onChange={(e) => handleChange('socialGitHub', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Gitter */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Gitter
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.socialGitter}
+                    onChange={(e) => handleChange('socialGitter', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Instagram */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Instagram
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.socialInstagram}
+                    onChange={(e) => handleChange('socialInstagram', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* LinkedIn */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  LinkedIn
+                </label>
+                <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
+                  <input
+                    type="text"
+                    value={formData.socialLinkedIn}
+                    onChange={(e) => handleChange('socialLinkedIn', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    Requires a named company page - does not support individuals
+                  </span>
+                </div>
+              </div>
+
+              {/* Reddit */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Reddit
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.socialReddit}
+                    onChange={(e) => handleChange('socialReddit', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Skype */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Skype
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.socialSkype}
+                    onChange={(e) => handleChange('socialSkype', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Slack */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Slack
+                </label>
+                <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
+                  <input
+                    type="text"
+                    value={formData.socialSlack}
+                    onChange={(e) => handleChange('socialSlack', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    Enter Slack workspace ID
+                  </span>
+                </div>
+              </div>
+
+              {/* Twitter */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Twitter
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.socialTwitter}
+                    onChange={(e) => handleChange('socialTwitter', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Viber */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Viber
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.socialViber}
+                    onChange={(e) => handleChange('socialViber', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Vimeo */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Vimeo
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.socialVimeo}
+                    onChange={(e) => handleChange('socialVimeo', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* WhatsApp */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  WhatsApp
+                </label>
+                <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
+                  <input
+                    type="text"
+                    value={formData.socialWhatsApp}
+                    onChange={(e) => handleChange('socialWhatsApp', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    Enter phone number registered for WhatsApp including country prefix
+                  </span>
+                </div>
+              </div>
+
+              {/* YouTube */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  YouTube
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.socialYouTube}
+                    onChange={(e) => handleChange('socialYouTube', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Announcements Tweet */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Announcements Tweet
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="announcements_tweet"
+                    checked={formData.announcementsTweet}
+                    onChange={(e) => handleChange('announcementsTweet', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="announcements_tweet" className="text-[12px] text-[#444] cursor-pointer">
+                    Enable Tweet Button on Announcements
+                  </label>
+                </div>
+              </div>
+
+              {/* Facebook Recommend */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Facebook Recommend
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="announcements_fb_recommend"
+                    checked={formData.announcementsFBRecommend}
+                    onChange={(e) => handleChange('announcementsFBRecommend', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="announcements_fb_recommend" className="text-[12px] text-[#444] cursor-pointer">
+                    Enable Facebook Recommend/Send on Announcements
+                  </label>
+                </div>
+              </div>
+
+              {/* Facebook Comments */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Facebook Comments
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="announcements_fb_comments"
+                    checked={formData.announcementsFBComments}
+                    onChange={(e) => handleChange('announcementsFBComments', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="announcements_fb_comments" className="text-[12px] text-[#444] cursor-pointer">
+                    Enable Facebook Comments on Announcements
+                  </label>
                 </div>
               </div>
             </div>
