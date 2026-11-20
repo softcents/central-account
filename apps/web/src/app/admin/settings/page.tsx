@@ -366,6 +366,48 @@ function AdminSettingsContent() {
     announcementsTweet: false,
     announcementsFBRecommend: false,
     announcementsFBComments: false,
+
+    // Other (Tab 12)
+    marketingEmails: true,
+    marketingEmailsRequireOptIn: 'disabled',
+    marketingEmailsOptInMessage: 'We would like to send you occasional news, information and special offers by email. Choose below whether you want to join our mailing list. You can unsubscribe at any time.',
+    clientDisplayFormat: '1',
+    defaultToClientArea: false,
+    disableClientAreaUserMgmt: false,
+    allowClientRegistration: true,
+    clientEmailPreferences: true,
+    // Optional Client Profile Fields
+    optionalProfileFirstName: true,
+    optionalProfileLastName: true,
+    optionalProfileAddress1: false,
+    optionalProfileCity: false,
+    optionalProfileState: false,
+    optionalProfilePostcode: false,
+    optionalProfilePhoneNumber: true,
+    // Locked Client/User Profile Fields
+    lockedProfileFirstName: false,
+    lockedProfileLastName: false,
+    lockedProfileCompanyName: false,
+    lockedProfileEmail: true,
+    lockedProfileAddress1: false,
+    lockedProfileAddress2: false,
+    lockedProfileCity: false,
+    lockedProfileState: false,
+    lockedProfilePostcode: false,
+    lockedProfileCountry: false,
+    lockedProfilePhoneNumber: true,
+    lockedProfileTaxId: false,
+    // Other Settings
+    clientDetailsChangeNotify: true,
+    showCancellationLink: true,
+    monthlyAffiliateReports: true,
+    bannedSubdomainPrefixes: 'mail,mx,gapps,gmail,webmail,cpanel,whm,ftp,clients,billing,members,login,accounts,access',
+    encodedFileLoading: 'safe',
+    eventHandlingMode: 'inline',
+    displayErrors: false,
+    logErrors: false,
+    sqlDebugMode: false,
+    hooksDebugMode: false,
   });
 
   const handleChange = (field: string, value: any) => {
@@ -4333,11 +4375,612 @@ function AdminSettingsContent() {
             </div>
           )}
 
-          {/* TAB 12: OTHER */}
+          {/* TAB 12: OTHER (EXACT 1:1 TO SCREENSHOT https://prnt.sc/Im2piIZF8KN_) */}
           {activeSubtab === 'other' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
-              <div className="text-[12px] text-[#555]">
-                Custom Client Fields, Activity Log retention policies, and API IP Access restrictions are active.
+              {/* Marketing Emails */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Marketing Emails
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="marketing_emails"
+                    checked={formData.marketingEmails}
+                    onChange={(e) => handleChange('marketingEmails', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="marketing_emails" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable marketing email opt-in/opt-out functionality
+                  </label>
+                </div>
+              </div>
+
+              {/* Require User Opt-In */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-0.5">
+                  Require User Opt-In
+                </label>
+                <div className="flex-1 space-y-1.5 text-[12px] text-[#444]">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="marketing_optin"
+                      value="enabled"
+                      checked={formData.marketingEmailsRequireOptIn === 'enabled'}
+                      onChange={() => handleChange('marketingEmailsRequireOptIn', 'enabled')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Enabled - Require users to opt-in to marketing emails</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="marketing_optin"
+                      value="disabled"
+                      checked={formData.marketingEmailsRequireOptIn === 'disabled'}
+                      onChange={() => handleChange('marketingEmailsRequireOptIn', 'disabled')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Disabled - Default to opt-in and allow users to uncheck the box to opt-out</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Marketing Email Opt-In Messaging */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">
+                  Marketing Email Opt-In Messaging
+                </label>
+                <div className="flex-1">
+                  <textarea
+                    rows={3}
+                    value={formData.marketingEmailsOptInMessage}
+                    onChange={(e) => handleChange('marketingEmailsOptInMessage', e.target.value)}
+                    className="w-full sm:w-[650px] p-2 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Admin Client Display Format */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-0.5">
+                  Admin Client Display Format
+                </label>
+                <div className="flex-1 space-y-1.5 text-[12px] text-[#444]">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="admin_client_format"
+                      value="1"
+                      checked={formData.clientDisplayFormat === '1'}
+                      onChange={() => handleChange('clientDisplayFormat', '1')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Show first name/last name only</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="admin_client_format"
+                      value="2"
+                      checked={formData.clientDisplayFormat === '2'}
+                      onChange={() => handleChange('clientDisplayFormat', '2')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Show company name if set, otherwise first name/last name</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="admin_client_format"
+                      value="3"
+                      checked={formData.clientDisplayFormat === '3'}
+                      onChange={() => handleChange('clientDisplayFormat', '3')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Show full name & company if set</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Default to Client Area */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Default to Client Area
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="def_to_client_area"
+                    checked={formData.defaultToClientArea}
+                    onChange={(e) => handleChange('defaultToClientArea', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="def_to_client_area" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to skip the homepage and forward users directly to the client area/login form upon first visiting WHMCS
+                  </label>
+                </div>
+              </div>
+
+              {/* Disable Client Area User Management */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Disable Client Area User Management
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="dis_client_user_mgmt"
+                    checked={formData.disableClientAreaUserMgmt}
+                    onChange={(e) => handleChange('disableClientAreaUserMgmt', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="dis_client_user_mgmt" className="text-[12px] text-[#444] cursor-pointer">
+                    Prevent owners from inviting or managing users associated with their account.
+                  </label>
+                </div>
+              </div>
+
+              {/* Allow Client Registration */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Allow Client Registration
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="allow_client_reg"
+                    checked={formData.allowClientRegistration}
+                    onChange={(e) => handleChange('allowClientRegistration', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="allow_client_reg" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to allow registration without ordering any products/services
+                  </label>
+                </div>
+              </div>
+
+              {/* Client Email Preferences */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Client Email Preferences
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="client_email_prefs"
+                    checked={formData.clientEmailPreferences}
+                    onChange={(e) => handleChange('clientEmailPreferences', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="client_email_prefs" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to allow clients to customise the email notification types they receive
+                  </label>
+                </div>
+              </div>
+
+              {/* Optional Client Profile Fields */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-0.5">
+                  Optional Client Profile Fields
+                </label>
+                <div className="flex-1 space-y-2">
+                  <div className="text-[12px] text-[#555]">
+                    Check any of the fields below to make them optional at signup time:
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-2 gap-x-4 max-w-xl text-[12px] text-[#444]">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.optionalProfileFirstName}
+                        onChange={(e) => handleChange('optionalProfileFirstName', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>First Name</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.optionalProfileLastName}
+                        onChange={(e) => handleChange('optionalProfileLastName', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Last Name</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.optionalProfileAddress1}
+                        onChange={(e) => handleChange('optionalProfileAddress1', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Address 1</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.optionalProfileCity}
+                        onChange={(e) => handleChange('optionalProfileCity', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>City</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.optionalProfileState}
+                        onChange={(e) => handleChange('optionalProfileState', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>State/Region</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.optionalProfilePostcode}
+                        onChange={(e) => handleChange('optionalProfilePostcode', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Postcode</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.optionalProfilePhoneNumber}
+                        onChange={(e) => handleChange('optionalProfilePhoneNumber', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Phone Number</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Locked Client/User Profile Fields */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-0.5">
+                  Locked Client/User Profile Fields
+                </label>
+                <div className="flex-1 space-y-2">
+                  <div className="text-[12px] text-[#555]">
+                    Select any fields below that you want to prevent clients and users being able to edit from the client area:
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-2 gap-x-4 max-w-xl text-[12px] text-[#444]">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lockedProfileFirstName}
+                        onChange={(e) => handleChange('lockedProfileFirstName', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>First Name</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lockedProfileLastName}
+                        onChange={(e) => handleChange('lockedProfileLastName', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Last Name</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lockedProfileCompanyName}
+                        onChange={(e) => handleChange('lockedProfileCompanyName', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Company Name</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lockedProfileEmail}
+                        onChange={(e) => handleChange('lockedProfileEmail', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Email Address</span>
+                    </label>
+
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lockedProfileAddress1}
+                        onChange={(e) => handleChange('lockedProfileAddress1', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Address 1</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lockedProfileAddress2}
+                        onChange={(e) => handleChange('lockedProfileAddress2', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Address 2</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lockedProfileCity}
+                        onChange={(e) => handleChange('lockedProfileCity', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>City</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lockedProfileState}
+                        onChange={(e) => handleChange('lockedProfileState', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>State/Region</span>
+                    </label>
+
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lockedProfilePostcode}
+                        onChange={(e) => handleChange('lockedProfilePostcode', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Postcode</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lockedProfileCountry}
+                        onChange={(e) => handleChange('lockedProfileCountry', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Country</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lockedProfilePhoneNumber}
+                        onChange={(e) => handleChange('lockedProfilePhoneNumber', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Phone Number</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.lockedProfileTaxId}
+                        onChange={(e) => handleChange('lockedProfileTaxId', e.target.checked)}
+                        className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                      />
+                      <span>Tax ID</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Client Details Change Notify */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Client Details Change Notify
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="client_details_change_notify"
+                    checked={formData.clientDetailsChangeNotify}
+                    onChange={(e) => handleChange('clientDetailsChangeNotify', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="client_details_change_notify" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to send an email notification to admins on user details change
+                  </label>
+                </div>
+              </div>
+
+              {/* Show Cancellation Link */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Show Cancellation Link
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="show_cancel_link"
+                    checked={formData.showCancellationLink}
+                    onChange={(e) => handleChange('showCancellationLink', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="show_cancel_link" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to show the cancellation request option in the client area for products
+                  </label>
+                </div>
+              </div>
+
+              {/* Monthly Affiliate Reports */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Monthly Affiliate Reports
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="monthly_aff_reports"
+                    checked={formData.monthlyAffiliateReports}
+                    onChange={(e) => handleChange('monthlyAffiliateReports', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="monthly_aff_reports" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to send Monthly Referrals Reports to Affiliates on the 1st of each month
+                  </label>
+                </div>
+              </div>
+
+              {/* Banned Subdomain Prefixes */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">
+                  Banned Subdomain Prefixes
+                </label>
+                <div className="flex-1">
+                  <textarea
+                    rows={3}
+                    value={formData.bannedSubdomainPrefixes}
+                    onChange={(e) => handleChange('bannedSubdomainPrefixes', e.target.value)}
+                    className="w-full sm:w-[650px] p-2 border border-[#ccc] rounded bg-white text-[12px] font-mono focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Encoded File Loading */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-0.5">
+                  Encoded File Loading
+                </label>
+                <div className="flex-1 space-y-1.5 text-[12px] text-[#444]">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="encoded_file_loading"
+                      value="safe"
+                      checked={formData.encodedFileLoading === 'safe'}
+                      onChange={() => handleChange('encodedFileLoading', 'safe')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Do not load files encoded with ionCube for unknown PHP targets</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="encoded_file_loading"
+                      value="all"
+                      checked={formData.encodedFileLoading === 'all'}
+                      onChange={() => handleChange('encodedFileLoading', 'all')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Attempt to load all files</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Event Handling */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-0.5">
+                  Event Handling
+                </label>
+                <div className="flex-1 space-y-1.5 text-[12px] text-[#444]">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="event_handling_mode"
+                      value="concurrent"
+                      checked={formData.eventHandlingMode === 'concurrent'}
+                      onChange={() => handleChange('eventHandlingMode', 'concurrent')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Concurrent (Launch an asynchronous request.)</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="event_handling_mode"
+                      value="inline"
+                      checked={formData.eventHandlingMode === 'inline'}
+                      onChange={() => handleChange('eventHandlingMode', 'inline')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Inline (Handle events within the same request.)</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="event_handling_mode"
+                      value="cron"
+                      checked={formData.eventHandlingMode === 'cron'}
+                      onChange={() => handleChange('eventHandlingMode', 'cron')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Cron (Defer events until the next cron run.)</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Display Errors */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Display Errors
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="display_errors"
+                    checked={formData.displayErrors}
+                    onChange={(e) => handleChange('displayErrors', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="display_errors" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable Displaying PHP Errors (Not recommended for production use)
+                  </label>
+                </div>
+              </div>
+
+              {/* Log Errors */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Log Errors
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="log_errors"
+                    checked={formData.logErrors}
+                    onChange={(e) => handleChange('logErrors', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="log_errors" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable logging of PHP Errors when possible (Not recommended for daily production use)
+                  </label>
+                </div>
+              </div>
+
+              {/* SQL Debug Mode */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  SQL Debug Mode
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="sql_debug_mode"
+                    checked={formData.sqlDebugMode}
+                    onChange={(e) => handleChange('sqlDebugMode', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="sql_debug_mode" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable logging of SQL Errors (Use only for testing purposes)
+                  </label>
+                </div>
+              </div>
+
+              {/* Hooks Debug Mode */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Hooks Debug Mode
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="hooks_debug_mode"
+                    checked={formData.hooksDebugMode}
+                    onChange={(e) => handleChange('hooksDebugMode', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="hooks_debug_mode" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable logging of Hook Calls (Use only for testing purposes)
+                  </label>
+                </div>
               </div>
             </div>
           )}
