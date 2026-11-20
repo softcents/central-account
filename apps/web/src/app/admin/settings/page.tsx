@@ -32,6 +32,7 @@ import {
   Filter,
   X,
   AlertTriangle,
+  Folder,
 } from 'lucide-react';
 
 export default function AdminSettingsPage() {
@@ -55,8 +56,8 @@ function AdminSettingsContent() {
   useEffect(() => {
     const handleHashOrParam = () => {
       const hash = window.location.hash.toLowerCase();
-      if (hash.includes('localisation')) setActiveSubtab('localisation');
-      else if (hash.includes('ordering')) setActiveSubtab('ordering');
+      if (hash.includes('ordering')) setActiveSubtab('ordering');
+      else if (hash.includes('localisation')) setActiveSubtab('localisation');
       else if (hash.includes('domains')) setActiveSubtab('domains');
       else if (hash.includes('mail')) setActiveSubtab('mail');
       else if (hash.includes('support')) setActiveSubtab('support');
@@ -94,7 +95,7 @@ function AdminSettingsContent() {
     maintenanceModeMessage: 'We are currently performing maintenance and will be back shortly.',
     maintenanceModeRedirectUrl: '',
 
-    // Localisation Tab (1:1 from screenshot https://prnt.sc/JQOW3851MaWY)
+    // Localisation Tab (1:1 from screenshot)
     systemCharset: 'utf-8',
     globalDateFormat: 'DD/MM/YYYY',
     clientDateFormat: 'Use Global Date Format',
@@ -105,10 +106,37 @@ function AdminSettingsContent() {
     removeExtendedUtf8: true,
     phoneNumbersDropdown: true,
 
-    // Ordering
-    orderTemplate: 'standard_cart',
-    tosUrl: 'https://softcents.com/terms',
-    autoRedirectInvoice: 'gateway',
+    // Ordering Tab (1:1 from screenshot https://prnt.sc/rHBX5MyO8j7d)
+    orderDaysGrace: '0',
+    defaultOrderTemplate: 'standard_cart',
+    onDemandRenewalsEnabled: false,
+    onDemandMonthly: '31',
+    onDemandQuarterly: '92',
+    onDemandSemiAnnually: '184',
+    onDemandAnnually: '366',
+    onDemandBiennially: '731',
+    onDemandTriennially: '1096',
+    undefinedAddonsRenewals: 'global',
+    sidebarToggleOption: true,
+    enableTosAcceptance: false,
+    termsOfServiceUrl: '',
+    autoRedirectOnCheckout: 'gateway',
+    allowNotesOnCheckout: true,
+    monthlyPricingBreakdown: false,
+    blockExistingDomains: true,
+    noInvoiceEmailOnOrder: false,
+    skipFraudCheckForExisting: false,
+    onlyAutoProvisionForExisting: false,
+    enableRandomUsernames: false,
+    signupAnniversaryProrata: false,
+    enableProductCrossSelling: false,
+    crossSellLocAddProduct: false,
+    crossSellLocReviewCheckout: false,
+    crossSellLocCheckout: false,
+    crossSellLocOrderConfirm: false,
+    numberOfCrossSells: '3',
+    recommendExistingServices: false,
+    productCrossSellStyle: false,
 
     // Domains
     domainRegEnabled: true,
@@ -179,6 +207,65 @@ function AdminSettingsContent() {
     { id: 'security', label: 'Security' },
     { id: 'social', label: 'Social' },
     { id: 'other', label: 'Other' },
+  ];
+
+  const orderTemplates = [
+    {
+      id: 'cloud_slider',
+      name: 'Cloud Slider',
+      bgClass: 'bg-gradient-to-b from-sky-50 to-blue-100 border-sky-300',
+      headerClass: 'bg-sky-600',
+      type: 'slider',
+    },
+    {
+      id: 'legacy_boxes',
+      name: 'Legacy Boxes',
+      bgClass: 'bg-slate-50 border-slate-300',
+      headerClass: 'bg-slate-700',
+      type: 'boxes',
+    },
+    {
+      id: 'legacy_modern',
+      name: 'Legacy Modern',
+      bgClass: 'bg-amber-50/40 border-amber-300',
+      headerClass: 'bg-amber-600',
+      type: 'modern',
+    },
+    {
+      id: 'premium_comparison',
+      name: 'Premium Comparison',
+      bgClass: 'bg-teal-50 border-teal-300',
+      headerClass: 'bg-teal-600',
+      type: 'comparison',
+    },
+    {
+      id: 'pure_comparison',
+      name: 'Pure Comparison',
+      bgClass: 'bg-blue-50 border-blue-300',
+      headerClass: 'bg-[#1A4D80]',
+      type: 'comparison',
+    },
+    {
+      id: 'standard_cart',
+      name: 'Standard Cart',
+      bgClass: 'bg-emerald-50 border-emerald-400',
+      headerClass: 'bg-emerald-600',
+      type: 'standard',
+    },
+    {
+      id: 'supreme_comparison',
+      name: 'Supreme Comparison',
+      bgClass: 'bg-purple-50 border-purple-300',
+      headerClass: 'bg-purple-700',
+      type: 'comparison',
+    },
+    {
+      id: 'universal_slider',
+      name: 'Universal Slider',
+      bgClass: 'bg-emerald-50/60 border-emerald-300',
+      headerClass: 'bg-emerald-700',
+      type: 'slider',
+    },
   ];
 
   return (
@@ -442,6 +529,40 @@ function AdminSettingsContent() {
             </Link>
           </div>
         </div>
+
+        {/* SECTION 6: OTHER (AS SHOWN IN SCREENSHOT) */}
+        <div className="bg-white border border-[#ccc] rounded shadow-sm overflow-hidden">
+          <div className="bg-[#f0f0f0] border-b border-[#e5e5e5] px-3 py-2 font-bold text-[#444] text-[11px] flex items-center space-x-1.5">
+            <Settings className="w-3.5 h-3.5 text-[#1A4D80]" />
+            <span>Other</span>
+          </div>
+          <div className="py-1 text-[11px]">
+            <Link
+              href="/admin/orders"
+              className="block px-3 py-1.5 text-[#444] hover:bg-[#f5f5f5] hover:text-[#1A4D80]"
+            >
+              Order Statuses
+            </Link>
+            <Link
+              href="/admin/security"
+              className="block px-3 py-1.5 text-[#444] hover:bg-[#f5f5f5] hover:text-[#1A4D80]"
+            >
+              Security Questions
+            </Link>
+            <Link
+              href="/admin/addons/unblockip"
+              className="block px-3 py-1.5 text-[#444] hover:bg-[#f5f5f5] hover:text-[#1A4D80]"
+            >
+              Banned IPs
+            </Link>
+            <Link
+              href="/admin/settings?tab=general&subtab=security"
+              className="block px-3 py-1.5 text-[#444] hover:bg-[#f5f5f5] hover:text-[#1A4D80]"
+            >
+              Banned Emails
+            </Link>
+          </div>
+        </div>
       </aside>
 
       {/* ======================================================== */}
@@ -691,7 +812,7 @@ function AdminSettingsContent() {
             </div>
           )}
 
-          {/* TAB 2: LOCALISATION (EXACT 1:1 TO SCREENSHOT https://prnt.sc/JQOW3851MaWY) */}
+          {/* TAB 2: LOCALISATION (1:1 TO SCREENSHOT 2) */}
           {activeSubtab === 'localisation' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
               {/* System Charset */}
@@ -850,47 +971,523 @@ function AdminSettingsContent() {
             </div>
           )}
 
-          {/* TAB 3: ORDERING */}
+          {/* TAB 3: ORDERING (EXACT 1:1 TO SCREENSHOT https://prnt.sc/rHBX5MyO8j7d) */}
           {activeSubtab === 'ordering' && (
-            <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
+            <div className="space-y-4 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
+              {/* Order Days Grace */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Default Order Template</label>
-                <div className="flex-1">
-                  <select
-                    value={formData.orderTemplate}
-                    onChange={(e) => handleChange('orderTemplate', e.target.value)}
-                    className="w-[200px] p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
-                  >
-                    <option value="standard_cart">standard_cart</option>
-                    <option value="boxes">boxes</option>
-                    <option value="slider">slider</option>
-                  </select>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Order Days Grace</label>
+                <div className="flex-1 flex flex-wrap items-center gap-3">
+                  <input
+                    type="number"
+                    value={formData.orderDaysGrace}
+                    onChange={(e) => handleChange('orderDaysGrace', e.target.value)}
+                    className="w-20 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[11px] text-[#777]">The number of days to allow for payment of an order before being overdue</span>
                 </div>
               </div>
 
+              {/* Default Order Form Template (Visual Grid from Screenshot) */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-1 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-2">
+                  Default Order Form Template
+                </label>
+                <div className="flex-1">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl">
+                    {orderTemplates.map((tmpl) => {
+                      const isSelected = formData.defaultOrderTemplate === tmpl.id;
+                      return (
+                        <div
+                          key={tmpl.id}
+                          onClick={() => handleChange('defaultOrderTemplate', tmpl.id)}
+                          className={`cursor-pointer border rounded p-2 text-center transition-all bg-white hover:border-[#1A4D80] ${
+                            isSelected ? 'ring-2 ring-[#1A4D80] border-[#1A4D80] shadow-sm' : 'border-[#ccc]'
+                          }`}
+                        >
+                          {/* Miniature Template Mockup */}
+                          <div className={`h-16 w-full rounded border mb-2 overflow-hidden flex flex-col ${tmpl.bgClass}`}>
+                            <div className={`h-3 w-full ${tmpl.headerClass}`}></div>
+                            <div className="p-1 flex-1 flex flex-col justify-around">
+                              <div className="h-1.5 w-3/4 bg-slate-300 rounded mx-auto"></div>
+                              <div className="grid grid-cols-3 gap-0.5 px-0.5">
+                                <div className="h-4 bg-white border border-slate-200 rounded"></div>
+                                <div className="h-4 bg-white border border-slate-200 rounded"></div>
+                                <div className="h-4 bg-white border border-slate-200 rounded"></div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-center space-x-1.5 text-[11px]">
+                            <input
+                              type="radio"
+                              name="order_form_tmpl"
+                              checked={isSelected}
+                              onChange={() => handleChange('defaultOrderTemplate', tmpl.id)}
+                              className="text-[#1A4D80]"
+                            />
+                            <span className={isSelected ? 'font-bold text-[#1A4D80]' : 'text-[#444]'}>
+                              {tmpl.name}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* On-Demand Renewals */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">On-Demand Renewals</label>
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="ondemand_enable"
+                      checked={formData.onDemandRenewalsEnabled}
+                      onChange={(e) => handleChange('onDemandRenewalsEnabled', e.target.checked)}
+                      className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                    />
+                    <label htmlFor="ondemand_enable" className="text-[12px] text-[#444] cursor-pointer">
+                      Check to allow clients to place renewal orders early.
+                    </label>
+                  </div>
+
+                  {/* 6 Interval Periods Table */}
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 max-w-2xl pt-1">
+                    <div>
+                      <div className="text-[11px] font-semibold text-[#555] mb-1">Monthly</div>
+                      <input
+                        type="number"
+                        value={formData.onDemandMonthly}
+                        onChange={(e) => handleChange('onDemandMonthly', e.target.value)}
+                        className="w-full p-1.5 border border-[#ccc] rounded bg-white text-[12px] text-center"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-semibold text-[#555] mb-1">Quarterly</div>
+                      <input
+                        type="number"
+                        value={formData.onDemandQuarterly}
+                        onChange={(e) => handleChange('onDemandQuarterly', e.target.value)}
+                        className="w-full p-1.5 border border-[#ccc] rounded bg-white text-[12px] text-center"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-semibold text-[#555] mb-1">Semi-Annually</div>
+                      <input
+                        type="number"
+                        value={formData.onDemandSemiAnnually}
+                        onChange={(e) => handleChange('onDemandSemiAnnually', e.target.value)}
+                        className="w-full p-1.5 border border-[#ccc] rounded bg-white text-[12px] text-center"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-semibold text-[#555] mb-1">Annually</div>
+                      <input
+                        type="number"
+                        value={formData.onDemandAnnually}
+                        onChange={(e) => handleChange('onDemandAnnually', e.target.value)}
+                        className="w-full p-1.5 border border-[#ccc] rounded bg-white text-[12px] text-center"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-semibold text-[#555] mb-1">Biennially</div>
+                      <input
+                        type="number"
+                        value={formData.onDemandBiennially}
+                        onChange={(e) => handleChange('onDemandBiennially', e.target.value)}
+                        className="w-full p-1.5 border border-[#ccc] rounded bg-white text-[12px] text-center"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-semibold text-[#555] mb-1">Triennially</div>
+                      <input
+                        type="number"
+                        value={formData.onDemandTriennially}
+                        onChange={(e) => handleChange('onDemandTriennially', e.target.value)}
+                        className="w-full p-1.5 border border-[#ccc] rounded bg-white text-[12px] text-center"
+                      />
+                    </div>
+                  </div>
+                  <div className="text-[11px] text-[#777]">
+                    The period (in days) during which clients can place early renewal orders before the service&apos;s due date.
+                  </div>
+
+                  {/* Undefined Addons Policy */}
+                  <div className="pt-2 text-[11px] text-[#444] space-y-1">
+                    <div className="font-semibold text-[#555]">
+                      Select the On-Demand Renewals configuration to use for undefined product addons:
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 pt-0.5">
+                      <label className="flex items-center space-x-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="undef_addons"
+                          checked={formData.undefinedAddonsRenewals === 'global'}
+                          onChange={() => handleChange('undefinedAddonsRenewals', 'global')}
+                          className="text-[#1A4D80]"
+                        />
+                        <span>Use Global Settings</span>
+                      </label>
+                      <label className="flex items-center space-x-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="undef_addons"
+                          checked={formData.undefinedAddonsRenewals === 'parent'}
+                          onChange={() => handleChange('undefinedAddonsRenewals', 'parent')}
+                          className="text-[#1A4D80]"
+                        />
+                        <span>Use Parent Product Settings</span>
+                      </label>
+                      <label className="flex items-center space-x-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="undef_addons"
+                          checked={formData.undefinedAddonsRenewals === 'disabled'}
+                          onChange={() => handleChange('undefinedAddonsRenewals', 'disabled')}
+                          className="text-[#1A4D80]"
+                        />
+                        <span>Disabled</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sidebar Toggle Option */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Sidebar Toggle Option</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="sidebar_toggle"
+                    checked={formData.sidebarToggleOption}
+                    onChange={(e) => handleChange('sidebarToggleOption', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="sidebar_toggle" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable the display of a sidebar toggle button on Order Form Product Selection Pages
+                  </label>
+                </div>
+              </div>
+
+              {/* Enable TOS Acceptance */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Terms of Service URL</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Enable TOS Acceptance</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="tos_accept"
+                    checked={formData.enableTosAcceptance}
+                    onChange={(e) => handleChange('enableTosAcceptance', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="tos_accept" className="text-[12px] text-[#444] cursor-pointer">
+                    If ticked, clients must agree to your Terms of Service
+                  </label>
+                </div>
+              </div>
+
+              {/* Terms of Service URL */}
+              <div className="flex flex-col sm:flex-row items-start gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1.5">Terms of Service URL</label>
                 <div className="flex-1">
                   <input
                     type="text"
-                    value={formData.tosUrl}
-                    onChange={(e) => handleChange('tosUrl', e.target.value)}
-                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    value={formData.termsOfServiceUrl}
+                    onChange={(e) => handleChange('termsOfServiceUrl', e.target.value)}
+                    placeholder=""
+                    className="w-full max-w-xl p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   />
+                  <div className="text-[11px] text-[#777] mt-1">
+                    The URL to your Terms of Service page on your site (eg. http://www.example.com/tos.html)
+                  </div>
                 </div>
               </div>
 
+              {/* Auto Redirect on Checkout */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-1 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">
+                  Auto Redirect on Checkout
+                </label>
+                <div className="flex-1 space-y-1.5 text-[12px]">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="auto_redirect_checkout"
+                      checked={formData.autoRedirectOnCheckout === 'completed'}
+                      onChange={() => handleChange('autoRedirectOnCheckout', 'completed')}
+                      className="text-[#1A4D80]"
+                    />
+                    <span>Just show the order completed page (no payment redirect)</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="auto_redirect_checkout"
+                      checked={formData.autoRedirectOnCheckout === 'invoice'}
+                      onChange={() => handleChange('autoRedirectOnCheckout', 'invoice')}
+                      className="text-[#1A4D80]"
+                    />
+                    <span>Automatically take the user to the invoice</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="auto_redirect_checkout"
+                      checked={formData.autoRedirectOnCheckout === 'gateway'}
+                      onChange={() => handleChange('autoRedirectOnCheckout', 'gateway')}
+                      className="text-[#1A4D80]"
+                    />
+                    <span>Automatically forward the user to the payment gateway</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Allow Notes on Checkout */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-1 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Allow Notes on Checkout</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="notes_checkout"
+                    checked={formData.allowNotesOnCheckout}
+                    onChange={(e) => handleChange('allowNotesOnCheckout', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="notes_checkout" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to show a field on the order form where the customer can enter additional info for staff
+                  </label>
+                </div>
+              </div>
+
+              {/* Monthly Pricing Breakdown */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Auto Redirect on Checkout</label>
-                <div className="flex-1">
-                  <select
-                    value={formData.autoRedirectInvoice}
-                    onChange={(e) => handleChange('autoRedirectInvoice', e.target.value)}
-                    className="p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
-                  >
-                    <option value="gateway">Automatically forward to Payment Gateway</option>
-                    <option value="invoice">Display Invoice</option>
-                  </select>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Monthly Pricing Breakdown</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="monthly_breakdown"
+                    checked={formData.monthlyPricingBreakdown}
+                    onChange={(e) => handleChange('monthlyPricingBreakdown', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="monthly_breakdown" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable monthly pricing breakdown for recurring terms on the order form
+                  </label>
+                </div>
+              </div>
+
+              {/* Block Existing Domains */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Block Existing Domains</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="block_existing_doms"
+                    checked={formData.blockExistingDomains}
+                    onChange={(e) => handleChange('blockExistingDomains', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="block_existing_doms" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to prevent orders being placed for domains already in your system
+                  </label>
+                </div>
+              </div>
+
+              {/* No Invoice Email on Order */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">No Invoice Email on Order</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="no_inv_order"
+                    checked={formData.noInvoiceEmailOnOrder}
+                    onChange={(e) => handleChange('noInvoiceEmailOnOrder', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="no_inv_order" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to not send an invoice created notice when new orders are placed
+                  </label>
+                </div>
+              </div>
+
+              {/* Skip Fraud Check for Existing */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Skip Fraud Check for Existing</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="skip_fraud"
+                    checked={formData.skipFraudCheckForExisting}
+                    onChange={(e) => handleChange('skipFraudCheckForExisting', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="skip_fraud" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to skip the fraud check for existing clients who already have an active order
+                  </label>
+                </div>
+              </div>
+
+              {/* Only Auto Provision for Existing */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Only Auto Provision for Existing</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="auto_prov_exist"
+                    checked={formData.onlyAutoProvisionForExisting}
+                    onChange={(e) => handleChange('onlyAutoProvisionForExisting', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="auto_prov_exist" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to always leave orders by new clients pending for manual review (no auto setup/registration)
+                  </label>
+                </div>
+              </div>
+
+              {/* Enable Random Usernames */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Enable Random Usernames</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="rnd_user"
+                    checked={formData.enableRandomUsernames}
+                    onChange={(e) => handleChange('enableRandomUsernames', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="rnd_user" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to generate random usernames for services rather than use the first 8 letters of the domain
+                  </label>
+                </div>
+              </div>
+
+              {/* Signup Anniversary Prorata */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Signup Anniversary Prorata</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="anniv_prorata"
+                    checked={formData.signupAnniversaryProrata}
+                    onChange={(e) => handleChange('signupAnniversaryProrata', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="anniv_prorata" className="text-[12px] text-[#444] cursor-pointer">
+                    Prorata products to the clients signup anniversary date if prorata is enabled (ie. all items due on the same date per client)
+                  </label>
+                </div>
+              </div>
+
+              {/* Enable Product Cross-selling */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-1 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Enable Product Cross-selling</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="enable_cross"
+                    checked={formData.enableProductCrossSelling}
+                    onChange={(e) => handleChange('enableProductCrossSelling', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="enable_cross" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to display product cross-sells in the shopping cart
+                  </label>
+                </div>
+              </div>
+
+              {/* Product Cross-sell Locations */}
+              <div className="flex flex-col sm:flex-row items-start gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">Product Cross-sell Locations</label>
+                <div className="flex-1 space-y-1 text-[12px]">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.crossSellLocAddProduct}
+                      onChange={(e) => handleChange('crossSellLocAddProduct', e.target.checked)}
+                      className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                    />
+                    <span>Display when adding a product to the cart</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.crossSellLocReviewCheckout}
+                      onChange={(e) => handleChange('crossSellLocReviewCheckout', e.target.checked)}
+                      className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                    />
+                    <span>Display on the Review & Checkout page</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.crossSellLocCheckout}
+                      onChange={(e) => handleChange('crossSellLocCheckout', e.target.checked)}
+                      className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                    />
+                    <span>Display on the Checkout page</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.crossSellLocOrderConfirm}
+                      onChange={(e) => handleChange('crossSellLocOrderConfirm', e.target.checked)}
+                      className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                    />
+                    <span>Display on the Order Confirmation page</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Number of Cross-sells */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Number of Cross-sells</label>
+                <div className="flex-1 flex flex-wrap items-center gap-3">
+                  <input
+                    type="number"
+                    value={formData.numberOfCrossSells}
+                    onChange={(e) => handleChange('numberOfCrossSells', e.target.value)}
+                    className="w-20 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[11px] text-[#777]">The number of cross-sells to display to a customer within the shopping cart experience</span>
+                </div>
+              </div>
+
+              {/* Recommend Existing Services on Order Confirmation */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Recommend Existing Services
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="rec_existing"
+                    checked={formData.recommendExistingServices}
+                    onChange={(e) => handleChange('recommendExistingServices', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="rec_existing" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to provide logged-in customers with product cross-sells for previously-purchased services on the Order Confirmation page
+                  </label>
+                </div>
+              </div>
+
+              {/* Product Cross-sell Style */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Product Cross-sell Style</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="cross_style"
+                    checked={formData.productCrossSellStyle}
+                    onChange={(e) => handleChange('productCrossSellStyle', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="cross_style" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to provide customers with an explanation of why specific cross-sells are presented
+                  </label>
                 </div>
               </div>
             </div>
