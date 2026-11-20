@@ -30,6 +30,8 @@ import {
   Clock,
   Shuffle,
   Filter,
+  X,
+  AlertTriangle,
 } from 'lucide-react';
 
 export default function AdminSettingsPage() {
@@ -43,19 +45,42 @@ export default function AdminSettingsPage() {
 function AdminSettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialSubtab = searchParams.get('subtab') || 'general';
-  const initialTab = searchParams.get('tab') || 'general';
+  const initialSubtab = searchParams.get('subtab') || searchParams.get('tab') || 'general';
 
   const [activeSubtab, setActiveSubtab] = useState(initialSubtab);
   const [savedToast, setSavedToast] = useState(false);
+  const [showOpCacheAlert, setShowOpCacheAlert] = useState(true);
 
+  // Sync with URL parameters or hash
   useEffect(() => {
-    const sub = searchParams.get('subtab');
-    if (sub) setActiveSubtab(sub);
+    const handleHashOrParam = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash.includes('localisation')) setActiveSubtab('localisation');
+      else if (hash.includes('ordering')) setActiveSubtab('ordering');
+      else if (hash.includes('domains')) setActiveSubtab('domains');
+      else if (hash.includes('mail')) setActiveSubtab('mail');
+      else if (hash.includes('support')) setActiveSubtab('support');
+      else if (hash.includes('invoices')) setActiveSubtab('invoices');
+      else if (hash.includes('credit')) setActiveSubtab('credit');
+      else if (hash.includes('affiliates')) setActiveSubtab('affiliates');
+      else if (hash.includes('security')) setActiveSubtab('security');
+      else if (hash.includes('social')) setActiveSubtab('social');
+      else if (hash.includes('other')) setActiveSubtab('other');
+      else if (hash.includes('general')) setActiveSubtab('general');
+      else {
+        const sub = searchParams.get('subtab');
+        if (sub) setActiveSubtab(sub);
+      }
+    };
+
+    handleHashOrParam();
+    window.addEventListener('hashchange', handleHashOrParam);
+    return () => window.removeEventListener('hashchange', handleHashOrParam);
   }, [searchParams]);
 
   // Form state initialized with exact WHMCS live database values
   const [formData, setFormData] = useState({
+    // General Tab
     companyName: 'SoftCents Systems',
     emailAddress: 'no-reply@softcents.com',
     domain: 'http://billing.softcents.com',
@@ -69,11 +94,16 @@ function AdminSettingsContent() {
     maintenanceModeMessage: 'We are currently performing maintenance and will be back shortly.',
     maintenanceModeRedirectUrl: '',
 
-    // Localisation
-    dateFormat: 'DD/MM/YYYY',
-    timezone: 'Asia/Dhaka',
-    defaultCountry: 'BD',
-    defaultLanguage: 'english',
+    // Localisation Tab (1:1 from screenshot https://prnt.sc/JQOW3851MaWY)
+    systemCharset: 'utf-8',
+    globalDateFormat: 'DD/MM/YYYY',
+    clientDateFormat: 'Use Global Date Format',
+    defaultCountry: 'Bangladesh',
+    defaultLanguage: 'English',
+    enableLanguageMenu: true,
+    dynamicFieldTranslations: false,
+    removeExtendedUtf8: true,
+    phoneNumbersDropdown: true,
 
     // Ordering
     orderTemplate: 'standard_cart',
@@ -86,12 +116,12 @@ function AdminSettingsContent() {
     bulkDomainSearch: true,
 
     // Mail
-    mailProvider: 'SMTP',
-    smtpHost: 'smtp-relay.brevo.com',
-    smtpPort: '587',
-    smtpUsername: '76ccb8a5001@smtp-brevo.com',
+    mailProvider: 'mail',
+    smtpHost: 'mail.softcents.com',
+    smtpPort: '25',
+    smtpUsername: 'no-reply@softcents.com',
     smtpPassword: '••••••••••••••••',
-    smtpSsl: 'tls',
+    smtpSsl: 'ssl',
 
     // Support
     ticketMask: '%A%A%A-%n%n%n%n%n%n',
@@ -99,8 +129,8 @@ function AdminSettingsContent() {
     ticketRating: true,
 
     // Invoices
-    invoiceGenDays: '14',
-    dueReminderDays: '3',
+    invoiceGenDays: '10',
+    dueReminderDays: '7',
     lateFeeDays: '4',
 
     // Credit
@@ -418,6 +448,29 @@ function AdminSettingsContent() {
       {/* 2. MAIN CONTENT AREA (EXACT TO SCREENSHOT)              */}
       {/* ======================================================== */}
       <main className="flex-1 min-w-0 bg-white border border-[#ccc] rounded shadow-sm p-4 text-[12px]">
+        {/* OPCache PHP Extension Alert (as seen in screenshot) */}
+        {showOpCacheAlert && (
+          <div className="mb-4 bg-[#fff3cd] border border-[#ffeeba] text-[#856404] px-3.5 py-2.5 rounded text-[11px] flex items-center justify-between shadow-sm">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="w-4 h-4 text-[#856404] shrink-0" />
+              <span>
+                <strong>The OPCache PHP extension is enabled.</strong> This extension can cause problems with cached data use and PHP script execution in WHMCS. We recommend disabling OPCache.{' '}
+                <a href="https://docs.whmcs.com" target="_blank" rel="noreferrer" className="underline font-semibold hover:text-[#533f03]">
+                  Learn More.
+                </a>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowOpCacheAlert(false)}
+              className="text-[#856404] hover:text-black p-0.5"
+              title="Dismiss"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Title */}
         <h1 className="text-xl font-normal text-[#333] mb-3">General Settings</h1>
 
@@ -428,7 +481,7 @@ function AdminSettingsContent() {
               key={tab.id}
               onClick={() => {
                 setActiveSubtab(tab.id);
-                router.replace(`/admin/settings?tab=general&subtab=${tab.id}`, { scroll: false });
+                router.replace(`/admin/settings?tab=general&subtab=${tab.id}#tab${tab.label}`, { scroll: false });
               }}
               className={`px-3 py-1.5 border-t border-l border-r rounded-t transition-colors ${
                 activeSubtab === tab.id
@@ -443,12 +496,12 @@ function AdminSettingsContent() {
 
         {/* Form Container */}
         <form onSubmit={handleSave} className="space-y-4">
-          {/* TAB 1: GENERAL (SCREENSHOT 1:1) */}
+          {/* TAB 1: GENERAL (SCREENSHOT 1) */}
           {activeSubtab === 'general' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
               {/* Company Name */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Company Name</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Company Name</label>
                 <div className="flex-1 flex flex-wrap items-center gap-3">
                   <input
                     type="text"
@@ -462,7 +515,7 @@ function AdminSettingsContent() {
 
               {/* Email Address */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Email Address</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Email Address</label>
                 <div className="flex-1 flex flex-wrap items-center gap-3">
                   <input
                     type="email"
@@ -476,7 +529,7 @@ function AdminSettingsContent() {
 
               {/* Domain */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Domain</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Domain</label>
                 <div className="flex-1 flex flex-wrap items-center gap-3">
                   <input
                     type="text"
@@ -490,7 +543,7 @@ function AdminSettingsContent() {
 
               {/* Logo URL */}
               <div className="flex flex-col sm:flex-row items-start gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1.5">Logo URL</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1.5">Logo URL</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -506,7 +559,7 @@ function AdminSettingsContent() {
 
               {/* Pay To Text */}
               <div className="flex flex-col sm:flex-row items-start gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1.5">Pay To Text</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1.5">Pay To Text</label>
                 <div className="flex-1">
                   <textarea
                     rows={4}
@@ -522,7 +575,7 @@ function AdminSettingsContent() {
 
               {/* WHMCS System URL */}
               <div className="flex flex-col sm:flex-row items-start gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1.5">WHMCS System URL</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1.5">WHMCS System URL</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -538,7 +591,7 @@ function AdminSettingsContent() {
 
               {/* System Theme */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">System Theme</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">System Theme</label>
                 <div className="flex-1 flex flex-wrap items-center gap-3">
                   <select
                     value={formData.systemTheme}
@@ -555,7 +608,7 @@ function AdminSettingsContent() {
 
               {/* Limit Activity Log */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Limit Activity Log</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Limit Activity Log</label>
                 <div className="flex-1 flex flex-wrap items-center gap-3">
                   <input
                     type="number"
@@ -569,7 +622,7 @@ function AdminSettingsContent() {
 
               {/* Records to Display per Page */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Records to Display per Page</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Records to Display per Page</label>
                 <div className="flex-1">
                   <select
                     value={formData.recordsPerPage}
@@ -587,7 +640,7 @@ function AdminSettingsContent() {
 
               {/* Maintenance Mode */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Maintenance Mode</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Maintenance Mode</label>
                 <div className="flex-1 flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -604,7 +657,7 @@ function AdminSettingsContent() {
 
               {/* Maintenance Mode Message */}
               <div className="flex flex-col sm:flex-row items-start gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1.5">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1.5">
                   Maintenance Mode Message
                 </label>
                 <div className="flex-1">
@@ -619,7 +672,7 @@ function AdminSettingsContent() {
 
               {/* Maintenance Mode Redirect URL */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
                   Maintenance Mode Redirect URL
                 </label>
                 <div className="flex-1 flex flex-wrap items-center gap-3">
@@ -627,7 +680,7 @@ function AdminSettingsContent() {
                     type="text"
                     value={formData.maintenanceModeRedirectUrl}
                     onChange={(e) => handleChange('maintenanceModeRedirectUrl', e.target.value)}
-                    placeholder="https://"
+                    placeholder=""
                     className="w-full sm:w-[320px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   />
                   <span className="text-[11px] text-[#777]">
@@ -638,63 +691,160 @@ function AdminSettingsContent() {
             </div>
           )}
 
-          {/* TAB 2: LOCALISATION */}
+          {/* TAB 2: LOCALISATION (EXACT 1:1 TO SCREENSHOT https://prnt.sc/JQOW3851MaWY) */}
           {activeSubtab === 'localisation' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
+              {/* System Charset */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Date Format</label>
-                <div className="flex-1">
-                  <select
-                    value={formData.dateFormat}
-                    onChange={(e) => handleChange('dateFormat', e.target.value)}
-                    className="p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
-                  >
-                    <option value="DD/MM/YYYY">DD/MM/YYYY (e.g. 20/11/2026)</option>
-                    <option value="YYYY-MM-DD">YYYY-MM-DD (e.g. 2026-11-20)</option>
-                    <option value="MM/DD/YYYY">MM/DD/YYYY (e.g. 11/20/2026)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Timezone</label>
-                <div className="flex-1">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">System Charset</label>
+                <div className="flex-1 flex flex-wrap items-center gap-3">
                   <input
                     type="text"
-                    value={formData.timezone}
-                    onChange={(e) => handleChange('timezone', e.target.value)}
-                    className="w-64 p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    value={formData.systemCharset}
+                    onChange={(e) => handleChange('systemCharset', e.target.value)}
+                    className="w-[180px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   />
-                  <span className="text-[11px] text-[#777] ml-2">Default: Asia/Dhaka (+06:00)</span>
+                  <span className="text-[11px] text-[#777]">Default: utf-8</span>
                 </div>
               </div>
 
+              {/* Global Date Format */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Default Country</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Global Date Format</label>
+                <div className="flex-1 flex flex-wrap items-center gap-3">
+                  <select
+                    value={formData.globalDateFormat}
+                    onChange={(e) => handleChange('globalDateFormat', e.target.value)}
+                    className="w-[180px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  >
+                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                    <option value="DD.MM.YYYY">DD.MM.YYYY</option>
+                    <option value="DD-MM-YYYY">DD-MM-YYYY</option>
+                  </select>
+                  <span className="text-[11px] text-[#777]">Choose numeric display format</span>
+                </div>
+              </div>
+
+              {/* Client Date Format */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Client Date Format</label>
+                <div className="flex-1 flex flex-wrap items-center gap-3">
+                  <select
+                    value={formData.clientDateFormat}
+                    onChange={(e) => handleChange('clientDateFormat', e.target.value)}
+                    className="w-[200px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  >
+                    <option value="Use Global Date Format">Use Global Date Format</option>
+                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                    <option value="Full Date">Full Date (e.g. 20th November 2026)</option>
+                  </select>
+                  <span className="text-[11px] text-[#777]">Choose display style for clients (can be text based)</span>
+                </div>
+              </div>
+
+              {/* Default Country */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Default Country</label>
                 <div className="flex-1">
                   <select
                     value={formData.defaultCountry}
                     onChange={(e) => handleChange('defaultCountry', e.target.value)}
-                    className="p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    className="w-[240px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   >
-                    <option value="BD">Bangladesh (BD)</option>
-                    <option value="US">United States (US)</option>
-                    <option value="GB">United Kingdom (GB)</option>
+                    <option value="Bangladesh">Bangladesh</option>
+                    <option value="United States">United States</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="India">India</option>
+                    <option value="Canada">Canada</option>
                   </select>
                 </div>
               </div>
 
+              {/* Default Language */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Default Language</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Default Language</label>
                 <div className="flex-1">
                   <select
                     value={formData.defaultLanguage}
                     onChange={(e) => handleChange('defaultLanguage', e.target.value)}
-                    className="p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    className="w-[180px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   >
-                    <option value="english">English</option>
-                    <option value="bengali">Bengali</option>
+                    <option value="English">English</option>
+                    <option value="Bengali">Bengali</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Enable Language Menu */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Enable Language Menu</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="enable_lang"
+                    checked={formData.enableLanguageMenu}
+                    onChange={(e) => handleChange('enableLanguageMenu', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="enable_lang" className="text-[12px] text-[#444] cursor-pointer">
+                    Allow users to change the language of the system
+                  </label>
+                </div>
+              </div>
+
+              {/* Dynamic Field Translations */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Dynamic Field Translations</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="dynamic_trans"
+                    checked={formData.dynamicFieldTranslations}
+                    onChange={(e) => handleChange('dynamicFieldTranslations', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="dynamic_trans" className="text-[12px] text-[#444] cursor-pointer">
+                    Enable localisation of supported database field values to multiple languages
+                  </label>
+                </div>
+              </div>
+
+              {/* Remove Extended UTF-8 Characters */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Remove Extended UTF-8 Characters
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="remove_utf8"
+                    checked={formData.removeExtendedUtf8}
+                    onChange={(e) => handleChange('removeExtendedUtf8', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="remove_utf8" className="text-[12px] text-[#444] cursor-pointer">
+                    Automatically remove 4 byte UTF-8 characters such as emoticons from customer ticket posts and emails
+                  </label>
+                </div>
+              </div>
+
+              {/* Phone Numbers */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Phone Numbers</label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="phone_numbers"
+                    checked={formData.phoneNumbersDropdown}
+                    onChange={(e) => handleChange('phoneNumbersDropdown', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="phone_numbers" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable international phone number input interface and automatic formatting
+                  </label>
                 </div>
               </div>
             </div>
@@ -704,12 +854,12 @@ function AdminSettingsContent() {
           {activeSubtab === 'ordering' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Default Order Template</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Default Order Template</label>
                 <div className="flex-1">
                   <select
                     value={formData.orderTemplate}
                     onChange={(e) => handleChange('orderTemplate', e.target.value)}
-                    className="p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    className="w-[200px] p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
                   >
                     <option value="standard_cart">standard_cart</option>
                     <option value="boxes">boxes</option>
@@ -719,7 +869,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Terms of Service URL</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Terms of Service URL</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -731,7 +881,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Auto Redirect on Checkout</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Auto Redirect on Checkout</label>
                 <div className="flex-1">
                   <select
                     value={formData.autoRedirectInvoice}
@@ -794,21 +944,21 @@ function AdminSettingsContent() {
           {activeSubtab === 'mail' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Mail Provider</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Mail Provider</label>
                 <div className="flex-1">
                   <select
                     value={formData.mailProvider}
                     onChange={(e) => handleChange('mailProvider', e.target.value)}
                     className="p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
                   >
-                    <option value="SMTP">SMTP (Brevo / SendGrid / Custom)</option>
                     <option value="mail">PHP mail()</option>
+                    <option value="SMTP">SMTP (mail.softcents.com / Brevo / SendGrid)</option>
                   </select>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">SMTP Host</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">SMTP Host</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -820,7 +970,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">SMTP Port</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">SMTP Port</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -832,7 +982,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">SMTP Username</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">SMTP Username</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -849,7 +999,7 @@ function AdminSettingsContent() {
           {activeSubtab === 'support' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Ticket Mask</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Ticket Mask</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -862,7 +1012,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Allowed File Types</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Allowed File Types</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -879,7 +1029,7 @@ function AdminSettingsContent() {
           {activeSubtab === 'invoices' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Invoice Generation Days</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Invoice Generation Days</label>
                 <div className="flex-1">
                   <input
                     type="number"
@@ -892,7 +1042,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Payment Due Reminder</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Payment Due Reminder</label>
                 <div className="flex-1">
                   <input
                     type="number"
@@ -905,7 +1055,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Add Late Fee Days</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Add Late Fee Days</label>
                 <div className="flex-1">
                   <input
                     type="number"
@@ -936,7 +1086,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Minimum Deposit</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Minimum Deposit</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -949,7 +1099,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Maximum Deposit</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Maximum Deposit</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -980,7 +1130,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Affiliate Payout Amount</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Affiliate Payout Amount</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -1024,7 +1174,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Session Timeout (minutes)</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Session Timeout (minutes)</label>
                 <div className="flex-1">
                   <input
                     type="number"
@@ -1041,7 +1191,7 @@ function AdminSettingsContent() {
           {activeSubtab === 'social' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Facebook URL</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Facebook URL</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -1053,7 +1203,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">Twitter / X URL</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Twitter / X URL</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -1065,7 +1215,7 @@ function AdminSettingsContent() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-56 shrink-0 font-bold text-[#444] text-right sm:pr-4">LinkedIn URL</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">LinkedIn URL</label>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -1087,19 +1237,18 @@ function AdminSettingsContent() {
             </div>
           )}
 
-          {/* Bottom Save Action Bar */}
-          <div className="pt-3 border-t border-[#e5e5e5] flex items-center space-x-3">
+          {/* Bottom Action Bar (EXACT TO SCREENSHOT) */}
+          <div className="pt-3 border-t border-[#e5e5e5] flex items-center space-x-2">
             <button
               type="submit"
-              className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-5 py-2 rounded text-xs font-bold shadow-sm transition-colors flex items-center space-x-1.5"
+              className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-4 py-1.5 rounded text-xs font-semibold shadow-sm transition-colors flex items-center space-x-1.5"
             >
-              <Save className="w-3.5 h-3.5" />
               <span>Save Changes</span>
             </button>
             <button
               type="button"
               onClick={() => router.refresh()}
-              className="bg-[#e0e0e0] hover:bg-[#d0d0d0] text-[#333] px-4 py-2 rounded text-xs font-semibold transition-colors"
+              className="bg-white hover:bg-[#f5f5f5] text-[#333] border border-[#ccc] px-4 py-1.5 rounded text-xs font-normal transition-colors"
             >
               Cancel Changes
             </button>
