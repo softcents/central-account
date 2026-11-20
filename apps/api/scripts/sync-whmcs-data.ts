@@ -8,7 +8,8 @@ const prisma = new PrismaClient();
 const SSH_CMD = "sshpass -p '#@Raju1' ssh -o StrictHostKeyChecking=no root@billing.softcents.com";
 
 function queryTsv(query: string): any[] {
-  const fullCmd = `${SSH_CMD} "mysql -u billing_softcents -pbilling_softcents billing_softcents -e \\"${query.replace(/"/g, '\\"')}\\" -B"`;
+  const sanitizedQuery = query.replace(/"/g, '\\"').replace(/`/g, '\\`');
+  const fullCmd = `${SSH_CMD} "mysql -u billing_softcents -pbilling_softcents billing_softcents -e \\"${sanitizedQuery}\\" -B"`;
   const output = execSync(fullCmd, { maxBuffer: 30 * 1024 * 1024, encoding: 'utf-8' });
   const lines = output.trim().split('\n');
   if (lines.length < 2) return [];
@@ -271,10 +272,43 @@ async function main() {
     FROM tblaccounts a;
   `);
 
+  const productGroups = queryTsv(`
+    SELECT id, name, slug, headline, tagline, hidden, tblproductgroups.order
+    FROM tblproductgroups
+    ORDER BY tblproductgroups.order, id;
+  `);
+
   const products = queryTsv(`
-    SELECT p.id, p.gid, g.name as group_name, p.name as product_name, p.type, p.description, p.paytype
+    SELECT 
+      p.id, 
+      p.gid, 
+      g.name as group_name,
+      g.slug as group_slug,
+      g.headline as group_headline,
+      g.tagline as group_tagline,
+      g.hidden as group_hidden,
+      g.order as group_order,
+      p.name as product_name, 
+      p.type, 
+      p.description, 
+      p.paytype,
+      p.retired,
+      p.hidden as product_hidden,
+      p.order as product_order,
+      pr.msetupfee,
+      pr.qsetupfee,
+      pr.ssetupfee,
+      pr.asetupfee,
+      pr.monthly, 
+      pr.quarterly, 
+      pr.semiannually, 
+      pr.annually, 
+      pr.biennially, 
+      pr.triennially
     FROM tblproducts p
-    LEFT JOIN tblproductgroups g ON p.gid = g.id;
+    LEFT JOIN tblproductgroups g ON p.gid = g.id
+    LEFT JOIN tblpricing pr ON pr.relid = p.id AND pr.type = 'product'
+    ORDER BY g.order, g.id, p.order, p.id;
   `);
 
   const servers = queryTsv(`
@@ -375,6 +409,7 @@ async function main() {
       ...t,
       clientName: clientMap[t.userid] || `Client #${t.userid}`,
     })),
+    productGroups,
     products,
   };
 

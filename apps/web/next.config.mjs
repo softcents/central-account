@@ -29,6 +29,14 @@ const nextConfig = {
         destination: '/cart',
       },
       {
+        source: '/store',
+        destination: '/cart',
+      },
+      {
+        source: '/store/:slug*',
+        destination: '/cart?group=:slug*',
+      },
+      {
         source: '/login.php',
         destination: '/login',
       },
