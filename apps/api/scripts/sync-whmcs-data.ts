@@ -226,10 +226,29 @@ async function main() {
   // 5. Fetch Services, Domains, Orders, Invoice Items, Transactions, Products, Servers, Addons
   console.log('--> Fetching full services, domains, orders, transactions, and product catalog...');
   const services = queryTsv(`
-    SELECT h.id, h.userid, p.name as package, h.domain, h.username, h.amount, h.billingcycle, h.nextduedate, h.regdate, h.domainstatus, s.name as server_name, s.ipaddress as server_ip
+    SELECT 
+      h.id, 
+      h.userid, 
+      h.orderid,
+      h.packageid,
+      g.id as group_id,
+      g.name as group_name, 
+      p.name as product_name, 
+      CONCAT(IFNULL(g.name, ''), IF(g.name IS NOT NULL AND p.name IS NOT NULL, ' - ', ''), IFNULL(p.name, '')) as package,
+      h.domain, 
+      h.username, 
+      h.amount, 
+      h.billingcycle, 
+      h.nextduedate, 
+      h.regdate, 
+      h.domainstatus, 
+      s.name as server_name, 
+      s.ipaddress as server_ip
     FROM tblhosting h
     LEFT JOIN tblproducts p ON h.packageid = p.id
-    LEFT JOIN tblservers s ON h.server = s.id;
+    LEFT JOIN tblproductgroups g ON p.gid = g.id
+    LEFT JOIN tblservers s ON h.server = s.id
+    ORDER BY h.regdate DESC, h.id DESC;
   `);
 
   const domains = queryTsv(`

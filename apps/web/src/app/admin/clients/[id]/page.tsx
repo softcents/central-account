@@ -640,13 +640,25 @@ export default function ClientSummaryPage() {
                   Active Subscriptions
                 </div>
                 <div className="p-2 space-y-2 text-xs">
-                  {clientServices.slice(0, 3).map((srv) => (
+                  {clientServices.slice(0, 5).map((srv) => (
                     <div key={srv.id} className="p-2 rounded bg-slate-50 border border-slate-100 flex items-center justify-between">
                       <div>
-                        <div className="font-semibold text-slate-800">{srv.package || 'Service'}</div>
-                        <div className="text-[11px] text-slate-500">{srv.domain || 'No domain'}</div>
+                        <div className="font-semibold text-slate-800">{srv.product_name || srv.package || 'Service'}</div>
+                        <div className="text-[11px] text-slate-500 flex items-center space-x-1 mt-0.5">
+                          <span>{srv.domain || 'No domain'}</span>
+                          {srv.regdate && (
+                            <>
+                              <span>•</span>
+                              <span className="text-[#1A4D80] font-mono">
+                                Activated: {srv.regdate_display || srv.regdate}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                        srv.domainstatus === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                      }`}>
                         {srv.domainstatus || 'Active'}
                       </span>
                     </div>
@@ -757,11 +769,12 @@ export default function ClientSummaryPage() {
                     <th className="py-2.5 px-3">Service ID</th>
                     <th className="py-2.5 px-3">Product / Package</th>
                     <th className="py-2.5 px-3">Domain / Extension</th>
+                    <th className="py-2.5 px-3 text-center">Activation Date</th>
                     <th className="py-2.5 px-3">Billing Cycle</th>
                     <th className="py-2.5 px-3">Amount</th>
                     <th className="py-2.5 px-3">Next Due Date</th>
                     <th className="py-2.5 px-3">Server Node</th>
-                    <th className="py-2.5 px-3">Status</th>
+                    <th className="py-2.5 px-3 text-center">Status</th>
                     <th className="py-2.5 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -769,13 +782,19 @@ export default function ClientSummaryPage() {
                   {clientServices.map((srv) => (
                     <tr key={srv.id} className="hover:bg-slate-50">
                       <td className="py-2.5 px-3 font-mono font-semibold text-[#1A4D80]">#{srv.id}</td>
-                      <td className="py-2.5 px-3 font-semibold text-slate-900">{srv.package || 'Custom Plan'}</td>
+                      <td className="py-2.5 px-3">
+                        <div className="font-semibold text-slate-900">{srv.product_name || srv.package || 'Custom Plan'}</div>
+                        {srv.group_name && <div className="text-[10px] text-slate-500 font-medium">{srv.group_name}</div>}
+                      </td>
                       <td className="py-2.5 px-3 font-mono text-slate-600">{srv.domain || srv.username || '-'}</td>
+                      <td className="py-2.5 px-3 font-mono text-[#1A4D80] font-medium text-center bg-slate-50/50">
+                        {srv.regdate_display || srv.date_activated || srv.regdate || '-'}
+                      </td>
                       <td className="py-2.5 px-3">{srv.billingcycle || 'Monthly'}</td>
                       <td className="py-2.5 px-3 font-semibold">৳{parseFloat(srv.amount || '0').toFixed(2)}</td>
-                      <td className="py-2.5 px-3 text-slate-600">{srv.nextduedate || '-'}</td>
+                      <td className="py-2.5 px-3 text-slate-600 font-mono">{srv.nextduedate_display || srv.nextduedate || '-'}</td>
                       <td className="py-2.5 px-3 text-slate-600">{srv.server_name || 'srv8 cPanel'}</td>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2.5 px-3 text-center">
                         <span
                           className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                             srv.domainstatus === 'Active'
@@ -789,7 +808,7 @@ export default function ClientSummaryPage() {
                         </span>
                       </td>
                       <td className="py-2.5 px-3 text-right">
-                        <button className="bg-[#1A4D80] text-white px-2 py-1 rounded text-[11px] hover:bg-[#143d66]">
+                        <button className="bg-[#1A4D80] text-white px-2.5 py-1 rounded text-[11px] hover:bg-[#143d66]">
                           Manage
                         </button>
                       </td>
