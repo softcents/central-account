@@ -138,10 +138,36 @@ function AdminSettingsContent() {
     recommendExistingServices: false,
     productCrossSellStyle: false,
 
-    // Domains
-    domainRegEnabled: true,
-    domainRenewEnabled: true,
-    bulkDomainSearch: true,
+    // Domains Tab (1:1 from screenshot https://prnt.sc/7TA2qdZZ83jl)
+    allowClientRegister: true,
+    allowTransfer: true,
+    allowOwnDomain: true,
+    enableRenewalOrders: true,
+    autoRenewOnPayment: true,
+    autoRenewRequiresProduct: true,
+    defaultAutoRenewalSetting: true,
+    createToDoListEntries: true,
+    allowIdnDomains: false,
+    domainGraceAndRedemptionFees: 'enabled',
+    domainGraceAndRedemptionFeeBilling: 'existing',
+    defaultNameserver1: 'ns12.softcents.com',
+    defaultNameserver2: 'ns13.softcents.com',
+    defaultNameserver3: '',
+    defaultNameserver4: '',
+    defaultNameserver5: '',
+    useClientsDetails: true,
+    contactFirstName: '',
+    contactLastName: '',
+    contactCompanyName: '',
+    contactEmailAddress: '',
+    contactAddress1: '',
+    contactAddress2: '',
+    contactCity: '',
+    contactStateRegion: '',
+    contactPostcode: '',
+    contactCountry: 'Bangladesh',
+    contactPhoneNumber: '',
+    contactPhoneCountryCode: '+880',
 
     // Mail
     mailProvider: 'mail',
@@ -1493,46 +1519,490 @@ function AdminSettingsContent() {
             </div>
           )}
 
-          {/* TAB 4: DOMAINS */}
+          {/* TAB 4: DOMAINS (EXACT 1:1 TO SCREENSHOT https://prnt.sc/7TA2qdZZ83jl) */}
           {activeSubtab === 'domains' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="dom_reg"
-                  checked={formData.domainRegEnabled}
-                  onChange={(e) => handleChange('domainRegEnabled', e.target.checked)}
-                  className="w-4 h-4 text-[#1A4D80]"
-                />
-                <label htmlFor="dom_reg" className="font-semibold text-[#444] cursor-pointer">
-                  Allow Client Domain Registration
+              {/* Domain Registration Options */}
+              <div className="flex flex-col sm:flex-row items-start gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-0.5">
+                  Domain Registration Options
                 </label>
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="allow_register"
+                      checked={formData.allowClientRegister}
+                      onChange={(e) => handleChange('allowClientRegister', e.target.checked)}
+                      className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                    />
+                    <label htmlFor="allow_register" className="text-[12px] text-[#444] cursor-pointer">
+                      Allow clients to register domains with you
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="allow_transfer"
+                      checked={formData.allowTransfer}
+                      onChange={(e) => handleChange('allowTransfer', e.target.checked)}
+                      className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                    />
+                    <label htmlFor="allow_transfer" className="text-[12px] text-[#444] cursor-pointer">
+                      Allow clients to transfer a domain to you
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="allow_own_domain"
+                      checked={formData.allowOwnDomain}
+                      onChange={(e) => handleChange('allowOwnDomain', e.target.checked)}
+                      className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                    />
+                    <label htmlFor="allow_own_domain" className="text-[12px] text-[#444] cursor-pointer">
+                      Allow clients to use their own domain
+                    </label>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="dom_renew"
-                  checked={formData.domainRenewEnabled}
-                  onChange={(e) => handleChange('domainRenewEnabled', e.target.checked)}
-                  className="w-4 h-4 text-[#1A4D80]"
-                />
-                <label htmlFor="dom_renew" className="font-semibold text-[#444] cursor-pointer">
-                  Auto Renew Domains on Payment
+              {/* Enable Renewal Orders */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Enable Renewal Orders
                 </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="enable_renewal_orders"
+                    checked={formData.enableRenewalOrders}
+                    onChange={(e) => handleChange('enableRenewalOrders', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="enable_renewal_orders" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to show the Domain Renewals cart category allowing clients to place renewal orders early if they wish
+                  </label>
+                </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="dom_bulk"
-                  checked={formData.bulkDomainSearch}
-                  onChange={(e) => handleChange('bulkDomainSearch', e.target.checked)}
-                  className="w-4 h-4 text-[#1A4D80]"
-                />
-                <label htmlFor="dom_bulk" className="font-semibold text-[#444] cursor-pointer">
-                  Enable Bulk Domain Search (.com, .net, .xyz, .com.bd)
+              {/* Auto Renew on Payment */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Auto Renew on Payment
                 </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="auto_renew_payment"
+                    checked={formData.autoRenewOnPayment}
+                    onChange={(e) => handleChange('autoRenewOnPayment', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="auto_renew_payment" className="text-[12px] text-[#444] cursor-pointer">
+                    Automatically renew domains which are set to a supported registrar when they are paid for
+                  </label>
+                </div>
+              </div>
+
+              {/* Auto Renew Requires Product */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Auto Renew Requires Product
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="auto_renew_req_product"
+                    checked={formData.autoRenewRequiresProduct}
+                    onChange={(e) => handleChange('autoRenewRequiresProduct', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="auto_renew_req_product" className="text-[12px] text-[#444] cursor-pointer">
+                    Only auto renew free domains that have a corresponding active product/service for the same domain
+                  </label>
+                </div>
+              </div>
+
+              {/* Default Auto Renewal Setting */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Default Auto Renewal Setting
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="default_auto_renewal"
+                    checked={formData.defaultAutoRenewalSetting}
+                    onChange={(e) => handleChange('defaultAutoRenewalSetting', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="default_auto_renewal" className="text-[12px] text-[#444] cursor-pointer">
+                    This can be changed per domain, but sets the default of whether invoices should auto generate for expiring domains
+                  </label>
+                </div>
+              </div>
+
+              {/* Create To-Do List Entries */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Create To-Do List Entries
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="create_todo_entries"
+                    checked={formData.createToDoListEntries}
+                    onChange={(e) => handleChange('createToDoListEntries', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="create_todo_entries" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to create To-Do list entries for new or failed domain actions that require manual intervention
+                  </label>
+                </div>
+              </div>
+
+              {/* Allow IDN Domains */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Allow IDN Domains
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="allow_idn_domains"
+                    checked={formData.allowIdnDomains}
+                    onChange={(e) => handleChange('allowIdnDomains', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="allow_idn_domains" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable Internationalized Domain Names (IDN) support.
+                  </label>
+                </div>
+              </div>
+
+              {/* Domain Grace and Redemption Fees */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Domain Grace and Redemption Fees
+                </label>
+                <div className="flex-1 flex items-center space-x-4">
+                  <label className="inline-flex items-center space-x-1.5 cursor-pointer text-[12px] text-[#444]">
+                    <input
+                      type="radio"
+                      name="grace_redemption_fees"
+                      value="enabled"
+                      checked={formData.domainGraceAndRedemptionFees === 'enabled'}
+                      onChange={() => handleChange('domainGraceAndRedemptionFees', 'enabled')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Enabled</span>
+                  </label>
+                  <label className="inline-flex items-center space-x-1.5 cursor-pointer text-[12px] text-[#444]">
+                    <input
+                      type="radio"
+                      name="grace_redemption_fees"
+                      value="disabled"
+                      checked={formData.domainGraceAndRedemptionFees === 'disabled'}
+                      onChange={() => handleChange('domainGraceAndRedemptionFees', 'disabled')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Disabled</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Domain Grace and Redemption Fee Billing */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-0.5">
+                  Domain Grace and Redemption Fee Billing
+                </label>
+                <div className="flex-1 space-y-1.5">
+                  <label className="flex items-center space-x-2 cursor-pointer text-[12px] text-[#444]">
+                    <input
+                      type="radio"
+                      name="grace_billing"
+                      value="existing"
+                      checked={formData.domainGraceAndRedemptionFeeBilling === 'existing'}
+                      onChange={() => handleChange('domainGraceAndRedemptionFeeBilling', 'existing')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Add Grace and Redemption Fees to existing invoice</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer text-[12px] text-[#444]">
+                    <input
+                      type="radio"
+                      name="grace_billing"
+                      value="new"
+                      checked={formData.domainGraceAndRedemptionFeeBilling === 'new'}
+                      onChange={() => handleChange('domainGraceAndRedemptionFeeBilling', 'new')}
+                      className="text-[#1A4D80] focus:ring-[#1A4D80]"
+                    />
+                    <span>Generate a new invoice for the domain renewal including any Grace and Redemption Fees</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Default Nameserver 1 */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Default Nameserver 1
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.defaultNameserver1}
+                    onChange={(e) => handleChange('defaultNameserver1', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Default Nameserver 2 */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Default Nameserver 2
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.defaultNameserver2}
+                    onChange={(e) => handleChange('defaultNameserver2', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Default Nameserver 3 */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Default Nameserver 3
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.defaultNameserver3}
+                    onChange={(e) => handleChange('defaultNameserver3', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Default Nameserver 4 */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Default Nameserver 4
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.defaultNameserver4}
+                    onChange={(e) => handleChange('defaultNameserver4', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Default Nameserver 5 */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Default Nameserver 5
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.defaultNameserver5}
+                    onChange={(e) => handleChange('defaultNameserver5', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Use Clients Details */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Use Clients Details
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="use_clients_details"
+                    checked={formData.useClientsDetails}
+                    onChange={(e) => handleChange('useClientsDetails', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="use_clients_details" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to use clients details for the Billing/Admin/Tech contacts
+                  </label>
+                </div>
+              </div>
+
+              {/* Contact Details Fields */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  First Name
+                </label>
+                <div className="flex-1 flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={formData.contactFirstName}
+                    onChange={(e) => handleChange('contactFirstName', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[11px] text-[#777]">Default Billing/Admin/Tech Contact Details</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Last Name
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.contactLastName}
+                    onChange={(e) => handleChange('contactLastName', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Company Name
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.contactCompanyName}
+                    onChange={(e) => handleChange('contactCompanyName', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Email Address
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="email"
+                    value={formData.contactEmailAddress}
+                    onChange={(e) => handleChange('contactEmailAddress', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Address 1
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.contactAddress1}
+                    onChange={(e) => handleChange('contactAddress1', e.target.value)}
+                    className="w-80 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Address 2
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.contactAddress2}
+                    onChange={(e) => handleChange('contactAddress2', e.target.value)}
+                    className="w-80 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  City
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.contactCity}
+                    onChange={(e) => handleChange('contactCity', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  State/Region
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.contactStateRegion}
+                    onChange={(e) => handleChange('contactStateRegion', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Postcode
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.contactPostcode}
+                    onChange={(e) => handleChange('contactPostcode', e.target.value)}
+                    className="w-36 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Country
+                </label>
+                <div className="flex-1">
+                  <select
+                    value={formData.contactCountry}
+                    onChange={(e) => handleChange('contactCountry', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  >
+                    <option value="Bangladesh">Bangladesh</option>
+                    <option value="United States">United States</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Australia">Australia</option>
+                    <option value="India">India</option>
+                    <option value="Singapore">Singapore</option>
+                    <option value="Malaysia">Malaysia</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Phone Number
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <div className="w-16 p-1.5 border border-[#ccc] rounded bg-[#f5f5f5] text-[12px] text-center font-medium text-[#555]">
+                    {formData.contactPhoneCountryCode}
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.contactPhoneNumber}
+                    onChange={(e) => handleChange('contactPhoneNumber', e.target.value)}
+                    placeholder=""
+                    className="w-56 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
               </div>
             </div>
           )}
