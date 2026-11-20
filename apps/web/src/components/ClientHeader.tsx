@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -17,13 +17,71 @@ import {
   PlusCircle,
   FileText,
 } from 'lucide-react';
+import whmcsData from '@/data/whmcs_sync.json';
 
 export function ClientHeader() {
   const pathname = usePathname();
   const [dropdown, setDropdown] = useState<string | null>(null);
+  const [impQuery, setImpQuery] = useState('');
+  const [userName, setUserName] = useState('Softcents Customer');
+  const [companyName, setCompanyName] = useState('SoftCents Systems Ltd.');
+  const [avatarLetter, setAvatarLetter] = useState('S');
 
   const toggle = (name: string) => {
     setDropdown(dropdown === name ? null : name);
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const imp = urlParams.get('impersonate') || urlParams.get('userid');
+    let targetId = imp;
+
+    const storedImp = localStorage.getItem('ci_impersonator_backup');
+    if (!targetId && storedImp) {
+      try {
+        const parsed = JSON.parse(storedImp);
+        targetId = parsed.targetUser?.whmcsId || parsed.targetUser?.id;
+      } catch {}
+    }
+
+    if (targetId) {
+      setImpQuery(`?impersonate=${encodeURIComponent(targetId)}`);
+      const matched = (whmcsData?.clients || []).find(
+        (c: any) => String(c.id) === String(targetId) || String(c.whmcsId) === String(targetId)
+      );
+      if (matched) {
+        const name = matched.name || `${matched.firstname || ''} ${matched.lastname || ''}`.trim();
+        setUserName(name || 'Customer');
+        setCompanyName(matched.company || matched.companyname || 'Softcents Telecom Ltd');
+        setAvatarLetter(((name || 'C')[0] || 'C').toUpperCase());
+        return;
+      }
+    }
+
+    const storedUser = localStorage.getItem('auth_user');
+    if (storedUser) {
+      try {
+        const u = JSON.parse(storedUser);
+        const name = u.profile?.first_name
+          ? `${u.profile.first_name} ${u.profile.last_name || ''}`.trim()
+          : (u.name || u.email);
+        if (name) {
+          setUserName(name);
+          setCompanyName(u.customerRegistration?.company_name || 'SoftCents Systems Ltd.');
+          setAvatarLetter(((name || 'U')[0] || 'U').toUpperCase());
+        }
+      } catch {}
+    }
+  }, []);
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('ci_impersonator_backup');
+    } catch {}
+    window.location.href = '/login';
   };
 
   return (
@@ -31,7 +89,7 @@ export function ClientHeader() {
       <div className="max-w-[1240px] mx-auto px-4 h-16 flex items-center justify-between">
         {/* Left: Logo & Nav items */}
         <div className="flex items-center space-x-6">
-          <Link href="/clientarea" className="flex items-center">
+          <Link href={`/clientarea${impQuery}`} className="flex items-center">
             <img
               src="/whmcs/logo.png"
               alt="SoftCents Systems"
@@ -42,7 +100,7 @@ export function ClientHeader() {
           {/* Twenty-One Main Menu */}
           <nav className="hidden md:flex items-center space-x-1 text-[13px] font-semibold text-slate-700">
             <Link
-              href="/clientarea"
+              href={`/clientarea${impQuery}`}
               className={`px-3 py-2 rounded transition-colors ${
                 pathname === '/clientarea'
                   ? 'text-[#1A4D80] bg-slate-50 font-bold'
@@ -68,7 +126,7 @@ export function ClientHeader() {
               {dropdown === 'services' && (
                 <div className="absolute left-0 top-full mt-1 w-52 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50">
                   <Link
-                    href="/clientarea/services"
+                    href={`/clientarea/services${impQuery}`}
                     onClick={() => setDropdown(null)}
                     className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-800"
                   >
@@ -103,7 +161,7 @@ export function ClientHeader() {
               {dropdown === 'domains' && (
                 <div className="absolute left-0 top-full mt-1 w-52 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50">
                   <Link
-                    href="/clientarea/domains"
+                    href={`/clientarea/domains${impQuery}`}
                     onClick={() => setDropdown(null)}
                     className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-800"
                   >
@@ -138,7 +196,7 @@ export function ClientHeader() {
               {dropdown === 'billing' && (
                 <div className="absolute left-0 top-full mt-1 w-52 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50">
                   <Link
-                    href="/clientarea/invoices"
+                    href={`/clientarea/invoices${impQuery}`}
                     onClick={() => setDropdown(null)}
                     className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-800"
                   >
@@ -146,7 +204,7 @@ export function ClientHeader() {
                     My Invoices
                   </Link>
                   <Link
-                    href="/clientarea/addfunds"
+                    href={`/clientarea/addfunds${impQuery}`}
                     onClick={() => setDropdown(null)}
                     className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-700"
                   >
@@ -173,7 +231,7 @@ export function ClientHeader() {
               {dropdown === 'support' && (
                 <div className="absolute left-0 top-full mt-1 w-52 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50">
                   <Link
-                    href="/clientarea/tickets"
+                    href={`/clientarea/tickets${impQuery}`}
                     onClick={() => setDropdown(null)}
                     className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-800"
                   >
@@ -212,20 +270,20 @@ export function ClientHeader() {
               onClick={() => toggle('user')}
               className="flex items-center space-x-2 p-1.5 rounded hover:bg-slate-100 text-slate-700 font-semibold"
             >
-              <div className="w-7 h-7 rounded-full bg-[#1A4D80] text-white flex items-center justify-center font-bold text-xs">
-                R
+              <div className="w-7 h-7 rounded-full bg-[#1A4D80] text-white flex items-center justify-center font-bold text-xs uppercase">
+                {avatarLetter}
               </div>
-              <span className="hidden sm:inline">Raju Ahmed</span>
+              <span className="hidden sm:inline">{userName}</span>
               <ChevronDown className="w-3.5 h-3.5 opacity-60" />
             </button>
             {dropdown === 'user' && (
               <div className="absolute right-0 top-full mt-1 w-56 bg-white text-slate-800 rounded shadow-xl border border-slate-200 py-1 text-xs z-50">
                 <div className="px-3 py-2 border-b border-slate-100">
-                  <div className="font-bold text-slate-900">Raju Ahmed</div>
-                  <div className="text-[11px] text-slate-500">SoftCents Systems Ltd.</div>
+                  <div className="font-bold text-slate-900">{userName}</div>
+                  <div className="text-[11px] text-slate-500">{companyName}</div>
                 </div>
                 <Link
-                  href="/clientarea/profile"
+                  href={`/clientarea/profile${impQuery}`}
                   onClick={() => setDropdown(null)}
                   className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-700"
                 >
@@ -233,7 +291,7 @@ export function ClientHeader() {
                   Account Details
                 </Link>
                 <Link
-                  href="/clientarea/security"
+                  href={`/clientarea/security${impQuery}`}
                   onClick={() => setDropdown(null)}
                   className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-700"
                 >
@@ -254,14 +312,13 @@ export function ClientHeader() {
                   </span>
                 </Link>
                 <div className="border-t border-slate-100 my-1"></div>
-                <Link
-                  href="/login"
-                  onClick={() => setDropdown(null)}
-                  className="flex items-center px-3 py-2 hover:bg-rose-50 text-rose-600"
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left flex items-center px-3 py-2 hover:bg-rose-50 text-rose-600"
                 >
                   <LogOut className="w-3.5 h-3.5 mr-2" />
                   Logout
-                </Link>
+                </button>
               </div>
             )}
           </div>

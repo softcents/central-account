@@ -19,7 +19,7 @@ function formatWhmcsDate(dateStr: string | null | undefined): string {
 function ClientServicesContent() {
   const searchParams = useSearchParams();
   const impersonate = searchParams.get('impersonate');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
   let rawServices = (whmcsData?.services || []) as any[];
