@@ -47648,5 +47648,43 @@
       "biennially": "-1.00",
       "triennially": "-1.00"
     }
-  ]
+  ],
+  "smsLogs": [
+    {
+      "id": "SMS-1795195903403",
+      "recipient": "01711000111",
+      "message": "Test SoftCents SMS Delivery Verification",
+      "sender": "SoftCents",
+      "status": "Delivered",
+      "date": "2026-11-20T17:31:43.403Z"
+    }
+  ],
+  "waLogs": [],
+  "unblockLogs": [
+    {
+      "id": "UNB-1795195956641",
+      "ip": "103.145.118.66",
+      "reason": "Client area self-service unblock",
+      "servers": "srv8 (cPanel), srv5, srv7, srv111",
+      "status": "Unblocked (CSF Firewall Cleared)",
+      "date": "2026-11-20T17:32:36.641Z"
+    }
+  ],
+  "coupons": [
+    {
+      "code": "SOFT10",
+      "discount": "10%",
+      "maxUses": "50",
+      "uses": "14",
+      "expiry": "2026-12-31"
+    },
+    {
+      "code": "HOST25",
+      "discount": "25%",
+      "maxUses": "20",
+      "uses": "8",
+      "expiry": "2026-11-30"
+    }
+  ],
+  "voipLogs": []
 }
