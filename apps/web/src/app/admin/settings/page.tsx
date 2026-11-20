@@ -300,10 +300,14 @@ function AdminSettingsContent() {
     dueReminderDays: '7',
     lateFeeDays: '4',
 
-    // Credit
+    // Credit Tab (1:1 from screenshot https://prnt.sc/JN9sEPj0cYqx)
     addFundsEnabled: true,
     addFundsMin: '10.00',
     addFundsMax: '1000000.00',
+    addFundsMaxBalance: '1000000.00',
+    addFundsRequireOrder: false,
+    automaticCreditUse: false,
+    creditOnDowngrade: false,
 
     // Affiliates
     affiliateEnabled: true,
@@ -3155,45 +3159,136 @@ function AdminSettingsContent() {
             </div>
           )}
 
-          {/* TAB 8: CREDIT */}
+          {/* TAB 8: CREDIT (EXACT 1:1 TO SCREENSHOT https://prnt.sc/JN9sEPj0cYqx) */}
           {activeSubtab === 'credit' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="addfunds_enable"
-                  checked={formData.addFundsEnabled}
-                  onChange={(e) => handleChange('addFundsEnabled', e.target.checked)}
-                  className="w-4 h-4 text-[#1A4D80]"
-                />
-                <label htmlFor="addfunds_enable" className="font-semibold text-[#444] cursor-pointer">
-                  Enable Add Funds (Client Wallet Balance)
+              {/* Enable/Disable */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Enable/Disable
                 </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="addfunds_enable"
+                    checked={formData.addFundsEnabled}
+                    onChange={(e) => handleChange('addFundsEnabled', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="addfunds_enable" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to enable adding of funds by clients from the client area
+                  </label>
+                </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Minimum Deposit</label>
-                <div className="flex-1">
+              {/* Minimum Deposit */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Minimum Deposit
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
                   <input
                     type="text"
                     value={formData.addFundsMin}
                     onChange={(e) => handleChange('addFundsMin', e.target.value)}
-                    className="w-32 p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    className="w-32 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   />
-                  <span className="text-[11px] text-[#777] ml-2">BDT (৳)</span>
+                  <span className="text-[12px] text-[#555]">
+                    Enter the minimum amount a client can add in a single transaction
+                  </span>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Maximum Deposit</label>
-                <div className="flex-1">
+              {/* Maximum Deposit */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Maximum Deposit
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
                   <input
                     type="text"
                     value={formData.addFundsMax}
                     onChange={(e) => handleChange('addFundsMax', e.target.value)}
-                    className="w-32 p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    className="w-32 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   />
-                  <span className="text-[11px] text-[#777] ml-2">BDT (৳)</span>
+                  <span className="text-[12px] text-[#555]">
+                    Enter the maximum amount a client can add in a single transaction
+                  </span>
+                </div>
+              </div>
+
+              {/* Maximum Balance */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Maximum Balance
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={formData.addFundsMaxBalance}
+                    onChange={(e) => handleChange('addFundsMaxBalance', e.target.value)}
+                    className="w-32 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <span className="text-[12px] text-[#555]">
+                    Enter the maximum balance that a client can add in credit
+                  </span>
+                </div>
+              </div>
+
+              {/* Require Active Order */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Require Active Order
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="addfunds_req_order"
+                    checked={formData.addFundsRequireOrder}
+                    onChange={(e) => handleChange('addFundsRequireOrder', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="addfunds_req_order" className="text-[12px] text-[#444] cursor-pointer">
+                    Require an active order before allowing Add Funds use (used to protect against fraud, means an admin must have manually reviewed the client &amp; approved an order before allowing credit to be added)
+                  </label>
+                </div>
+              </div>
+
+              {/* Automatic Credit Use */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Automatic Credit Use
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="auto_credit_use"
+                    checked={formData.automaticCreditUse}
+                    onChange={(e) => handleChange('automaticCreditUse', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="auto_credit_use" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to automatically apply available credit from a users credit balance to recurring invoices upon creation
+                  </label>
+                </div>
+              </div>
+
+              {/* Credit On Downgrade */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Credit On Downgrade
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="credit_on_downgrade"
+                    checked={formData.creditOnDowngrade}
+                    onChange={(e) => handleChange('creditOnDowngrade', e.target.checked)}
+                    className="w-4 h-4 text-[#1A4D80] rounded border-gray-300"
+                  />
+                  <label htmlFor="credit_on_downgrade" className="text-[12px] text-[#444] cursor-pointer">
+                    Check to provide a prorata refund to clients when downgrading for unused time
+                  </label>
                 </div>
               </div>
             </div>
