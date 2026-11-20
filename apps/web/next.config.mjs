@@ -56,6 +56,14 @@ const nextConfig = {
         source: '/downloads.php',
         destination: '/admin/support/downloads',
       },
+      {
+        source: '/admin/configgeneral.php',
+        destination: '/admin/settings?tab=general',
+      },
+      {
+        source: '/admin/configgeneral',
+        destination: '/admin/settings?tab=general',
+      },
     ];
   },
 };
