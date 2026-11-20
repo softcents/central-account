@@ -51,6 +51,7 @@ function AdminSettingsContent() {
   const [activeSubtab, setActiveSubtab] = useState(initialSubtab);
   const [savedToast, setSavedToast] = useState(false);
   const [showOpCacheAlert, setShowOpCacheAlert] = useState(true);
+  const [showMailProviderModal, setShowMailProviderModal] = useState(false);
 
   // Sync with URL parameters or hash
   useEffect(() => {
@@ -169,8 +170,82 @@ function AdminSettingsContent() {
     contactPhoneNumber: '',
     contactPhoneCountryCode: '+880',
 
-    // Mail
-    mailProvider: 'mail',
+    // Mail Tab (1:1 from screenshot https://prnt.sc/e4rz5W_xwfFh)
+    mailProvider: 'SMTP',
+    disableEmailSending: false,
+    disableRfc3834: false,
+    globalEmailSignature: '',
+    globalEmailCss: `.ExternalClass,.ExternalClass div,.ExternalClass font,.ExternalClass p,.ExternalClass span,.ExternalClass td,h1,img{line-height:100%}h1,h2{display:block;font-family:Helvetica;font-style:normal;font-weight:700}#outlook a{padding:0}.ExternalClass,.ReadMsgBody{width:100%}a,blockquote,body,li,p,table,td{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}table,td{mso-table-lspace:0;mso-table-rspace:0}img{-ms-interpolation-mode:bicubic;border:0;height:auto;outline:0;text-decoration:none}table{border-collapse:collapse!important}#bodyCell,#bodyTable,body{height:100%!important;margin:0;padding:0;width:100%!important}#bodyCell{padding:20px;}#templateContainer{width:600px;border:1px solid #ddd;background-color:#fff}#bodyTable,body{background-color:#FAFAFA}h1{color:#202020!important;font-size:26px;letter-spacing:normal;text-align:left;margin:0 0 10px}h2{color:#404040!important;font-size:20px;line-height:100%;letter-spacing:normal;text-align:left;margin:0 0 10px}h3,h4{display:block;font-style:italic;font-weight:400;letter-spacing:normal;text-align:left;margin:0 0 10px;font-family:Helvetica;line-height:100%}h3{color:#606060!important;font-size:16px}h4{color:grey!important;font-size:14px}.headerContent{background-color:#f8f8f8;border-bottom:1px solid #ddd;color:#505050;font-family:Helvetica;font-size:20px;font-weight:700;line-height:100%;text-align:left;vertical-align:middle;padding:0}.bodyContent,.footerContent{font-family:Helvetica;line-height:150%;text-align:left;}.footerContent{text-align:center}.bodyContent pre{padding:15px;background-color:#444;color:#f8f8f8;border:0}.bodyContent pre code{white-space:pre;word-break:normal;word-wrap:normal}.bodyContent table{margin:10px 0;background-color:#fff;border:1px solid #ddd}.bodyContent table th{padding:4px 10px;background-color:#f8f8f8;border:1px solid #ddd;font-weight:700;text-align:center}.bodyContent table td{padding:3px 8px;border:1px solid #ddd}.table-responsive{border:0}.bodyContent a{word-break:break-all}.headerContent a .yshortcuts,.headerContent a:link,.headerContent a:visited{color:#1f5d8c;font-weight:400;text-decoration:underline}#headerImage{height:auto;max-width:600px;padding:20px}#templateBody{background-color:#fff}.bodyContent{color:#505050;font-size:14px;padding:20px}.bodyContent a .yshortcuts,.bodyContent a:link,.bodyContent a:visited{color:#1f5d8c;font-weight:400;text-decoration:underline}.bodyContent a:hover{text-decoration:none}.bodyContent img{display:inline;height:auto;max-width:560px}.footerContent{color:grey;font-size:12px;padding:20px}.footerContent a .yshortcuts,.footerContent a span,.footerContent a:link,.footerContent a:visited{color:#606060;font-weight:400;text-decoration:underline}@media only screen and (max-width:640px){h1,h2,h3,h4{line-height:100%!important}#templateContainer{max-width:600px!important;width:100%!important}#templateContainer,body{width:100%!important}a,blockquote,body,li,p,table,td{-webkit-text-size-adjust:none!important}body{min-width:100%!important}#bodyCell{padding:10px!important}h1{font-size:24px!important}h2{font-size:20px!important}h3{font-size:18px!important}h4{font-size:16px!important}#templatePreheader{display:none!important}.headerContent{font-size:20px!important;line-height:125%!important}.footerContent{font-size:14px!important;line-height:115%!important}.footerContent a{display:block!important}.hide-mobile{display:none;}}`,
+    clientEmailHeader: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset={$charset}" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <style type="text/css">
+            [EmailCSS]
+        </style>
+    </head>
+    <body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0">
+        <center>
+            <table align="center" border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" id="bodyTable">
+                <tr>
+                    <td align="center" valign="top" id="bodyCell">
+                        <table border="0" cellpadding="0" cellspacing="0" id="templateContainer">
+                            <tr>
+                                <td align="center" valign="top">
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" id="templateHeader">
+                                        <tr>
+                                            <td valign="top" class="headerContent">
+                                                <a href="{$company_domain}">
+                                                    {if $company_logo_url}
+                                                        <img src="{$company_logo_url}" style="max-width:600px;padding:20px 20px 0 20px" id="headerImage" alt="{$company_name}" />
+                                                    {else}
+                                                        {$company_name}
+                                                    {/if}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td align="center" valign="top">
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" id="templateBody">
+                                        <tr>
+                                            <td valign="top" class="bodyContent">`,
+    clientEmailFooter: `</td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td align="center" valign="top">
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" id="templateFooter">
+                                        <tr>
+                                            <td valign="top" class="footerContent">
+                                                 <a href="{$company_domain}">visit our website</a>
+                                                <span class="hide-mobile"> | </span>
+                                                <a href="{$whmcs_url}">log in to your account</a>
+                                                <span class="hide-mobile"> | </span>
+                                                <a href="{$whmcs_url}submitticket.php">get support</a> <br />
+                                                Copyright © {$company_name}, All rights reserved.
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </center>
+    </body>
+</html>`,
+    systemEmailsFromName: 'SoftCents Systems Admin',
+    systemEmailsFromEmail: 'no-reply@billing.softcents.com',
+    bccMessages: '',
+    presalesFormDestination: '1',
+    presalesContactFormEmail: 'sales@softcents.com',
     smtpHost: 'mail.softcents.com',
     smtpPort: '25',
     smtpUsername: 'no-reply@softcents.com',
@@ -2007,55 +2082,218 @@ function AdminSettingsContent() {
             </div>
           )}
 
-          {/* TAB 5: MAIL */}
+          {/* TAB 5: MAIL (EXACT 1:1 TO SCREENSHOT https://prnt.sc/e4rz5W_xwfFh) */}
           {activeSubtab === 'mail' && (
             <div className="space-y-3.5 border border-[#e5e5e5] rounded p-4 bg-[#fafafa]/50">
+              {/* Mail Provider */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">Mail Provider</label>
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Mail Provider
+                </label>
+                <div className="flex-1 flex items-center space-x-2">
+                  <div className="w-32 p-1.5 border border-[#ccc] rounded bg-white text-[12px] font-semibold text-[#333] text-center">
+                    {formData.mailProvider}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowMailProviderModal(true)}
+                    className="bg-white hover:bg-[#f5f5f5] text-[#333] border border-[#ccc] px-3 py-1.5 rounded text-xs font-normal shadow-xs transition-colors"
+                  >
+                    Configure Mail Provider
+                  </button>
+                </div>
+              </div>
+
+              {/* Disable Email Sending */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Disable Email Sending
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => handleChange('disableEmailSending', !formData.disableEmailSending)}
+                    className={`px-3 py-0.5 rounded text-[11px] font-bold border transition-colors ${
+                      formData.disableEmailSending
+                        ? 'bg-[#d9534f] text-white border-[#d43f3a]'
+                        : 'bg-[#f0f0f0] text-[#777] border-[#ccc]'
+                    }`}
+                  >
+                    {formData.disableEmailSending ? 'ON' : 'OFF'}
+                  </button>
+                  <span className="text-[12px] text-[#555]">
+                    Disables all outgoing emails within WHMCS.
+                  </span>
+                </div>
+              </div>
+
+              {/* Disable RFC3834 Headers */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Disable RFC3834 Headers
+                </label>
+                <div className="flex-1 flex items-center space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => handleChange('disableRfc3834', !formData.disableRfc3834)}
+                    className={`px-3 py-0.5 rounded text-[11px] font-bold border transition-colors ${
+                      formData.disableRfc3834
+                        ? 'bg-[#d9534f] text-white border-[#d43f3a]'
+                        : 'bg-[#f0f0f0] text-[#777] border-[#ccc]'
+                    }`}
+                  >
+                    {formData.disableRfc3834 ? 'ON' : 'OFF'}
+                  </button>
+                  <span className="text-[12px] text-[#555]">
+                    Outgoing Support emails have a header that prevents circular responses between autoresponders (RFC-3834). This option disables that behavior.
+                  </span>
+                </div>
+              </div>
+
+              {/* Global Email Signature */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">
+                  Global Email Signature
+                </label>
+                <div className="flex-1">
+                  <textarea
+                    rows={4}
+                    value={formData.globalEmailSignature}
+                    onChange={(e) => handleChange('globalEmailSignature', e.target.value)}
+                    className="w-full sm:max-w-2xl p-2 border border-[#ccc] rounded bg-white text-[12px] font-sans focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Global Email CSS Styling */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">
+                  Global Email CSS Styling
+                </label>
+                <div className="flex-1">
+                  <textarea
+                    rows={6}
+                    value={formData.globalEmailCss}
+                    onChange={(e) => handleChange('globalEmailCss', e.target.value)}
+                    className="w-full sm:max-w-2xl p-2 border border-[#ccc] rounded bg-white text-[11px] font-mono leading-relaxed focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* Client Email Header Content */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">
+                  Client Email Header Content
+                </label>
+                <div className="flex-1 space-y-1">
+                  <textarea
+                    rows={8}
+                    value={formData.clientEmailHeader}
+                    onChange={(e) => handleChange('clientEmailHeader', e.target.value)}
+                    className="w-full sm:max-w-2xl p-2 border border-[#ccc] rounded bg-white text-[11px] font-mono leading-relaxed focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <div className="text-[11px] text-[#777]">
+                    Any text you enter here will be prefixed to the top of all client email templates sent out by the system. HTML is accepted.
+                  </div>
+                </div>
+              </div>
+
+              {/* Client Email Footer Content */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">
+                  Client Email Footer Content
+                </label>
+                <div className="flex-1 space-y-1">
+                  <textarea
+                    rows={8}
+                    value={formData.clientEmailFooter}
+                    onChange={(e) => handleChange('clientEmailFooter', e.target.value)}
+                    className="w-full sm:max-w-2xl p-2 border border-[#ccc] rounded bg-white text-[11px] font-mono leading-relaxed focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <div className="text-[11px] text-[#777]">
+                    Any text you enter here will be added to the bottom of all client email templates sent out by the system. HTML is accepted.
+                  </div>
+                </div>
+              </div>
+
+              {/* System Emails From Name */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  System Emails From Name
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={formData.systemEmailsFromName}
+                    onChange={(e) => handleChange('systemEmailsFromName', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* System Emails From Email */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  System Emails From Email
+                </label>
+                <div className="flex-1">
+                  <input
+                    type="email"
+                    value={formData.systemEmailsFromEmail}
+                    onChange={(e) => handleChange('systemEmailsFromEmail', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+              </div>
+
+              {/* BCC Messages */}
+              <div className="flex flex-col sm:flex-row items-start gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4 pt-1">
+                  BCC Messages
+                </label>
+                <div className="flex-1 space-y-1">
+                  <input
+                    type="text"
+                    value={formData.bccMessages}
+                    onChange={(e) => handleChange('bccMessages', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                  <div className="text-[11px] text-[#777]">
+                    If you want copies of all emails sent by the system sent to an address of yours enter the address here. You may enter multiple addresses seperated by a comma (,)
+                  </div>
+                </div>
+              </div>
+
+              {/* Presales Form Destination */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Presales Form Destination
+                </label>
                 <div className="flex-1">
                   <select
-                    value={formData.mailProvider}
-                    onChange={(e) => handleChange('mailProvider', e.target.value)}
-                    className="p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    value={formData.presalesFormDestination}
+                    onChange={(e) => handleChange('presalesFormDestination', e.target.value)}
+                    className="w-full sm:w-[380px] p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   >
-                    <option value="mail">PHP mail()</option>
-                    <option value="SMTP">SMTP (mail.softcents.com / Brevo / SendGrid)</option>
+                    <option value="">Choose a Department - OR - Send to email address below</option>
+                    <option value="1">Sales Department</option>
+                    <option value="2">Technical Support</option>
+                    <option value="3">Site Migration</option>
                   </select>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">SMTP Host</label>
+              {/* Presales Contact Form Email */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-[#eee]">
+                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">
+                  Presales Contact Form Email
+                </label>
                 <div className="flex-1">
                   <input
-                    type="text"
-                    value={formData.smtpHost}
-                    onChange={(e) => handleChange('smtpHost', e.target.value)}
-                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">SMTP Port</label>
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={formData.smtpPort}
-                    onChange={(e) => handleChange('smtpPort', e.target.value)}
-                    className="w-24 p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <label className="w-64 shrink-0 font-bold text-[#444] text-right sm:pr-4">SMTP Username</label>
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={formData.smtpUsername}
-                    onChange={(e) => handleChange('smtpUsername', e.target.value)}
-                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px]"
+                    type="email"
+                    value={formData.presalesContactFormEmail}
+                    onChange={(e) => handleChange('presalesContactFormEmail', e.target.value)}
+                    className="w-72 p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
                   />
                 </div>
               </div>
@@ -2322,6 +2560,113 @@ function AdminSettingsContent() {
           </div>
         </form>
       </main>
+
+      {/* Configure Mail Provider Modal */}
+      {showMailProviderModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded border border-[#ccc] shadow-2xl max-w-md w-full overflow-hidden text-[#333]">
+            <div className="bg-[#1A4D80] text-white px-4 py-2.5 flex items-center justify-between">
+              <span className="font-semibold text-xs">Configure Mail Provider</span>
+              <button
+                type="button"
+                onClick={() => setShowMailProviderModal(false)}
+                className="text-white/80 hover:text-white text-base leading-none"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 space-y-3 text-[12px]">
+              <div>
+                <label className="block font-bold text-[#444] mb-1">Mail Type</label>
+                <select
+                  value={formData.mailProvider}
+                  onChange={(e) => handleChange('mailProvider', e.target.value)}
+                  className="w-full p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                >
+                  <option value="SMTP">SMTP (Recommended)</option>
+                  <option value="mail">PHP mail()</option>
+                  <option value="Mailgun">Mailgun API</option>
+                  <option value="SendGrid">SendGrid API</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#444] mb-1">SMTP Host</label>
+                <input
+                  type="text"
+                  value={formData.smtpHost}
+                  onChange={(e) => handleChange('smtpHost', e.target.value)}
+                  className="w-full p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold text-[#444] mb-1">SMTP Port</label>
+                  <input
+                    type="text"
+                    value={formData.smtpPort}
+                    onChange={(e) => handleChange('smtpPort', e.target.value)}
+                    className="w-full p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#444] mb-1">SSL Type</label>
+                  <select
+                    value={formData.smtpSsl}
+                    onChange={(e) => handleChange('smtpSsl', e.target.value)}
+                    className="w-full p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                  >
+                    <option value="none">None</option>
+                    <option value="ssl">SSL</option>
+                    <option value="tls">TLS</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#444] mb-1">SMTP Username</label>
+                <input
+                  type="text"
+                  value={formData.smtpUsername}
+                  onChange={(e) => handleChange('smtpUsername', e.target.value)}
+                  className="w-full p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#444] mb-1">SMTP Password</label>
+                <input
+                  type="password"
+                  value={formData.smtpPassword}
+                  onChange={(e) => handleChange('smtpPassword', e.target.value)}
+                  className="w-full p-1.5 border border-[#ccc] rounded bg-white text-[12px] focus:outline-none focus:border-[#1A4D80]"
+                />
+              </div>
+            </div>
+            <div className="bg-[#f7f7f7] border-t border-[#e5e5e5] px-4 py-2 flex items-center justify-end space-x-2">
+              <button
+                type="button"
+                onClick={() => setShowMailProviderModal(false)}
+                className="bg-white hover:bg-[#eee] border border-[#ccc] text-[#444] px-3 py-1 rounded text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMailProviderModal(false);
+                  setSavedToast(true);
+                  setTimeout(() => setSavedToast(false), 3000);
+                }}
+                className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-3 py-1 rounded text-xs font-semibold"
+              >
+                Save Configuration
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
