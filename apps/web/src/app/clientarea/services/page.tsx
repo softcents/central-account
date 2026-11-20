@@ -4,8 +4,8 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
+import { useActiveClient } from '@/hooks/useActiveClient';
 import { Box, ExternalLink, ShieldCheck, Search, Filter, Server, CheckCircle2, Calendar } from 'lucide-react';
-import whmcsData from '@/data/whmcs_sync.json';
 
 function formatWhmcsDate(dateStr: string | null | undefined): string {
   if (!dateStr || dateStr === '0000-00-00' || dateStr.startsWith('0000')) return '-';
@@ -18,17 +18,11 @@ function formatWhmcsDate(dateStr: string | null | undefined): string {
 
 function ClientServicesContent() {
   const searchParams = useSearchParams();
-  const impersonate = searchParams.get('impersonate') || searchParams.get('userid');
+  const { clientId, client, impQuery, services, activeServices, isLoaded } = useActiveClient();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  let rawServices = (whmcsData?.services || []) as any[];
-  if (impersonate) {
-    const matched = rawServices.filter((s: any) => String(s.userid) === String(impersonate));
-    if (matched.length > 0) {
-      rawServices = matched;
-    }
-  }
+  const rawServices = services;
 
   const filtered = rawServices
     .filter((s: any) => {
@@ -59,12 +53,12 @@ function ClientServicesContent() {
             <span>My Products &amp; Services ({rawServices.length})</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            View and manage active web hosting, cloud VPS, PBX, and provisioned services.
+            View and manage active web hosting, cloud VPS, PBX, and provisioned services for {client?.name || 'Customer'}.
           </p>
         </div>
         <div>
           <Link
-            href="/cart"
+            href={`/cart${impQuery}`}
             className="w-full sm:w-auto text-center bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
           >
             + Order New Services
@@ -107,8 +101,15 @@ function ClientServicesContent() {
         {/* Mobile View: Cards (< sm) */}
         <div className="block sm:hidden divide-y divide-slate-100">
           {filtered.length === 0 ? (
-            <div className="py-8 text-center text-slate-500 text-xs px-4">
-              No services found matching your criteria.
+            <div className="py-12 text-center text-slate-500 text-xs px-4">
+              <Box className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="font-semibold text-slate-700">No services found matching your criteria.</p>
+              <Link
+                href={`/cart${impQuery}`}
+                className="mt-3 inline-block bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-1.5 rounded text-xs font-bold"
+              >
+                + Order New Services
+              </Link>
             </div>
           ) : (
             filtered.slice(0, 50).map((s: any) => (
@@ -129,11 +130,11 @@ function ClientServicesContent() {
                   </div>
                   <span
                     className={`font-bold px-2 py-0.5 rounded-full text-[10px] shrink-0 ${
-                      s.domainstatus === 'Active'
+                      (s.domainstatus || '').toLowerCase() === 'active'
                         ? 'bg-emerald-100 text-emerald-800'
-                        : s.domainstatus === 'Suspended'
+                        : (s.domainstatus || '').toLowerCase() === 'suspended'
                         ? 'bg-rose-100 text-rose-800'
-                        : s.domainstatus === 'Pending'
+                        : (s.domainstatus || '').toLowerCase() === 'pending'
                         ? 'bg-amber-100 text-amber-800'
                         : 'bg-slate-100 text-slate-700'
                     }`}
@@ -153,7 +154,7 @@ function ClientServicesContent() {
                     </div>
                   </div>
                   <Link
-                    href={`/clientarea/services/${s.id}${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
+                    href={`/clientarea/services/${s.id}${impQuery}`}
                     className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-3 py-1 rounded font-semibold text-xs transition-colors shrink-0"
                   >
                     Manage &rarr;
@@ -181,8 +182,15 @@ function ClientServicesContent() {
             <tbody className="divide-y divide-slate-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500">
-                    No services found matching your criteria.
+                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                    <Box className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="font-semibold text-slate-700">No services found matching your criteria.</p>
+                    <Link
+                      href={`/cart${impQuery}`}
+                      className="mt-3 inline-block bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-1.5 rounded text-xs font-bold transition-colors"
+                    >
+                      + Order New Services
+                    </Link>
                   </td>
                 </tr>
               ) : (
@@ -217,11 +225,11 @@ function ClientServicesContent() {
                     <td className="py-3.5 px-4 text-center">
                       <span
                         className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
-                          s.domainstatus === 'Active'
+                          (s.domainstatus || '').toLowerCase() === 'active'
                             ? 'bg-emerald-100 text-emerald-800'
-                            : s.domainstatus === 'Suspended'
+                            : (s.domainstatus || '').toLowerCase() === 'suspended'
                             ? 'bg-rose-100 text-rose-800'
-                            : s.domainstatus === 'Pending'
+                            : (s.domainstatus || '').toLowerCase() === 'pending'
                             ? 'bg-amber-100 text-amber-800'
                             : 'bg-slate-100 text-slate-700'
                         }`}
@@ -231,7 +239,7 @@ function ClientServicesContent() {
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <Link
-                        href={`/clientarea/services/${s.id}${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
+                        href={`/clientarea/services/${s.id}${impQuery}`}
                         className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold transition-colors border border-slate-300 inline-block"
                       >
                         Manage &rarr;

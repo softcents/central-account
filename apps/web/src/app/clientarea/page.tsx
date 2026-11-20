@@ -4,35 +4,44 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
+import { useActiveClient } from '@/hooks/useActiveClient';
 import {
   Box,
   Globe,
-  MessageSquare,
   CreditCard,
+  MessageSquare,
   Search,
   ExternalLink,
-  ShieldCheck,
-  AlertCircle,
-  FileText,
-  ShoppingBag,
-  ArrowRight,
-  Server,
-  CheckCircle2,
   ChevronRight,
+  AlertCircle,
+  Clock,
+  ArrowRight,
+  FileText,
 } from 'lucide-react';
-import whmcsData from '@/data/whmcs_sync.json';
 
 function ClientAreaHomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const action = searchParams.get('action');
+
+  const {
+    clientId,
+    client,
+    impQuery,
+    services,
+    activeServices,
+    domains,
+    invoices,
+    unpaidInvoices,
+    tickets,
+    openTickets,
+    quotes,
+    isLoaded,
+  } = useActiveClient();
+
   const [domainSearch, setDomainSearch] = useState('');
 
-  // Handle WHMCS legacy query parameters like ?action=services, ?action=invoices, etc.
-  const action = searchParams.get('action');
-  const impersonateParam = searchParams.get('impersonate') || searchParams.get('userid');
-
-  const impQuery = impersonateParam ? `?impersonate=${encodeURIComponent(impersonateParam)}` : '';
-
+  // Handle WHMCS legacy query-based actions e.g. /clientarea?action=services
   useEffect(() => {
     if (!action) return;
     if (action === 'services' || action === 'products') {
@@ -41,6 +50,8 @@ function ClientAreaHomeContent() {
       router.replace(`/clientarea/domains${impQuery}`);
     } else if (action === 'invoices') {
       router.replace(`/clientarea/invoices${impQuery}`);
+    } else if (action === 'quotes') {
+      router.replace(`/clientarea/quotes${impQuery}`);
     } else if (action === 'tickets' || action === 'support') {
       router.replace(`/clientarea/tickets${impQuery}`);
     } else if (action === 'addfunds') {
@@ -64,137 +75,18 @@ function ClientAreaHomeContent() {
       const id = searchParams.get('id');
       router.replace(`/clientarea/domains/${id || ''}${impQuery}`);
     }
-  }, [action, impQuery, router]);
+  }, [action, impQuery, router, searchParams]);
 
-  // Determine active client identity
-  const [clientInfo, setClientInfo] = useState<{
-    id: string | null;
-    name: string;
-    company: string;
-  }>({
-    id: impersonateParam || null,
-    name: 'Customer',
-    company: 'SoftCents Systems Ltd.',
-  });
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    let targetId = impersonateParam;
-    if (!targetId) {
-      const storedImp = localStorage.getItem('ci_impersonator_backup');
-      if (storedImp) {
-        try {
-          const parsed = JSON.parse(storedImp);
-          targetId = parsed.targetUser?.whmcsId || parsed.targetUser?.id;
-        } catch {}
-      }
-    }
-
-    if (targetId) {
-      const matched = (whmcsData?.clients || []).find(
-        (c: any) => String(c.id) === String(targetId) || String(c.whmcsId) === String(targetId)
-      );
-      if (matched) {
-        setClientInfo({
-          id: String(matched.id),
-          name: matched.name || `${matched.firstname || ''} ${matched.lastname || ''}`.trim() || 'Customer',
-          company: matched.company || matched.companyname || 'Softcents Telecom Ltd',
-        });
-        return;
-      }
-    }
-
-    // Check auth user from local storage
-    const storedUser = localStorage.getItem('auth_user');
-    if (storedUser) {
-      try {
-        const u = JSON.parse(storedUser);
-        const name = u.profile?.first_name
-          ? `${u.profile.first_name} ${u.profile.last_name || ''}`.trim()
-          : (u.name || u.email);
-
-        // Check if user email matches any WHMCS client
-        const matched = (whmcsData?.clients || []).find(
-          (c: any) => c.email && u.email && c.email.toLowerCase() === u.email.toLowerCase()
-        );
-
-        setClientInfo({
-          id: matched ? String(matched.id) : u.id || null,
-          name: name || matched?.name || 'Customer',
-          company: matched?.company || matched?.companyname || u.customerRegistration?.company_name || 'SoftCents Systems Ltd.',
-        });
-        return;
-      } catch {}
-    }
-
-    // Default primary customer view
-    const defaultClient = (whmcsData?.clients || []).find((c: any) => String(c.id) === '177') || (whmcsData?.clients || [])[0];
-    if (defaultClient) {
-      setClientInfo({
-        id: String(defaultClient.id),
-        name: defaultClient.name || `${defaultClient.firstname || ''} ${defaultClient.lastname || ''}`.trim(),
-        company: defaultClient.company || defaultClient.companyname || 'Softcents Telecom Ltd',
-      });
-    }
-  }, [impersonateParam]);
-
-  // Compute active services
-  const allServices = (whmcsData?.services || []) as any[];
-  let clientServices = allServices;
-  if (clientInfo.id) {
-    const matched = allServices.filter((s: any) => String(s.userid) === String(clientInfo.id));
-    if (matched.length > 0) {
-      clientServices = matched;
-    }
-  }
-
-  const activeServices = clientServices.filter(
-    (s: any) => (s.domainstatus || '').toLowerCase() === 'active'
-  );
-  const displayServices = activeServices.length > 0 ? activeServices.slice(0, 10) : clientServices.slice(0, 10);
-
-  // Compute domains
-  const allDomains = (whmcsData?.domains || []) as any[];
-  let clientDomains = allDomains;
-  if (clientInfo.id) {
-    const matched = allDomains.filter((d: any) => String(d.userid) === String(clientInfo.id));
-    if (matched.length > 0) {
-      clientDomains = matched;
-    }
-  }
-
-  // Compute tickets
-  const allTickets = (whmcsData?.tickets || []) as any[];
-  let clientTickets = allTickets;
-  if (clientInfo.id) {
-    const matched = allTickets.filter((t: any) => String(t.userid) === String(clientInfo.id));
-    if (matched.length > 0) {
-      clientTickets = matched;
-    }
-  }
-  const openTicketsCount = clientTickets.filter(
-    (t: any) => (t.status || '').toLowerCase() !== 'closed'
-  ).length;
-
-  // Compute invoices
-  const allInvoices = (whmcsData?.invoices || []) as any[];
-  let clientInvoices = allInvoices;
-  if (clientInfo.id) {
-    const matched = allInvoices.filter((i: any) => String(i.userid) === String(clientInfo.id));
-    if (matched.length > 0) {
-      clientInvoices = matched;
-    }
-  }
-  const unpaidInvoices = clientInvoices.filter(
-    (inv: any) => (inv.status || '').toLowerCase() === 'unpaid'
-  );
+  const displayServices = activeServices.length > 0 ? activeServices : services;
 
   const handleDomainSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!domainSearch.trim()) return;
-    router.push(`/domainchecker?domain=${encodeURIComponent(domainSearch.trim())}`);
+    router.push(`/domainchecker?domain=${encodeURIComponent(domainSearch.trim())}${impQuery ? `&${impQuery.replace('?', '')}` : ''}`);
   };
+
+  const clientName = client?.name || 'Customer';
+  const companyName = client?.company || client?.companyname || 'SoftCents Systems Ltd.';
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans">
@@ -205,15 +97,15 @@ function ClientAreaHomeContent() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
           <div>
             <h1 className="text-lg sm:text-xl font-bold text-slate-900">
-              Welcome Back, {clientInfo.name}!
+              Welcome Back, {clientName}!
             </h1>
             <p className="text-xs text-slate-500">
-              {clientInfo.company} &bull; Client Portal &amp; Management Console
+              {companyName} &bull; Client Portal &amp; Management Console
             </p>
           </div>
           <div>
             <Link
-              href="/cart"
+              href={`/cart${impQuery}`}
               className="w-full sm:w-auto text-center bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-3 sm:px-4 py-2 rounded shadow-sm text-xs font-bold inline-block transition-colors"
             >
               + Order New Services
@@ -231,7 +123,7 @@ function ClientAreaHomeContent() {
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
               <Box className="w-6 h-6 sm:w-7 sm:h-7 text-[#007bff]" />
               <div className="text-xl sm:text-2xl font-bold text-slate-900">
-                {activeServices.length > 0 ? activeServices.length : clientServices.length}
+                {activeServices.length > 0 ? activeServices.length : services.length}
               </div>
             </div>
             <div className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wide">
@@ -247,7 +139,7 @@ function ClientAreaHomeContent() {
           >
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
               <Globe className="w-6 h-6 sm:w-7 sm:h-7 text-[#28a745]" />
-              <div className="text-xl sm:text-2xl font-bold text-slate-900">{clientDomains.length}</div>
+              <div className="text-xl sm:text-2xl font-bold text-slate-900">{domains.length}</div>
             </div>
             <div className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wide">
               Domains
@@ -262,7 +154,7 @@ function ClientAreaHomeContent() {
           >
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
               <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7 text-[#dc3545]" />
-              <div className="text-xl sm:text-2xl font-bold text-slate-900">{openTicketsCount}</div>
+              <div className="text-xl sm:text-2xl font-bold text-slate-900">{openTickets.length}</div>
             </div>
             <div className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wide">
               Tickets
@@ -389,7 +281,7 @@ function ClientAreaHomeContent() {
                       <span className="text-slate-400 ml-1">({s.billingcycle || 'Monthly'})</span>
                     </div>
                     <Link
-                      href={`/clientarea/services/${s.id}${impersonateParam ? `?impersonate=${encodeURIComponent(impersonateParam)}` : ''}`}
+                      href={`/clientarea/services/${s.id}${impQuery}`}
                       className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-2.5 py-1 rounded text-[11px] font-semibold transition-colors"
                     >
                       Manage
@@ -402,7 +294,7 @@ function ClientAreaHomeContent() {
                 <Box className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                 <p className="font-semibold text-slate-700 text-xs">No active products or services found.</p>
                 <Link
-                  href="/cart"
+                  href={`/cart${impQuery}`}
                   className="mt-3 inline-block bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-1.5 rounded text-xs font-bold"
                 >
                   + Order New Service
@@ -470,7 +362,7 @@ function ClientAreaHomeContent() {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <Link
-                          href={`/clientarea/services/${s.id}${impersonateParam ? `?impersonate=${encodeURIComponent(impersonateParam)}` : ''}`}
+                          href={`/clientarea/services/${s.id}${impQuery}`}
                           className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-3 py-1 rounded text-[11px] font-semibold transition-colors inline-block"
                         >
                           Manage
@@ -485,7 +377,7 @@ function ClientAreaHomeContent() {
                       <p className="font-semibold text-slate-700">No active products or services found.</p>
                       <p className="text-xs text-slate-400 mt-1">Order your first cloud VPS, web hosting, or VoIP service today.</p>
                       <Link
-                        href="/cart"
+                        href={`/cart${impQuery}`}
                         className="mt-3 inline-block bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-1.5 rounded text-xs font-bold transition-colors"
                       >
                         + Order New Service
@@ -507,7 +399,7 @@ function ClientAreaHomeContent() {
             <Link href="/contact" className="hover:text-[#1A4D80]">Contact Us</Link>
             <Link href="/knowledgebase" className="hover:text-[#1A4D80]">Knowledgebase</Link>
             <Link href="/networkissues" className="hover:text-[#1A4D80]">Network Status</Link>
-            <Link href="/clientarea/affiliates" className="hover:text-[#1A4D80]">Affiliates</Link>
+            <Link href={`/clientarea/affiliates${impQuery}`} className="hover:text-[#1A4D80]">Affiliates</Link>
           </div>
         </div>
       </footer>

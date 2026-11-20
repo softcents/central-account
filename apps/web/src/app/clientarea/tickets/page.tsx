@@ -4,21 +4,15 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
+import { useActiveClient } from '@/hooks/useActiveClient';
 import { HelpCircle, Search, MessageSquare, PlusCircle } from 'lucide-react';
-import whmcsData from '@/data/whmcs_sync.json';
 
 function ClientTicketsContent() {
   const searchParams = useSearchParams();
-  const impersonate = searchParams.get('impersonate') || searchParams.get('userid');
+  const { clientId, client, impQuery, tickets, openTickets, isLoaded } = useActiveClient();
   const [searchTerm, setSearchTerm] = useState('');
 
-  let rawTickets = whmcsData?.tickets || [];
-  if (impersonate) {
-    const matched = rawTickets.filter((t: any) => String(t.userid) === String(impersonate));
-    if (matched.length > 0) {
-      rawTickets = matched;
-    }
-  }
+  const rawTickets = tickets;
 
   const filtered = rawTickets.filter(
     (t: any) =>
@@ -35,12 +29,12 @@ function ClientTicketsContent() {
             <span>Support Tickets ({rawTickets.length})</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Track communication with our 24/7 technical and billing engineers.
+            Track communication with our 24/7 technical and billing engineers for {client?.name || 'Customer'}.
           </p>
         </div>
         <div>
           <Link
-            href="/support/new"
+            href={`/support/new${impQuery}`}
             className="w-full sm:w-auto text-center bg-[#d9534f] hover:bg-[#c9302c] text-white px-4 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
           >
             + Open New Ticket
@@ -63,8 +57,15 @@ function ClientTicketsContent() {
         {/* Mobile View: Cards (< sm) */}
         <div className="block sm:hidden divide-y divide-slate-100">
           {filtered.length === 0 ? (
-            <div className="py-8 text-center text-slate-500 text-xs px-4">
-              No support tickets found.
+            <div className="py-12 text-center text-slate-500 text-xs px-4">
+              <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="font-semibold text-slate-700">No support tickets found.</p>
+              <Link
+                href={`/support/new${impQuery}`}
+                className="mt-3 inline-block bg-[#d9534f] hover:bg-[#c9302c] text-white px-4 py-1.5 rounded text-xs font-bold"
+              >
+                + Open New Ticket
+              </Link>
             </div>
           ) : (
             filtered.map((t: any) => (
@@ -80,9 +81,9 @@ function ClientTicketsContent() {
                   </div>
                   <span
                     className={`font-bold px-2 py-0.5 rounded-full text-[10px] shrink-0 ${
-                      t.status === 'Open'
+                      (t.status || '').toLowerCase() === 'open'
                         ? 'bg-rose-100 text-rose-800'
-                        : t.status === 'Closed'
+                        : (t.status || '').toLowerCase() === 'closed'
                         ? 'bg-slate-100 text-slate-700'
                         : 'bg-emerald-100 text-emerald-800'
                     }`}
@@ -96,7 +97,7 @@ function ClientTicketsContent() {
                     {t.date || '-'}
                   </div>
                   <Link
-                    href={`/support/${t.id}${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
+                    href={`/support/${t.id}${impQuery}`}
                     className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold text-xs transition-colors border border-slate-300"
                   >
                     View &rarr;
@@ -123,8 +124,15 @@ function ClientTicketsContent() {
             <tbody className="divide-y divide-slate-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
-                    No support tickets found.
+                  <td colSpan={6} className="py-12 text-center text-slate-500">
+                    <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="font-semibold text-slate-700">No support tickets found.</p>
+                    <Link
+                      href={`/support/new${impQuery}`}
+                      className="mt-3 inline-block bg-[#d9534f] hover:bg-[#c9302c] text-white px-4 py-1.5 rounded text-xs font-bold transition-colors"
+                    >
+                      + Open New Ticket
+                    </Link>
                   </td>
                 </tr>
               ) : (
@@ -138,9 +146,9 @@ function ClientTicketsContent() {
                     <td className="py-3.5 px-4 text-center">
                       <span
                         className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
-                          t.status === 'Open'
+                          (t.status || '').toLowerCase() === 'open'
                             ? 'bg-rose-100 text-rose-800'
-                            : t.status === 'Closed'
+                            : (t.status || '').toLowerCase() === 'closed'
                             ? 'bg-slate-100 text-slate-700'
                             : 'bg-emerald-100 text-emerald-800'
                         }`}
@@ -153,7 +161,7 @@ function ClientTicketsContent() {
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <Link
-                        href={`/support/${t.id}${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
+                        href={`/support/${t.id}${impQuery}`}
                         className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold transition-colors border border-slate-300 inline-block"
                       >
                         View &rarr;

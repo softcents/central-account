@@ -459,6 +459,45 @@ async function main() {
     clientMap[c.id] = `${c.firstname || ''} ${c.lastname || ''}`.trim() || c.companyname || c.email;
   });
 
+  console.log('--> Fetching quotes and quote line items...');
+  const quotesRaw = queryTsv(`
+    SELECT id, subject, stage, validuntil, userid, firstname, lastname, companyname, email,
+           address1, address2, city, state, postcode, country, phonenumber, tax_id, currency,
+           subtotal, tax1, tax2, total, proposal, customernotes, adminnotes, datecreated, lastmodified,
+           datesent, dateaccepted
+    FROM tblquotes
+    ORDER BY id DESC;
+  `);
+
+  const quoteItemsRaw = queryTsv(`
+    SELECT id, quoteid, description, quantity, unitprice, discount, taxable, created_at, updated_at
+    FROM tblquoteitems
+    ORDER BY id ASC;
+  `);
+
+  const quotes = quotesRaw.map((q: any) => ({
+    ...q,
+    clientName: clientMap[q.userid] || (q.firstname ? `${q.firstname} ${q.lastname || ''}`.trim() : `Client #${q.userid}`),
+    items: quoteItemsRaw.filter((item: any) => String(item.quoteid) === String(q.id)),
+  }));
+  console.log(`✓ Fetched ${quotes.length} quotes with ${quoteItemsRaw.length} line items.`);
+
+  console.log('--> Fetching promotions and announcements...');
+  const promotionsRaw = queryTsv(`
+    SELECT id, code, type, recurring, value, cycles, appliesto, requires, requiresexisting,
+           startdate, expirationdate, maxuses, uses, lifetimepromo, applyonce, newsignups,
+           existingclient, onceperclient, recurfor, upgrades, upgradeconfig, notes
+    FROM tblpromotions
+    ORDER BY id DESC;
+  `);
+
+  const announcementsRaw = queryTsv(`
+    SELECT id, date, title, announcement, published, parentid, language, created_at, updated_at
+    FROM tblannouncements
+    ORDER BY id DESC;
+  `);
+  console.log(`✓ Fetched ${promotionsRaw.length} promotions and ${announcementsRaw.length} announcements.`);
+
   const syncData = {
     syncedAt: new Date().toISOString(),
     clientCount: clients.length,
@@ -469,6 +508,9 @@ async function main() {
     transactionCount: transactions.length,
     ticketCount: tickets.length,
     productCount: products.length,
+    quoteCount: quotes.length,
+    promotionCount: promotionsRaw.length,
+    announcementCount: announcementsRaw.length,
     servers,
     serverGroups,
     addons,
@@ -574,6 +616,9 @@ async function main() {
     emails,
     productGroups,
     products,
+    quotes,
+    promotions: promotionsRaw,
+    announcements: announcementsRaw,
   };
 
   const webDataDir = '/www/wwwroot/account.softcents.com/apps/web/src/data';

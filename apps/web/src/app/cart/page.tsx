@@ -33,8 +33,10 @@ import {
   List,
   RefreshCw,
   AlertCircle,
+  Share2,
 } from 'lucide-react';
 import whmcsData from '@/data/whmcs_sync.json';
+import { useActiveClient } from '@/hooks/useActiveClient';
 
 interface CartItem {
   id: string;
@@ -167,6 +169,18 @@ function CartInner() {
   const rawGid = searchParams.get('gid');
   const rawGroup = searchParams.get('group');
   const rawPid = searchParams.get('pid');
+  const action = searchParams.get('a');
+  const domainAction = searchParams.get('domain');
+
+  const { clientId, client, impQuery, domains } = useActiveClient();
+
+  const isRenewView = action === 'renew';
+  const isTransferView = action === 'add' && domainAction === 'transfer';
+  const isAddonsView = rawGid === 'addons';
+
+  const [transferDomain, setTransferDomain] = useState('');
+  const [transferEpp, setTransferEpp] = useState('');
+  const [manualRenewDomain, setManualRenewDomain] = useState('');
 
   // Load all synced product groups & products
   const allGroups = useMemo(() => {
@@ -369,6 +383,50 @@ function CartInner() {
     }
   };
 
+  const handleAddDomainTransfer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!transferDomain.trim()) return;
+    const item: CartItem = {
+      id: `domain-transfer-${Date.now()}`,
+      name: `Domain Transfer - ${transferDomain.trim()}`,
+      groupName: 'Domains',
+      price: 1500,
+      setupFee: 0,
+      cycle: '1 Year',
+      displayPrice: '৳1,500.00 BDT',
+    };
+    setCart((prev) => [...prev, item]);
+    setCheckoutOpen(true);
+  };
+
+  const handleRenewDomain = (domainName: string) => {
+    const item: CartItem = {
+      id: `domain-renew-${Date.now()}`,
+      name: `Domain Renewal - ${domainName}`,
+      groupName: 'Domains',
+      price: 1500,
+      setupFee: 0,
+      cycle: '1 Year',
+      displayPrice: '৳1,500.00 BDT',
+    };
+    setCart((prev) => [...prev, item]);
+    setCheckoutOpen(true);
+  };
+
+  const handleAddAddon = (addonName: string, price: number, cycle: string) => {
+    const item: CartItem = {
+      id: `addon-${Date.now()}`,
+      name: addonName,
+      groupName: 'Product Addons',
+      price: price,
+      setupFee: 0,
+      cycle: cycle,
+      displayPrice: `৳${price.toFixed(2)} BDT`,
+    };
+    setCart((prev) => [...prev, item]);
+    setCheckoutOpen(true);
+  };
+
   const isPhoneGroup =
     selectedGroupId === '5' ||
     selectedGroupId === '15' ||
@@ -520,6 +578,222 @@ function CartInner() {
 
           {/* MAIN PRODUCT LISTING AREA */}
           <div className="lg:col-span-3 space-y-4">
+            {isRenewView ? (
+              <div className="space-y-4">
+                <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
+                        <RefreshCw className="w-6 h-6 text-teal-600" />
+                        <span>Renew Domains</span>
+                      </h1>
+                      <p className="text-xs text-slate-600 mt-1">
+                        Extend your domain registration for an additional year to prevent service interruption.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                  <div className="p-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-800">
+                    Domains Eligible for Renewal ({domains.length})
+                  </div>
+                  {domains.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-slate-500">
+                      <Globe className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="font-semibold text-slate-700">No registered domains found on your account.</p>
+                      <p className="mt-1">Enter a domain below to renew or register a new domain.</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100">
+                      {domains.map((d: any) => (
+                        <div key={d.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50">
+                          <div>
+                            <div className="font-bold text-sm text-[#1A4D80]">{d.domain}</div>
+                            <div className="text-xs text-slate-500 mt-0.5">
+                              Expires: <span className="font-mono font-medium text-slate-800">{d.expirydate || '-'}</span> &bull; Status: <span className="text-emerald-700 font-semibold">{d.status}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <span className="font-bold text-slate-900 font-mono text-sm">৳1,500.00 BDT / 1 Yr</span>
+                            <button
+                              onClick={() => handleRenewDomain(d.domain)}
+                              className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-2 rounded text-xs font-bold transition-colors flex items-center space-x-1"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                              <span>Renew Now</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
+                  <h3 className="font-bold text-slate-900 text-sm">Renew Any Other Domain</h3>
+                  <form onSubmit={(e) => { e.preventDefault(); if (manualRenewDomain.trim()) handleRenewDomain(manualRenewDomain.trim()); }} className="flex flex-col sm:flex-row gap-2 max-w-lg">
+                    <input
+                      type="text"
+                      value={manualRenewDomain}
+                      onChange={(e) => setManualRenewDomain(e.target.value)}
+                      placeholder="Enter domain name (e.g. mycompany.com)..."
+                      className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded focus:outline-none focus:border-[#1A4D80]"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-5 py-2 rounded text-xs font-bold transition-colors"
+                    >
+                      Renew Domain
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ) : isTransferView ? (
+              <div className="space-y-4">
+                <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
+                        <Share2 className="w-6 h-6 text-cyan-600" />
+                        <span>Transfer Domains to Us</span>
+                      </h1>
+                      <p className="text-xs text-slate-600 mt-1">
+                        Transfer your active domain name from your current registrar to SoftCents Systems. Includes 1-year extension.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+                  <form onSubmit={handleAddDomainTransfer} className="space-y-4 max-w-lg">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Domain Name to Transfer
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={transferDomain}
+                        onChange={(e) => setTransferDomain(e.target.value)}
+                        placeholder="example.com"
+                        className="w-full px-3 py-2 text-xs border border-slate-300 rounded focus:outline-none focus:border-[#1A4D80]"
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1">Enter your domain with extension, without www or http.</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        EPP / Authorization Code
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={transferEpp}
+                        onChange={(e) => setTransferEpp(e.target.value)}
+                        placeholder="Obtain this from your current registrar"
+                        className="w-full px-3 py-2 text-xs border border-slate-300 rounded font-mono focus:outline-none focus:border-[#1A4D80]"
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1">Unlock your domain at your current registrar before submitting.</p>
+                    </div>
+
+                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-xs space-y-1.5">
+                      <div className="flex justify-between font-semibold text-slate-800">
+                        <span>Transfer Fee (Includes 1 Yr Extension):</span>
+                        <span className="font-mono text-emerald-700">৳1,500.00 BDT</span>
+                      </div>
+                      <div className="flex justify-between text-slate-500 text-[11px]">
+                        <span>Free DNS Management &amp; Email Forwarding:</span>
+                        <span className="text-emerald-600 font-bold">Included Free</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full bg-[#1A4D80] hover:bg-[#143d66] text-white py-2.5 rounded text-xs font-bold transition-colors shadow-sm flex items-center justify-center space-x-1"
+                    >
+                      <ShoppingBag className="w-4 h-4 mr-1" />
+                      <span>Add Transfer to Cart &rarr;</span>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ) : isAddonsView ? (
+              <div className="space-y-4">
+                <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
+                        <Layers className="w-6 h-6 text-indigo-600" />
+                        <span>Product Addons</span>
+                      </h1>
+                      <p className="text-xs text-slate-600 mt-1">
+                        Enhance your hosting, Cloud PBX, and server performance with enterprise service addons.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-sm">Dedicated IPv4 Address</h3>
+                      <p className="text-xs text-slate-500 mt-1">Dedicated clean IP address for private SSL, mail reputation, and BDIX peering routing.</p>
+                      <div className="mt-4 font-mono font-bold text-lg text-[#1A4D80]">৳300.00 BDT <span className="text-xs text-slate-500 font-normal">/ Monthly</span></div>
+                    </div>
+                    <button
+                      onClick={() => handleAddAddon('Dedicated IPv4 Address', 300, 'Monthly')}
+                      className="mt-4 bg-[#1A4D80] hover:bg-[#143d66] text-white py-2 rounded text-xs font-bold transition-colors"
+                    >
+                      Order Addon &rarr;
+                    </button>
+                  </div>
+
+                  <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-sm">SpamExperts Email Security</h3>
+                      <p className="text-xs text-slate-500 mt-1">99.98% anti-spam filtering, inbound/outbound protection, and automated virus quarantine.</p>
+                      <div className="mt-4 font-mono font-bold text-lg text-[#1A4D80]">৳500.00 BDT <span className="text-xs text-slate-500 font-normal">/ Monthly</span></div>
+                    </div>
+                    <button
+                      onClick={() => handleAddAddon('SpamExperts Email Security', 500, 'Monthly')}
+                      className="mt-4 bg-[#1A4D80] hover:bg-[#143d66] text-white py-2 rounded text-xs font-bold transition-colors"
+                    >
+                      Order Addon &rarr;
+                    </button>
+                  </div>
+
+                  <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-sm">Wildcard SSL Certificate</h3>
+                      <p className="text-xs text-slate-500 mt-1">Secure unlimited subdomains under your primary domain with 256-bit encryption & warranty.</p>
+                      <div className="mt-4 font-mono font-bold text-lg text-[#1A4D80]">৳2,500.00 BDT <span className="text-xs text-slate-500 font-normal">/ Annually</span></div>
+                    </div>
+                    <button
+                      onClick={() => handleAddAddon('Wildcard SSL Certificate', 2500, 'Annually')}
+                      className="mt-4 bg-[#1A4D80] hover:bg-[#143d66] text-white py-2 rounded text-xs font-bold transition-colors"
+                    >
+                      Order Addon &rarr;
+                    </button>
+                  </div>
+
+                  <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-sm">Acronis Cloud Daily Backup (50GB)</h3>
+                      <p className="text-xs text-slate-500 mt-1">Automated daily snapshot backups with 1-click restore for MySQL databases and website files.</p>
+                      <div className="mt-4 font-mono font-bold text-lg text-[#1A4D80]">৳400.00 BDT <span className="text-xs text-slate-500 font-normal">/ Monthly</span></div>
+                    </div>
+                    <button
+                      onClick={() => handleAddAddon('Acronis Cloud Daily Backup (50GB)', 400, 'Monthly')}
+                      className="mt-4 bg-[#1A4D80] hover:bg-[#143d66] text-white py-2 rounded text-xs font-bold transition-colors"
+                    >
+                      Order Addon &rarr;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
             {/* Category Header Banner */}
             <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -788,6 +1062,8 @@ function CartInner() {
                   </button>
                 </div>
               </div>
+            )}
+              </>
             )}
           </div>
         </div>

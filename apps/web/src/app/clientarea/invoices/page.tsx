@@ -4,22 +4,16 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
+import { useActiveClient } from '@/hooks/useActiveClient';
 import { CreditCard, Search, ExternalLink, Printer } from 'lucide-react';
-import whmcsData from '@/data/whmcs_sync.json';
 
 function ClientInvoicesContent() {
   const searchParams = useSearchParams();
-  const impersonate = searchParams.get('impersonate') || searchParams.get('userid');
+  const { clientId, client, impQuery, invoices, unpaidInvoices, isLoaded } = useActiveClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  let rawInvoices = whmcsData?.invoices || [];
-  if (impersonate) {
-    const matched = rawInvoices.filter((inv: any) => String(inv.userid) === String(impersonate));
-    if (matched.length > 0) {
-      rawInvoices = matched;
-    }
-  }
+  const rawInvoices = invoices;
 
   const filtered = rawInvoices.filter((inv: any) => {
     const matchesSearch =
@@ -39,18 +33,18 @@ function ClientInvoicesContent() {
             <span>My Invoices ({rawInvoices.length})</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Review billing history, payment receipts, and settle outstanding dues via PipraPay.
+            Review billing history, payment receipts, and settle outstanding dues for {client?.name || 'Customer'}.
           </p>
         </div>
         <div className="flex items-center space-x-2">
           <Link
-            href={`/clientarea/masspay${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
+            href={`/clientarea/masspay${impQuery}`}
             className="w-full sm:w-auto text-center bg-[#1A4D80] hover:bg-[#143d66] text-white px-4 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
           >
             Mass Payment
           </Link>
           <Link
-            href="/clientarea/addfunds"
+            href={`/clientarea/addfunds${impQuery}`}
             className="w-full sm:w-auto text-center bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
           >
             + Add Funds Deposit
@@ -91,8 +85,9 @@ function ClientInvoicesContent() {
         {/* Mobile View: Cards (< sm) */}
         <div className="block sm:hidden divide-y divide-slate-100">
           {filtered.length === 0 ? (
-            <div className="py-8 text-center text-slate-500 text-xs px-4">
-              No invoices found matching your criteria.
+            <div className="py-12 text-center text-slate-500 text-xs px-4">
+              <CreditCard className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="font-semibold text-slate-700">No invoices found matching your criteria.</p>
             </div>
           ) : (
             filtered.slice(0, 50).map((inv: any) => (
@@ -108,9 +103,9 @@ function ClientInvoicesContent() {
                   </div>
                   <span
                     className={`font-bold px-2 py-0.5 rounded-full text-[10px] shrink-0 ${
-                      inv.status === 'Paid'
+                      (inv.status || '').toLowerCase() === 'paid'
                         ? 'bg-emerald-100 text-emerald-800'
-                        : inv.status === 'Unpaid'
+                        : (inv.status || '').toLowerCase() === 'unpaid'
                         ? 'bg-rose-100 text-rose-800'
                         : 'bg-slate-100 text-slate-700'
                     }`}
@@ -128,10 +123,10 @@ function ClientInvoicesContent() {
                     target="_blank"
                     rel="noreferrer"
                     className={`inline-flex items-center space-x-1 px-3 py-1 rounded font-semibold text-xs transition-colors text-white ${
-                      inv.status === 'Unpaid' ? 'bg-[#5cb85c] hover:bg-[#4cae4c]' : 'bg-[#1A4D80] hover:bg-[#143d66]'
+                      (inv.status || '').toLowerCase() === 'unpaid' ? 'bg-[#5cb85c] hover:bg-[#4cae4c]' : 'bg-[#1A4D80] hover:bg-[#143d66]'
                     }`}
                   >
-                    <span>{inv.status === 'Unpaid' ? 'Pay Now' : 'View'}</span>
+                    <span>{(inv.status || '').toLowerCase() === 'unpaid' ? 'Pay Now' : 'View'}</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
@@ -156,8 +151,9 @@ function ClientInvoicesContent() {
             <tbody className="divide-y divide-slate-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
-                    No invoices found matching your criteria.
+                  <td colSpan={6} className="py-12 text-center text-slate-500">
+                    <CreditCard className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="font-semibold text-slate-700">No invoices found matching your criteria.</p>
                   </td>
                 </tr>
               ) : (
@@ -174,9 +170,9 @@ function ClientInvoicesContent() {
                     <td className="py-3.5 px-4 text-center">
                       <span
                         className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
-                          inv.status === 'Paid'
+                          (inv.status || '').toLowerCase() === 'paid'
                             ? 'bg-emerald-100 text-emerald-800'
-                            : inv.status === 'Unpaid'
+                            : (inv.status || '').toLowerCase() === 'unpaid'
                             ? 'bg-rose-100 text-rose-800'
                             : 'bg-slate-100 text-slate-700'
                         }`}
@@ -191,7 +187,7 @@ function ClientInvoicesContent() {
                         rel="noreferrer"
                         className="inline-flex items-center space-x-1 bg-[#1A4D80] hover:bg-[#143d66] text-white px-3 py-1 rounded font-semibold transition-colors"
                       >
-                        <span>{inv.status === 'Unpaid' ? 'Pay Now' : 'View'}</span>
+                        <span>{(inv.status || '').toLowerCase() === 'unpaid' ? 'Pay Now' : 'View'}</span>
                         <ExternalLink className="w-3 h-3" />
                       </a>
                     </td>

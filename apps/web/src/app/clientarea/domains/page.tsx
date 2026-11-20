@@ -4,21 +4,15 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
+import { useActiveClient } from '@/hooks/useActiveClient';
 import { Globe, Search, RefreshCw, CheckCircle2, ShieldCheck, PlusCircle } from 'lucide-react';
-import whmcsData from '@/data/whmcs_sync.json';
 
 function ClientDomainsContent() {
   const searchParams = useSearchParams();
-  const impersonate = searchParams.get('impersonate') || searchParams.get('userid');
+  const { clientId, client, impQuery, domains, isLoaded } = useActiveClient();
   const [searchTerm, setSearchTerm] = useState('');
 
-  let rawDomains = whmcsData?.domains || [];
-  if (impersonate) {
-    const matched = rawDomains.filter((d: any) => String(d.userid) === String(impersonate));
-    if (matched.length > 0) {
-      rawDomains = matched;
-    }
-  }
+  const rawDomains = domains;
 
   const filtered = rawDomains.filter((d: any) =>
     (d.domain || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -33,13 +27,19 @@ function ClientDomainsContent() {
             <span>My Domains ({rawDomains.length})</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Manage DNS nameservers, whois contact protection, and automatic renewals.
+            Manage DNS nameservers, whois contact protection, and automatic renewals for {client?.name || 'Customer'}.
           </p>
         </div>
-        <div>
+        <div className="flex items-center space-x-2">
           <Link
-            href="/cart?a=add&domain=register"
-            className="w-full sm:w-auto text-center bg-[#28a745] hover:bg-[#218838] text-white px-4 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
+            href={`/cart?a=renew${impQuery}`}
+            className="w-full sm:w-auto text-center bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
+          >
+            Renew Domains
+          </Link>
+          <Link
+            href={`/cart?a=add&domain=register${impQuery}`}
+            className="w-full sm:w-auto text-center bg-[#28a745] hover:bg-[#218838] text-white px-3 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
           >
             + Register New Domain
           </Link>
@@ -61,8 +61,15 @@ function ClientDomainsContent() {
         {/* Mobile View: Cards (< sm) */}
         <div className="block sm:hidden divide-y divide-slate-100">
           {filtered.length === 0 ? (
-            <div className="py-8 text-center text-slate-500 text-xs px-4">
-              No domains found.
+            <div className="py-12 text-center text-slate-500 text-xs px-4">
+              <Globe className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="font-semibold text-slate-700">No domains registered yet.</p>
+              <Link
+                href={`/cart?a=add&domain=register${impQuery}`}
+                className="mt-3 inline-block bg-[#28a745] hover:bg-[#218838] text-white px-4 py-1.5 rounded text-xs font-bold"
+              >
+                + Register New Domain
+              </Link>
             </div>
           ) : (
             filtered.map((d: any) => (
@@ -78,7 +85,7 @@ function ClientDomainsContent() {
                   </div>
                   <span
                     className={`font-bold px-2 py-0.5 rounded-full text-[10px] shrink-0 ${
-                      d.status === 'Active'
+                      (d.status || '').toLowerCase() === 'active'
                         ? 'bg-emerald-100 text-emerald-800'
                         : 'bg-rose-100 text-rose-800'
                     }`}
@@ -92,7 +99,7 @@ function ClientDomainsContent() {
                     Expires: <span className="font-mono font-medium text-slate-800">{d.expirydate || '-'}</span>
                   </div>
                   <Link
-                    href={`/clientarea/domains/${d.id}${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
+                    href={`/clientarea/domains/${d.id}${impQuery}`}
                     className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold text-xs transition-colors border border-slate-300"
                   >
                     Manage &rarr;
@@ -119,8 +126,15 @@ function ClientDomainsContent() {
             <tbody className="divide-y divide-slate-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
-                    No domains found.
+                  <td colSpan={6} className="py-12 text-center text-slate-500">
+                    <Globe className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="font-semibold text-slate-700">No domains found.</p>
+                    <Link
+                      href={`/cart?a=add&domain=register${impQuery}`}
+                      className="mt-3 inline-block bg-[#28a745] hover:bg-[#218838] text-white px-4 py-1.5 rounded text-xs font-bold transition-colors"
+                    >
+                      + Register New Domain
+                    </Link>
                   </td>
                 </tr>
               ) : (
@@ -133,7 +147,7 @@ function ClientDomainsContent() {
                     <td className="py-3.5 px-4 text-center">
                       <span
                         className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
-                          d.status === 'Active'
+                          (d.status || '').toLowerCase() === 'active'
                             ? 'bg-emerald-100 text-emerald-800'
                             : 'bg-rose-100 text-rose-800'
                         }`}
@@ -143,7 +157,7 @@ function ClientDomainsContent() {
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <Link
-                        href={`/clientarea/domains/${d.id}${impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : ''}`}
+                        href={`/clientarea/domains/${d.id}${impQuery}`}
                         className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold transition-colors border border-slate-300 inline-block"
                       >
                         Manage &rarr;
