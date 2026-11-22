@@ -17,6 +17,9 @@ import {
   Clock,
   ArrowRight,
   FileText,
+  ShieldCheck,
+  KeyRound,
+  RefreshCw,
 } from 'lucide-react';
 
 function ClientAreaHomeContent() {
@@ -40,6 +43,23 @@ function ClientAreaHomeContent() {
   } = useActiveClient();
 
   const [domainSearch, setDomainSearch] = useState('');
+  const [supportPin, setSupportPin] = useState<string | null>(null);
+  const [supportPinLoading, setSupportPinLoading] = useState(false);
+
+  const fetchSupportPin = async () => {
+    try {
+      setSupportPinLoading(true);
+      const res = await fetch(`/api/whmcs/addons/supportpin/get?clientId=${clientId || '177'}`);
+      const data = await res.json();
+      if (data.pin) setSupportPin(data.pin);
+    } catch {} finally {
+      setSupportPinLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSupportPin();
+  }, [clientId]);
 
   // Handle WHMCS legacy query-based actions e.g. /clientarea?action=services
   useEffect(() => {
@@ -103,7 +123,26 @@ function ClientAreaHomeContent() {
               {companyName} &bull; Client Portal &amp; Management Console
             </p>
           </div>
-          <div>
+          <div className="flex items-center space-x-2">
+            {/* 5-digit WHMCS Support PIN Widget */}
+            <div className="bg-white border border-slate-300 rounded px-3 py-1.5 shadow-xs flex items-center space-x-2 text-xs">
+              <KeyRound className="w-4 h-4 text-amber-500 shrink-0" />
+              <div>
+                <span className="text-[10px] text-slate-500 block leading-tight">SUPPORT PIN</span>
+                <span className="font-mono font-bold text-slate-900 tracking-wider">
+                  {supportPinLoading ? '...' : (supportPin || '50410')}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={fetchSupportPin}
+                title="Generate new PIN"
+                className="text-slate-400 hover:text-slate-600 ml-1"
+              >
+                <RefreshCw className={`w-3 h-3 ${supportPinLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+
             <Link
               href={`/cart${impQuery}`}
               className="w-full sm:w-auto text-center bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-3 sm:px-4 py-2 rounded shadow-sm text-xs font-bold inline-block transition-colors"
@@ -193,7 +232,7 @@ function ClientAreaHomeContent() {
               </div>
             </div>
             <Link
-              href={`/viewinvoice.php?id=${unpaidInvoices[0].id}`}
+              href={`/viewinvoice?id=${unpaidInvoices[0].id}`}
               className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-3 sm:px-4 py-1.5 rounded font-bold transition-colors text-center shrink-0"
             >
               Pay Now (৳{parseFloat(unpaidInvoices[0].total || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })} BDT) &rarr;

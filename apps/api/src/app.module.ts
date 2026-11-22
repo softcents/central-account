@@ -1,6 +1,7 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuditModule } from './modules/audit/audit.module';
@@ -37,6 +38,7 @@ import { TenantDomainMiddleware } from './common/middleware/tenant-domain.middle
         limit: 100, // 100 requests per minute
       },
     ]),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuditModule,
     AuthModule,

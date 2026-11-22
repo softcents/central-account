@@ -12,6 +12,7 @@ import { SupportPinAddon } from './addons/supportpin.addon';
 import { ClientVerificationAddon } from './addons/client-verification.addon';
 import { DomainsResellerAddon } from './addons/domains-reseller.addon';
 import { WhmcsService } from './whmcs.service';
+import { WhmcsCronService } from './whmcs-cron.service';
 import { WhmcsController } from './whmcs.controller';
 
 @Module({
@@ -30,9 +31,11 @@ import { WhmcsController } from './whmcs.controller';
     ClientVerificationAddon,
     DomainsResellerAddon,
     WhmcsService,
+    WhmcsCronService,
   ],
   exports: [
     WhmcsService,
+    WhmcsCronService,
     PipraPayGateway,
     UddoktaPayGateway,
     ResellerGateway,

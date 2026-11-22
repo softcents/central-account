@@ -1,9 +1,28 @@
 import { Controller, Get, Post, Body, Query, Headers, Param, Res, HttpStatus } from '@nestjs/common';
 import { WhmcsService } from './whmcs.service';
+import { WhmcsCronService } from './whmcs-cron.service';
 
 @Controller('whmcs')
 export class WhmcsController {
-  constructor(private readonly whmcs: WhmcsService) {}
+  constructor(
+    private readonly whmcs: WhmcsService,
+    private readonly whmcsCron: WhmcsCronService,
+  ) {}
+
+  @Post('cron/run')
+  async runCron() {
+    return this.whmcsCron.runAutomationCycle();
+  }
+
+  @Post('cart/checkout')
+  async createCartOrder(@Body() body: any) {
+    return this.whmcs.createOrder(body);
+  }
+
+  @Post('services/:id/provision')
+  async provisionServiceEndpoint(@Param('id') id: string) {
+    return this.whmcs.provisionService(id);
+  }
 
   @Get('summary')
   getSummary() {
@@ -55,6 +74,25 @@ export class WhmcsController {
     return this.whmcs.uddoktapay.createCharge(body);
   }
 
+  // GATEWAYS: Reseller Wallet Credit
+  @Post('gateways/reseller/deduct')
+  async deductWalletBalance(@Body() body: { clientId: string | number; invoiceId: string | number; amount: number }) {
+    const client = this.whmcs.getClient(body.clientId);
+    const balance = Number(client?.credit || 10000);
+    const res = await this.whmcs.resellerGateway.processPayment({
+      clientId: body.clientId,
+      amount: body.amount,
+      currentBalance: balance,
+      invoiceId: body.invoiceId,
+    });
+    if (res.success) {
+      if (client) client.credit = String(res.newBalance);
+      await this.whmcs.applyPayment(body.invoiceId, `WALLET-${Date.now()}`, body.amount, 'reseller');
+      return { success: true, message: 'Paid with wallet balance', newBalance: res.newBalance };
+    }
+    return { success: false, message: res.error || 'Failed to deduct wallet' };
+  }
+
   @Post('gateways/uddoktapay/webhook')
   async uddoktapayWebhook(@Body() body: any, @Headers() headers: any) {
     const invoiceId = body?.metadata?.invoice_id;
@@ -82,6 +120,23 @@ export class WhmcsController {
   @Post('servers/softcentspbx/unblock-ip')
   async unblockPbxIp(@Body() body: { domain: string; clientIp: string }) {
     return this.whmcs.pbxServer.unblockIp(body);
+  }
+
+  // SERVERS: cPanel
+  @Post('servers/cpanel/change-password')
+  async changeCpanelPassword(@Body() body: { username: string; newPass: string }) {
+    return this.whmcs.cpanelServer.changePassword(body.username, body.newPass);
+  }
+
+  // SERVERS: Virtualizor VPS
+  @Post('servers/virtualizor/action')
+  async virtualizorAction(@Body() body: { vpsId: string | number; action: 'start' | 'stop' | 'restart' | 'suspend' | 'unsuspend' }) {
+    if (body.action === 'start') return this.whmcs.virtualizorServer.startVps(body.vpsId);
+    if (body.action === 'stop') return this.whmcs.virtualizorServer.stopVps(body.vpsId);
+    if (body.action === 'restart') return this.whmcs.virtualizorServer.restartVps(body.vpsId);
+    if (body.action === 'suspend') return this.whmcs.virtualizorServer.suspendVps(body.vpsId);
+    if (body.action === 'unsuspend') return this.whmcs.virtualizorServer.unsuspendVps(body.vpsId);
+    return { status: 'error', message: 'Invalid action' };
   }
 
   // ADDONS: Softcents SMS

@@ -295,6 +295,7 @@ function CartInner() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [loadingPay, setLoadingPay] = useState(false);
+  const [selectedGateway, setSelectedGateway] = useState<'piprapay' | 'uddoktapay' | 'reseller' | 'bank'>('piprapay');
 
   // Customer checkout info
   const [customerName, setCustomerName] = useState('SoftCents Customer');
@@ -357,24 +358,31 @@ function CartInner() {
   const cartGrandTotal = cartSubtotal + cartSetupTotal;
 
   const handleCheckout = async () => {
+    if (cart.length === 0) return;
     try {
       setLoadingPay(true);
-      const res = await fetch('/api/payment/checkout', {
+      const primaryItem = cart[0];
+      const res = await fetch('/api/whmcs/cart/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          invoiceId: `ORD-${Date.now().toString().slice(-6)}`,
-          amount: cartGrandTotal,
-          fullName: customerName,
-          email: customerEmail,
-          phone: customerPhone,
+          clientId: activeClient?.id || '177',
+          productId: Number(String(primaryItem.id).replace(/[^0-9]/g, '')) || 1,
+          billingCycle: primaryItem.cycle || 'Monthly',
+          domain: `${customerName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'sc'}-pbx.bdpbx.com`,
+          paymentMethod: selectedGateway,
+          systemUrl: typeof window !== 'undefined' ? window.location.origin : 'https://account.softcents.com',
+          returnUrl: typeof window !== 'undefined' ? `${window.location.origin}/viewinvoice?payment=success` : 'https://account.softcents.com/viewinvoice?payment=success',
         }),
       });
       const data = await res.json();
-      if (data.pp_url) {
-        window.location.href = data.pp_url;
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      } else if (data.invoiceId) {
+        window.location.href = `/viewinvoice?id=${data.invoiceId}`;
       } else {
-        alert(data.error || 'Failed to initiate PipraPay checkout');
+        alert(data.message || 'Order placed successfully!');
+        window.location.href = '/clientarea/services';
       }
     } catch (e: any) {
       alert(e.message || 'Payment initiation error');
@@ -1230,20 +1238,107 @@ function CartInner() {
                   </div>
                 </div>
 
-                {/* Payment Gateway: PipraPay */}
-                <div className="bg-[#f0f8ff] border border-[#b8daff] rounded p-3 text-xs flex items-center justify-between">
-                  <div>
-                    <div className="font-bold text-slate-900 flex items-center space-x-1.5">
-                      <CreditCard className="w-4 h-4 text-[#1A4D80]" />
-                      <span>PipraPay Payment Gateway</span>
-                    </div>
-                    <div className="text-slate-600 text-[11px] mt-0.5">
-                      Instant automatic activation via bKash, Nagad, Rocket, or Bank Cards.
-                    </div>
+                {/* Payment Gateway Options */}
+                <div className="space-y-2 pt-1">
+                  <h4 className="font-bold text-xs text-slate-700 uppercase tracking-wider">
+                    Select Payment Method
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <label
+                      className={`p-3 rounded-lg border cursor-pointer flex items-center justify-between transition-colors ${
+                        selectedGateway === 'piprapay'
+                          ? 'border-[#1A4D80] bg-sky-50/60 ring-1 ring-[#1A4D80]'
+                          : 'border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2.5">
+                        <input
+                          type="radio"
+                          name="paymentGateway"
+                          value="piprapay"
+                          checked={selectedGateway === 'piprapay'}
+                          onChange={() => setSelectedGateway('piprapay')}
+                          className="text-[#1A4D80]"
+                        />
+                        <div>
+                          <div className="font-bold text-slate-800">PipraPay (bKash / Nagad / Cards)</div>
+                          <div className="text-[11px] text-slate-500">Instant auto activation</div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded">
+                        Fastest
+                      </span>
+                    </label>
+
+                    <label
+                      className={`p-3 rounded-lg border cursor-pointer flex items-center justify-between transition-colors ${
+                        selectedGateway === 'uddoktapay'
+                          ? 'border-[#1A4D80] bg-sky-50/60 ring-1 ring-[#1A4D80]'
+                          : 'border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2.5">
+                        <input
+                          type="radio"
+                          name="paymentGateway"
+                          value="uddoktapay"
+                          checked={selectedGateway === 'uddoktapay'}
+                          onChange={() => setSelectedGateway('uddoktapay')}
+                          className="text-[#1A4D80]"
+                        />
+                        <div>
+                          <div className="font-bold text-slate-800">UddoktaPay</div>
+                          <div className="text-[11px] text-slate-500">bKash, Nagad, Rocket Checkout</div>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label
+                      className={`p-3 rounded-lg border cursor-pointer flex items-center justify-between transition-colors ${
+                        selectedGateway === 'reseller'
+                          ? 'border-[#1A4D80] bg-sky-50/60 ring-1 ring-[#1A4D80]'
+                          : 'border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2.5">
+                        <input
+                          type="radio"
+                          name="paymentGateway"
+                          value="reseller"
+                          checked={selectedGateway === 'reseller'}
+                          onChange={() => setSelectedGateway('reseller')}
+                          className="text-[#1A4D80]"
+                        />
+                        <div>
+                          <div className="font-bold text-slate-800">Reseller Account Balance</div>
+                          <div className="text-[11px] text-slate-500">Deduct directly from wallet</div>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label
+                      className={`p-3 rounded-lg border cursor-pointer flex items-center justify-between transition-colors ${
+                        selectedGateway === 'bank'
+                          ? 'border-[#1A4D80] bg-sky-50/60 ring-1 ring-[#1A4D80]'
+                          : 'border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2.5">
+                        <input
+                          type="radio"
+                          name="paymentGateway"
+                          value="bank"
+                          checked={selectedGateway === 'bank'}
+                          onChange={() => setSelectedGateway('bank')}
+                          className="text-[#1A4D80]"
+                        />
+                        <div>
+                          <div className="font-bold text-slate-800">Bank Transfer</div>
+                          <div className="text-[11px] text-slate-500">City / BRAC Bank (Manual review)</div>
+                        </div>
+                      </div>
+                    </label>
                   </div>
-                  <span className="text-[10px] bg-[#1A4D80] text-white px-2 py-0.5 rounded font-bold uppercase">
-                    Auto Active
-                  </span>
                 </div>
 
                 {/* Action Buttons */}
@@ -1262,8 +1357,8 @@ function CartInner() {
                     <CreditCard className="w-4 h-4" />
                     <span>
                       {loadingPay
-                        ? 'Connecting to PipraPay...'
-                        : `Pay ৳${cartGrandTotal.toFixed(2)} BDT \u2192`}
+                        ? 'Processing Order...'
+                        : `Complete Order (৳${cartGrandTotal.toFixed(2)} BDT) \u2192`}
                     </span>
                   </button>
                 </div>

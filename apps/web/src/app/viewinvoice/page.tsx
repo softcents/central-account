@@ -14,6 +14,7 @@ function InvoiceContent() {
   const [paymentGateway, setPaymentGateway] = useState('piprapay');
   const [loadingPay, setLoadingPay] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+  const [showBankInfo, setShowBankInfo] = useState(false);
 
   // Find invoice in synced data
   const invoice = (whmcsData?.invoices || []).find(
@@ -41,24 +42,66 @@ function InvoiceContent() {
       setLoadingPay(true);
       setPayError(null);
 
-      const res = await fetch('/api/payment/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoiceId: invoiceId || '0',
-          amount: amount,
-          fullName: client?.name || 'SoftCents Valued Client',
-          email: client?.email || 'billing@softcents.com',
-          phone: client?.phone || '01700000000',
-        }),
-      });
+      if (paymentGateway === 'piprapay') {
+        const res = await fetch('/api/payment/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            invoiceId: invoiceId || '0',
+            amount: amount,
+            fullName: client?.name || 'SoftCents Valued Client',
+            email: client?.email || 'billing@softcents.com',
+            phone: client?.phone || '01700000000',
+          }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
+        if (data.pp_url) {
+          window.location.href = data.pp_url;
+        } else {
+          setPayError(data.error || 'Failed to initiate PipraPay checkout. Please contact support.');
+        }
+      } else if (paymentGateway === 'uddoktapay') {
+        const res = await fetch('/api/whmcs/gateways/uddoktapay/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            invoiceId: invoiceId || '0',
+            amount: amount,
+            fullName: client?.name || 'SoftCents Valued Client',
+            email: client?.email || 'billing@softcents.com',
+            returnUrl: window.location.href,
+            cancelUrl: window.location.href,
+            webhookUrl: `${window.location.origin}/api/whmcs/gateways/uddoktapay/webhook`,
+          }),
+        });
 
-      if (data.pp_url) {
-        window.location.href = data.pp_url;
-      } else {
-        setPayError(data.error || 'Failed to initiate PipraPay checkout. Please contact support.');
+        const data = await res.json();
+        if (data.payment_url) {
+          window.location.href = data.payment_url;
+        } else {
+          setPayError(data.message || 'Failed to initiate UddoktaPay checkout.');
+        }
+      } else if (paymentGateway === 'reseller') {
+        const res = await fetch('/api/whmcs/gateways/reseller/deduct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientId: client?.id || invoice?.userid || '177',
+            invoiceId: invoiceId || '0',
+            amount: amount,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success !== false) {
+          alert('Invoice successfully paid using Account Wallet Balance!');
+          window.location.reload();
+        } else {
+          setPayError(data.message || 'Insufficient wallet credit.');
+        }
+      } else if (paymentGateway === 'bank') {
+        setShowBankInfo((prev) => !prev);
       }
     } catch (err: any) {
       setPayError(err.message || 'Payment initiation error');
@@ -127,6 +170,8 @@ function InvoiceContent() {
                 className="p-2 border border-slate-300 rounded bg-white text-xs font-semibold focus:outline-none"
               >
                 <option value="piprapay">PipraPay (bKash / Nagad / Rocket / Cards)</option>
+                <option value="uddoktapay">UddoktaPay (bKash / Nagad Checkout)</option>
+                <option value="reseller">Reseller Wallet Credit</option>
                 <option value="bank">Bank Transfer (City Bank / BRAC Bank)</option>
               </select>
               <button
@@ -145,6 +190,25 @@ function InvoiceContent() {
               </button>
             </div>
           </div>
+
+          {showBankInfo && (
+            <div className="bg-sky-50 border border-sky-200 text-sky-900 p-3.5 rounded text-xs space-y-1.5">
+              <div className="font-bold flex items-center space-x-1.5">
+                <CreditCard className="w-4 h-4 text-sky-700" />
+                <span>Bank Deposit / Wire Transfer Instructions</span>
+              </div>
+              <div className="text-slate-700 space-y-0.5 pt-1">
+                <div>• <strong>Bank Name:</strong> The City Bank Limited</div>
+                <div>• <strong>Account Name:</strong> Softcents Systems Ltd.</div>
+                <div>• <strong>Account Number:</strong> 15024410001</div>
+                <div>• <strong>Branch:</strong> Kawran Bazar Branch, Dhaka</div>
+                <div>• <strong>Routing Number:</strong> 225262728</div>
+                <div className="text-[11px] text-slate-500 pt-1">
+                  After transfer, please send the deposit slip or transaction reference to <strong>billing@softcents.com</strong> or WhatsApp <strong>+880 1711 000 111</strong>.
+                </div>
+              </div>
+            </div>
+          )}
 
           {payError && (
             <div className="bg-red-50 border border-red-200 text-red-700 p-2.5 rounded text-xs flex items-center space-x-2">

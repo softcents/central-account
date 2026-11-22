@@ -28,23 +28,7 @@ import {
   FileCheck2,
 } from 'lucide-react';
 import whmcsData from '@/data/whmcs_sync.json';
-
-const COUNTRIES = [
-  { code: 'BD', name: 'Bangladesh' },
-  { code: 'US', name: 'United States' },
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'CA', name: 'Canada' },
-  { code: 'AU', name: 'Australia' },
-  { code: 'SG', name: 'Singapore' },
-  { code: 'IN', name: 'India' },
-  { code: 'MY', name: 'Malaysia' },
-  { code: 'AE', name: 'United Arab Emirates' },
-  { code: 'SA', name: 'Saudi Arabia' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'FR', name: 'France' },
-  { code: 'NL', name: 'Netherlands' },
-  { code: 'JP', name: 'Japan' },
-];
+import COUNTRIES from '@/data/countries.json';
 
 function ProfileContent() {
   const searchParams = useSearchParams();

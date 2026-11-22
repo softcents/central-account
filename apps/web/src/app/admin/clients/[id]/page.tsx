@@ -37,6 +37,7 @@ import {
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import { apiFetch } from '@/lib/api';
 import whmcsData from '@/data/whmcs_sync.json';
+import countriesList from '@/data/countries.json';
 
 export default function ClientSummaryPage() {
   const params = useParams();
@@ -68,6 +69,73 @@ export default function ClientSummaryPage() {
   // Notes
   const [notes, setNotes] = useState<string[]>([]);
   const [newNote, setNewNote] = useState('');
+
+  // Profile Form State
+  const [profileForm, setProfileForm] = useState<any>({
+    firstname: '',
+    lastname: '',
+    companyname: '',
+    email: '',
+    phonenumber: '',
+    address1: '',
+    address2: '',
+    city: '',
+    state: '',
+    postcode: '',
+    country: 'BD',
+    status: 'Active',
+    defaultgateway: 'piprapay',
+    billingcid: '0',
+    language: 'english',
+    customfields: {
+      'Identity Document Type': 'Smart NID',
+      'NID Namber': '',
+      'Your Whatsapp No': '',
+      'Permanent Full Address': '',
+    },
+    notes: '',
+  });
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileSaveSuccess, setProfileSaveSuccess] = useState<string | null>(null);
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingProfile(true);
+    setProfileSaveSuccess(null);
+    setProfileSaveError(null);
+    try {
+      const res = await fetch('/api/admin/clients/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: client?.whmcsId || client?.id || clientId,
+          ...profileForm,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProfileSaveSuccess('Client profile updated successfully!');
+        if (data.client) {
+          setClient((prev: any) => ({
+            ...prev,
+            ...data.client,
+            firstName: data.client.firstname,
+            lastName: data.client.lastname,
+            companyName: data.client.companyname,
+            phone: data.client.phonenumber,
+          }));
+        }
+        setTimeout(() => setProfileSaveSuccess(null), 4000);
+      } else {
+        setProfileSaveError(data.error || 'Failed to update client profile');
+      }
+    } catch (err: any) {
+      setProfileSaveError(err.message || 'Network error');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const [moduleActionToast, setModuleActionToast] = useState<string | null>(null);
 
@@ -140,15 +208,40 @@ export default function ClientSummaryPage() {
         if (res.data?.notes) {
           setNotes([res.data.notes]);
         }
+        setProfileForm({
+          firstname: res.data.firstName || res.data.profile?.first_name || '',
+          lastname: res.data.lastName || res.data.profile?.last_name || '',
+          companyname: res.data.companyName || '',
+          email: res.data.email || '',
+          phonenumber: res.data.phone || res.data.profile?.phone_number || '',
+          address1: res.data.address1 || res.data.profile?.address || '',
+          address2: res.data.address2 || '',
+          city: res.data.city || res.data.profile?.city || 'Dhaka',
+          state: res.data.state || 'Dhaka',
+          postcode: res.data.postcode || '',
+          country: res.data.country || 'BD',
+          status: res.data.status || 'Active',
+          defaultgateway: res.data.defaultgateway || 'piprapay',
+          billingcid: String(res.data.billingcid || '0'),
+          language: res.data.language || 'english',
+          customfields: {
+            'Identity Document Type': 'Smart NID',
+            'NID Namber': '',
+            'Your Whatsapp No': res.data.phone || '',
+            'Permanent Full Address': res.data.address1 || '',
+            ...(res.data.customfields || {}),
+          },
+          notes: res.data.notes || '',
+        });
       } else if (foundWhmcs) {
         setClient({
           id: String(foundWhmcs.id),
           whmcsId: String(foundWhmcs.id),
-          firstName: foundWhmcs.name?.split(' ')[0] || foundWhmcs.name || 'Client',
-          lastName: foundWhmcs.name?.split(' ').slice(1).join(' ') || '',
+          firstName: foundWhmcs.firstname || foundWhmcs.name?.split(' ')[0] || foundWhmcs.name || 'Client',
+          lastName: foundWhmcs.lastname || foundWhmcs.name?.split(' ').slice(1).join(' ') || '',
           email: foundWhmcs.email,
-          companyName: foundWhmcs.company,
-          phone: foundWhmcs.phone,
+          companyName: foundWhmcs.companyname || foundWhmcs.company,
+          phone: foundWhmcs.phonenumber || foundWhmcs.phone,
           address1: foundWhmcs.address1 || '',
           city: foundWhmcs.city || 'Dhaka',
           state: foundWhmcs.state || 'Dhaka',
@@ -157,13 +250,38 @@ export default function ClientSummaryPage() {
           created_at: foundWhmcs.dateCreated,
           credit: foundWhmcs.credit || '0.00',
           profile: {
-            first_name: foundWhmcs.name?.split(' ')[0],
-            last_name: foundWhmcs.name?.split(' ').slice(1).join(' '),
-            phone_number: foundWhmcs.phone,
+            first_name: foundWhmcs.firstname || foundWhmcs.name?.split(' ')[0],
+            last_name: foundWhmcs.lastname || foundWhmcs.name?.split(' ').slice(1).join(' '),
+            phone_number: foundWhmcs.phonenumber || foundWhmcs.phone,
             address: foundWhmcs.address1,
             city: foundWhmcs.city,
             country_code: foundWhmcs.country || 'BD',
           },
+        });
+        setProfileForm({
+          firstname: foundWhmcs.firstname || foundWhmcs.name?.split(' ')[0] || '',
+          lastname: foundWhmcs.lastname || foundWhmcs.name?.split(' ').slice(1).join(' ') || '',
+          companyname: foundWhmcs.companyname || foundWhmcs.company || '',
+          email: foundWhmcs.email || '',
+          phonenumber: foundWhmcs.phonenumber || foundWhmcs.phone || '',
+          address1: foundWhmcs.address1 || '',
+          address2: foundWhmcs.address2 || '',
+          city: foundWhmcs.city || 'Dhaka',
+          state: foundWhmcs.state || 'Dhaka',
+          postcode: foundWhmcs.postcode || '',
+          country: foundWhmcs.country || 'BD',
+          status: foundWhmcs.status || 'Active',
+          defaultgateway: foundWhmcs.defaultgateway || 'piprapay',
+          billingcid: String(foundWhmcs.billingcid || '0'),
+          language: foundWhmcs.language || 'english',
+          customfields: {
+            'Identity Document Type': foundWhmcs.customfields?.['Identity Document Type'] || 'Smart NID',
+            'NID Namber': foundWhmcs.customfields?.['NID Namber'] || '',
+            'Your Whatsapp No': foundWhmcs.customfields?.['Your Whatsapp No'] || foundWhmcs.phonenumber || foundWhmcs.phone || '',
+            'Permanent Full Address': foundWhmcs.customfields?.['Permanent Full Address'] || foundWhmcs.address1 || '',
+            ...(foundWhmcs.customfields || {}),
+          },
+          notes: foundWhmcs.notes || '',
         });
       } else {
         setError('Client not found.');
@@ -1156,88 +1274,327 @@ export default function ClientSummaryPage() {
         </div>
       )}
 
-      {/* TAB CONTENT: PROFILE */}
+      {/* TAB CONTENT: PROFILE (Complete WHMCS Profile Editor) */}
       {activeTab === 'profile' && (
-        <div className="bg-white p-5 rounded border border-slate-200 shadow-sm space-y-4">
-          <div className="font-bold text-sm text-[#1A4D80] border-b border-slate-200 pb-2">
-            Client Profile Information
+        <div className="bg-white p-5 sm:p-6 rounded border border-slate-200 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+            <div>
+              <h2 className="text-base font-bold text-[#1A4D80] flex items-center space-x-2">
+                <User className="w-5 h-5 text-[#1A4D80]" />
+                <span>Client Profile &amp; Custom Fields</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Update primary account information, billing configuration, and KYC verification identity details.
+              </p>
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-mono font-bold">
+              Client ID: #{client?.whmcsId || client?.id || clientId}
+            </span>
           </div>
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div>
-              <label className="block text-slate-600 font-semibold mb-1">First Name</label>
-              <input
-                type="text"
-                defaultValue={client.firstName || client.first_name || ''}
-                className="w-full p-2 border border-slate-300 rounded"
-              />
+
+          {profileSaveSuccess && (
+            <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded text-xs flex items-center space-x-2">
+              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="font-semibold">{profileSaveSuccess}</span>
             </div>
-            <div>
-              <label className="block text-slate-600 font-semibold mb-1">Last Name</label>
-              <input
-                type="text"
-                defaultValue={client.lastName || client.last_name || ''}
-                className="w-full p-2 border border-slate-300 rounded"
-              />
+          )}
+
+          {profileSaveError && (
+            <div className="bg-rose-50 border border-rose-300 text-rose-800 px-4 py-3 rounded text-xs flex items-center space-x-2">
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span className="font-semibold">{profileSaveError}</span>
             </div>
-            <div>
-              <label className="block text-slate-600 font-semibold mb-1">Company Name</label>
-              <input
-                type="text"
-                defaultValue={client.companyName || ''}
-                className="w-full p-2 border border-slate-300 rounded"
-              />
+          )}
+
+          <form onSubmit={handleProfileSubmit} className="space-y-6 text-xs">
+            {/* 1. Personal & Company Details */}
+            <div className="space-y-3">
+              <div className="font-bold text-slate-700 uppercase tracking-wider text-[11px] pb-1 border-b border-slate-100">
+                1. Personal &amp; Company Details
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">
+                    First Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profileForm.firstname}
+                    onChange={(e) => setProfileForm({ ...profileForm, firstname: e.target.value })}
+                    className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-[#1A4D80] focus:border-[#1A4D80]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">
+                    Last Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profileForm.lastname}
+                    onChange={(e) => setProfileForm({ ...profileForm, lastname: e.target.value })}
+                    className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-[#1A4D80] focus:border-[#1A4D80]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Company Name</label>
+                  <input
+                    type="text"
+                    value={profileForm.companyname}
+                    onChange={(e) => setProfileForm({ ...profileForm, companyname: e.target.value })}
+                    placeholder="Softcents Telecom Ltd"
+                    className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-[#1A4D80] focus:border-[#1A4D80]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">
+                    Email Address <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={profileForm.email}
+                    onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                    className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-[#1A4D80] focus:border-[#1A4D80]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">
+                    Phone Number <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profileForm.phonenumber}
+                    onChange={(e) => setProfileForm({ ...profileForm, phonenumber: e.target.value })}
+                    placeholder="01711000111"
+                    className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-[#1A4D80] focus:border-[#1A4D80]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Account Status</label>
+                  <select
+                    value={profileForm.status}
+                    onChange={(e) => setProfileForm({ ...profileForm, status: e.target.value })}
+                    className="w-full p-2 border border-slate-300 rounded bg-white font-semibold"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-slate-600 font-semibold mb-1">Email Address</label>
-              <input
-                type="email"
-                defaultValue={client.email}
-                className="w-full p-2 border border-slate-300 rounded"
-              />
+
+            {/* 2. Billing Address */}
+            <div className="space-y-3">
+              <div className="font-bold text-slate-700 uppercase tracking-wider text-[11px] pb-1 border-b border-slate-100">
+                2. Billing Address
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-slate-600 font-semibold mb-1">
+                    Address Line 1 <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profileForm.address1}
+                    onChange={(e) => setProfileForm({ ...profileForm, address1: e.target.value })}
+                    placeholder="House / Road / Area"
+                    className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-[#1A4D80] focus:border-[#1A4D80]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Address Line 2</label>
+                  <input
+                    type="text"
+                    value={profileForm.address2}
+                    onChange={(e) => setProfileForm({ ...profileForm, address2: e.target.value })}
+                    placeholder="Apartment, suite, unit (optional)"
+                    className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-[#1A4D80] focus:border-[#1A4D80]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">City</label>
+                  <input
+                    type="text"
+                    value={profileForm.city}
+                    onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
+                    placeholder="Dhaka"
+                    className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-[#1A4D80] focus:border-[#1A4D80]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">State / Region</label>
+                  <input
+                    type="text"
+                    value={profileForm.state}
+                    onChange={(e) => setProfileForm({ ...profileForm, state: e.target.value })}
+                    placeholder="Dhaka"
+                    className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-[#1A4D80] focus:border-[#1A4D80]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Postcode / ZIP</label>
+                  <input
+                    type="text"
+                    value={profileForm.postcode}
+                    onChange={(e) => setProfileForm({ ...profileForm, postcode: e.target.value })}
+                    placeholder="1212"
+                    className="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-[#1A4D80] focus:border-[#1A4D80]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Country</label>
+                  <select
+                    value={profileForm.country}
+                    onChange={(e) => setProfileForm({ ...profileForm, country: e.target.value })}
+                    className="w-full p-2 border border-slate-300 rounded bg-white font-medium"
+                  >
+                    {(countriesList || []).map((cnt: any) => (
+                      <option key={cnt.code} value={cnt.code}>
+                        {cnt.name} ({cnt.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Payment Method</label>
+                  <select
+                    value={profileForm.defaultgateway}
+                    onChange={(e) => setProfileForm({ ...profileForm, defaultgateway: e.target.value })}
+                    className="w-full p-2 border border-slate-300 rounded bg-white font-medium"
+                  >
+                    <option value="piprapay">PipraPay (bKash / Nagad / Rocket / Cards)</option>
+                    <option value="uddoktapay">UddoktaPay (bKash, Nagad, Rocket)</option>
+                    <option value="reseller">Reseller Wallet Balance</option>
+                    <option value="bank">Bank Transfer</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-slate-600 font-semibold mb-1">Address 1</label>
-              <input
-                type="text"
-                defaultValue={client.address1 || client.profile?.address || ''}
-                className="w-full p-2 border border-slate-300 rounded"
-              />
+
+            {/* 3. Custom Identity Verification Fields (WHMCS Custom Fields) */}
+            <div className="space-y-3 bg-slate-50 p-4 rounded border border-slate-200">
+              <div className="font-bold text-[#1A4D80] uppercase tracking-wider text-[11px] pb-1 border-b border-slate-200 flex items-center justify-between">
+                <span>3. Identity Verification &amp; Additional Information (WHMCS Custom Fields)</span>
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Identity Document Type</label>
+                  <select
+                    value={profileForm.customfields?.['Identity Document Type'] || 'Smart NID'}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        customfields: {
+                          ...profileForm.customfields,
+                          'Identity Document Type': e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full p-2 border border-slate-300 rounded bg-white"
+                  >
+                    <option value="Smart NID">Smart NID (10-digit)</option>
+                    <option value="Old NID">Old NID (13/17-digit)</option>
+                    <option value="Passport">Passport</option>
+                    <option value="Driving Licence">Driving Licence</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">NID Namber / ID Number</label>
+                  <input
+                    type="text"
+                    value={profileForm.customfields?.['NID Namber'] || ''}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        customfields: {
+                          ...profileForm.customfields,
+                          'NID Namber': e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="Enter NID or Passport number"
+                    className="w-full p-2 border border-slate-300 rounded font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Your Whatsapp No</label>
+                  <input
+                    type="text"
+                    value={profileForm.customfields?.['Your Whatsapp No'] || ''}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        customfields: {
+                          ...profileForm.customfields,
+                          'Your Whatsapp No': e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="01711000111"
+                    className="w-full p-2 border border-slate-300 rounded font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Permanent Full Address</label>
+                  <input
+                    type="text"
+                    value={profileForm.customfields?.['Permanent Full Address'] || ''}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        customfields: {
+                          ...profileForm.customfields,
+                          'Permanent Full Address': e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="Village, Post Office, Police Station, District"
+                    className="w-full p-2 border border-slate-300 rounded"
+                  />
+                </div>
+              </div>
             </div>
+
+            {/* 4. Admin Notes */}
             <div>
-              <label className="block text-slate-600 font-semibold mb-1">City</label>
-              <input
-                type="text"
-                defaultValue={client.city || 'Dhaka'}
-                className="w-full p-2 border border-slate-300 rounded"
-              />
+              <label className="block text-slate-600 font-semibold mb-1">Admin Internal Notes</label>
+              <textarea
+                rows={3}
+                value={profileForm.notes || ''}
+                onChange={(e) => setProfileForm({ ...profileForm, notes: e.target.value })}
+                placeholder="Internal notes regarding client account, special PBX or server instructions..."
+                className="w-full p-2.5 border border-slate-300 rounded focus:ring-1 focus:ring-[#1A4D80] focus:border-[#1A4D80]"
+              ></textarea>
             </div>
-            <div>
-              <label className="block text-slate-600 font-semibold mb-1">Phone Number</label>
-              <input
-                type="text"
-                defaultValue={client.phone || client.profile?.phone_number || ''}
-                className="w-full p-2 border border-slate-300 rounded"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-600 font-semibold mb-1">Country</label>
-              <select
-                defaultValue={client.country || 'BD'}
-                className="w-full p-2 border border-slate-300 rounded bg-white"
-              >
-                <option value="BD">Bangladesh</option>
-                <option value="US">United States</option>
-                <option value="GB">United Kingdom</option>
-                <option value="CA">Canada</option>
-              </select>
-            </div>
-            <div className="col-span-full pt-3">
+
+            {/* Submit Action */}
+            <div className="pt-2 flex items-center justify-between border-t border-slate-200">
               <button
-                type="button"
-                className="bg-[#1A4D80] text-white px-5 py-2 rounded font-semibold text-xs hover:bg-[#143d66]"
+                type="submit"
+                disabled={savingProfile}
+                className="bg-[#1A4D80] hover:bg-[#143d66] disabled:opacity-50 text-white px-6 py-2.5 rounded font-bold text-xs flex items-center space-x-2 shadow-sm transition-colors"
               >
-                Save Changes
+                {savingProfile ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving Profile...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Save Changes</span>
+                  </>
+                )}
               </button>
+              <span className="text-[11px] text-slate-500 font-medium">
+                Changes persist immediately across WHMCS sync storage &amp; client sessions.
+              </span>
             </div>
           </form>
         </div>

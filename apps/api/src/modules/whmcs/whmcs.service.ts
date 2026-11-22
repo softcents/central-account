@@ -18,7 +18,6 @@ import { DomainsResellerAddon } from './addons/domains-reseller.addon';
 export class WhmcsService {
   private readonly logger = new Logger(WhmcsService.name);
   private syncData: any = null;
-  private readonly syncFilePath = path.join(process.cwd(), '../web/src/data/whmcs_sync.json');
 
   constructor(
     public readonly piprapay: PipraPayGateway,
@@ -37,31 +36,44 @@ export class WhmcsService {
     this.loadSyncData();
   }
 
+  private getSyncFilePath(): string {
+    const candidates = [
+      '/www/wwwroot/account.softcents.com/apps/web/src/data/whmcs_sync.json',
+      path.join(process.cwd(), 'apps/web/src/data/whmcs_sync.json'),
+      path.join(process.cwd(), '../web/src/data/whmcs_sync.json'),
+      path.join(__dirname, '../../../../web/src/data/whmcs_sync.json'),
+      path.join(process.cwd(), 'src/data/whmcs_sync.json'),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) return p;
+    }
+    return candidates[0];
+  }
+
   private loadSyncData() {
     try {
-      if (fs.existsSync(this.syncFilePath)) {
-        const raw = fs.readFileSync(this.syncFilePath, 'utf-8');
+      const filePath = this.getSyncFilePath();
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, 'utf-8');
         this.syncData = JSON.parse(raw);
-        this.logger.log(`WHMCS Data Store loaded: ${this.syncData.clients?.length || 0} clients, ${this.syncData.services?.length || 0} services, ${this.syncData.products?.length || 0} products`);
-      } else {
-        // Fallback relative path check
-        const altPath = path.join(process.cwd(), 'src/data/whmcs_sync.json');
-        if (fs.existsSync(altPath)) {
-          this.syncData = JSON.parse(fs.readFileSync(altPath, 'utf-8'));
-        }
+        this.logger.log(`WHMCS Data Store loaded from ${filePath}: ${this.syncData.clients?.length || 0} clients, ${this.syncData.services?.length || 0} services, ${this.syncData.products?.length || 0} products`);
       }
     } catch (err: any) {
       this.logger.warn(`Could not read whmcs_sync.json: ${err.message}`);
+    }
+    if (!this.syncData) {
+      this.syncData = { clients: [], services: [], invoices: [], orders: [], products: [] };
     }
   }
 
   private saveSyncData() {
     try {
-      if (this.syncData && fs.existsSync(path.dirname(this.syncFilePath))) {
-        fs.writeFileSync(this.syncFilePath, JSON.stringify(this.syncData, null, 2), 'utf-8');
+      if (this.syncData) {
+        const filePath = this.getSyncFilePath();
+        fs.writeFileSync(filePath, JSON.stringify(this.syncData, null, 2), 'utf-8');
       }
     } catch (err: any) {
-      this.logger.warn(`Could not save whmcs_sync.json: ${err.message}`);
+      this.logger.error(`Could not save whmcs_sync.json: ${err.message}`);
     }
   }
 
@@ -273,6 +285,18 @@ export class WhmcsService {
         message: 'Order paid successfully using account credit balance.',
       };
     }
+  }
+
+  async createOrder(payload: any) {
+    return this.checkout({
+      clientId: payload.clientId || '177',
+      productId: Number(payload.productId || 1),
+      billingCycle: payload.billingCycle || 'Monthly',
+      domain: payload.domain || '',
+      paymentMethod: payload.paymentMethod || 'piprapay',
+      systemUrl: payload.systemUrl || 'https://account.softcents.com',
+      returnUrl: payload.returnUrl || `https://account.softcents.com/viewinvoice?payment=success`,
+    });
   }
 
   /**

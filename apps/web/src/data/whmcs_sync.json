@@ -655,8 +655,8 @@
     {
       "id": "177",
       "firstname": "Softcents",
-      "lastname": "Enterprise",
-      "name": "Softcents Enterprise",
+      "lastname": "Telecom",
+      "name": "Softcents Telecom",
       "company": "Softcents Telecom Ltd",
       "companyname": "Softcents Telecom Ltd",
       "email": "client.test@softcents.com",
@@ -671,7 +671,7 @@
       "tax_id": "",
       "defaultgateway": "",
       "billingcid": "0",
-      "language": "",
+      "language": "english",
       "marketing_emails_opt_in": true,
       "email_preferences": {
         "general": 1,
@@ -15391,6 +15391,25 @@
     }
   ],
   "invoices": [
+    {
+      "id": "87487",
+      "userid": "177",
+      "invoicenum": "87487",
+      "date": "2026-11-22",
+      "duedate": "2026-11-29",
+      "subtotal": 1500,
+      "credit": 0,
+      "tax": 0,
+      "total": 1500,
+      "status": "Paid",
+      "paymentmethod": "reseller",
+      "items": [
+        {
+          "description": "New Service Subscription",
+          "amount": 1500
+        }
+      ]
+    },
     {
       "id": "11",
       "userid": "3",
