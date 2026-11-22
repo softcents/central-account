@@ -142,7 +142,8 @@ function CartInner() {
   const isRenewView = action === 'renew';
   const isTransferView = action === 'add' && domainAction === 'transfer';
   const isAddonsView = rawGid === 'addons';
-  const isViewCartParam = action === 'view' || action === 'checkout';
+  const isCheckoutParam = action === 'checkout';
+  const isViewCartParam = action === 'view';
 
   const [transferDomain, setTransferDomain] = useState('');
   const [transferEpp, setTransferEpp] = useState('');
@@ -213,6 +214,7 @@ function CartInner() {
     setSearchTerm('');
     setPage(1);
     setViewCartView(false);
+    setIsCheckoutView(false);
   };
 
   const groupProducts = useMemo(() => {
@@ -241,16 +243,53 @@ function CartInner() {
 
   const totalPages = Math.ceil(filteredProducts.length / pageSize);
 
+  const isLoggedIn = !!(client?.id || clientId);
+
   // Cart state
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [viewCartView, setViewCartView] = useState<boolean>(isViewCartParam);
+  const [viewCartView, setViewCartView] = useState<boolean>(isViewCartParam || isCheckoutParam);
+  const [isCheckoutView, setIsCheckoutView] = useState<boolean>(isCheckoutParam);
   const [loadingPay, setLoadingPay] = useState(false);
   const [selectedGateway, setSelectedGateway] = useState<'piprapay' | 'uddoktapay' | 'reseller' | 'bank'>('piprapay');
 
-  // Customer info
+  // Customer info & Checkout form state
   const [customerName, setCustomerName] = useState('SoftCents Customer');
   const [customerEmail, setCustomerEmail] = useState('billing@softcents.com');
   const [customerPhone, setCustomerPhone] = useState('01700000000');
+
+  const [isExistingUser, setIsExistingUser] = useState<boolean>(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loadingLogin, setLoadingLogin] = useState(false);
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [address1, setAddress1] = useState('');
+  const [address2, setAddress2] = useState('');
+  const [city, setCity] = useState('Dhaka');
+  const [stateVal, setStateVal] = useState('Dhaka');
+  const [postcode, setPostcode] = useState('1207');
+  const [country, setCountry] = useState('BD');
+
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [orderNotes, setOrderNotes] = useState('');
+  const [acceptTos, setAcceptTos] = useState(true);
+  const [checkoutError, setCheckoutError] = useState('');
+
+  useEffect(() => {
+    if (action === 'checkout') {
+      setIsCheckoutView(true);
+      setViewCartView(true);
+    } else if (action === 'view') {
+      setIsCheckoutView(false);
+      setViewCartView(true);
+    }
+  }, [action]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -262,8 +301,23 @@ function CartInner() {
         if (u) {
           const name = `${u.firstname || ''} ${u.lastname || ''}`.trim() || u.name;
           if (name) setCustomerName(name);
-          if (u.email) setCustomerEmail(u.email);
-          if (u.phonenumber) setCustomerPhone(u.phonenumber);
+          if (u.firstname) setFirstName(u.firstname);
+          if (u.lastname) setLastName(u.lastname);
+          if (u.email) {
+            setCustomerEmail(u.email);
+            setEmail(u.email);
+          }
+          if (u.phonenumber) {
+            setCustomerPhone(u.phonenumber);
+            setPhoneNumber(u.phonenumber);
+          }
+          if (u.companyname) setCompanyName(u.companyname);
+          if (u.address1) setAddress1(u.address1);
+          if (u.address2) setAddress2(u.address2);
+          if (u.city) setCity(u.city);
+          if (u.state) setStateVal(u.state);
+          if (u.postcode) setPostcode(u.postcode);
+          if (u.country) setCountry(u.country);
           return;
         }
       } catch {}
@@ -277,11 +331,102 @@ function CartInner() {
           ? `${u.profile.first_name} ${u.profile.last_name || ''}`.trim()
           : (u.name || u.email);
         if (name) setCustomerName(name);
-        if (u.email) setCustomerEmail(u.email);
-        if (u.phone || u.phonenumber) setCustomerPhone(u.phone || u.phonenumber);
+        if (u.profile?.first_name) setFirstName(u.profile.first_name);
+        if (u.profile?.last_name) setLastName(u.profile.last_name);
+        if (u.email) {
+          setCustomerEmail(u.email);
+          setEmail(u.email);
+        }
+        if (u.phone || u.phonenumber) {
+          const ph = u.phone || u.phonenumber;
+          setCustomerPhone(ph);
+          setPhoneNumber(ph);
+        }
       } catch {}
     }
   }, []);
+
+  useEffect(() => {
+    if (client) {
+      if (client.firstname) setFirstName(client.firstname);
+      if (client.lastname) setLastName(client.lastname);
+      if (!client.firstname && client.name) {
+        const parts = client.name.split(' ');
+        setFirstName(parts[0] || '');
+        setLastName(parts.slice(1).join(' ') || '');
+      }
+      if (client.email) {
+        setEmail(client.email);
+        setCustomerEmail(client.email);
+      }
+      if (client.phonenumber) {
+        setPhoneNumber(client.phonenumber);
+        setCustomerPhone(client.phonenumber);
+      }
+      if (client.companyname) setCompanyName(client.companyname);
+      if (client.address1) setAddress1(client.address1);
+      if (client.address2) setAddress2(client.address2);
+      if (client.city) setCity(client.city);
+      if (client.state) setStateVal(client.state);
+      if (client.postcode) setPostcode(client.postcode);
+      if (client.country) setCountry(client.country);
+    }
+  }, [client]);
+
+  const passwordStrength = useMemo(() => {
+    if (!password) return 0;
+    let score = 0;
+    if (password.length >= 8) score += 30;
+    if (/[A-Z]/.test(password)) score += 25;
+    if (/[0-9]/.test(password)) score += 25;
+    if (/[^A-Za-z0-9]/.test(password)) score += 20;
+    return Math.min(100, score);
+  }, [password]);
+
+  const handleGeneratePassword = () => {
+    const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*';
+    let gen = '';
+    for (let i = 0; i < 14; i++) {
+      gen += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setPassword(gen);
+    setConfirmPassword(gen);
+  };
+
+  const handleExistingLogin = async () => {
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      setLoginError('Please enter both your email address and password.');
+      return;
+    }
+    setLoadingLogin(true);
+    setLoginError('');
+    try {
+      const clientsList = (whmcsData as any).clients || [];
+      const match = clientsList.find(
+        (c: any) => c.email && c.email.toLowerCase() === loginEmail.trim().toLowerCase()
+      );
+      if (match) {
+        setFirstName(match.firstname || match.name?.split(' ')[0] || '');
+        setLastName(match.lastname || match.name?.split(' ').slice(1).join(' ') || '');
+        setEmail(match.email);
+        setPhoneNumber(match.phonenumber || '');
+        setCompanyName(match.companyname || '');
+        setAddress1(match.address1 || '');
+        setCity(match.city || 'Dhaka');
+        setStateVal(match.state || 'Dhaka');
+        setPostcode(match.postcode || '1207');
+        setCountry(match.country || 'BD');
+        setIsExistingUser(false);
+      } else {
+        setEmail(loginEmail.trim());
+        setIsExistingUser(false);
+      }
+    } catch (err: any) {
+      setLoginError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoadingLogin(false);
+    }
+  };
 
   useEffect(() => {
     if (rawPid && allProducts.length > 0 && cart.length === 0) {
@@ -317,6 +462,7 @@ function CartInner() {
     };
     setCart((prev) => [...prev, item]);
     setViewCartView(true);
+    setIsCheckoutView(false);
   };
 
   const removeFromCart = (index: number) => {
@@ -327,11 +473,41 @@ function CartInner() {
   const cartSetupTotal = cart.reduce((sum, item) => sum + item.setupFee, 0);
   const cartGrandTotal = cartSubtotal + cartSetupTotal;
 
-  const handleCheckout = async () => {
-    if (cart.length === 0) return;
+  const handleCheckout = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setCheckoutError('');
+
+    if (cart.length === 0) {
+      setCheckoutError('Your shopping cart is empty.');
+      return;
+    }
+
+    if (!isLoggedIn && !isExistingUser) {
+      if (!firstName.trim() || !lastName.trim() || !email.trim() || !phoneNumber.trim()) {
+        setCheckoutError('Please fill in all required personal information fields.');
+        return;
+      }
+      if (!password) {
+        setCheckoutError('Please enter a password for your account.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setCheckoutError('The passwords you entered do not match.');
+        return;
+      }
+    }
+
+    if (!acceptTos) {
+      setCheckoutError('You must agree to the Terms of Service to complete your order.');
+      return;
+    }
+
     try {
       setLoadingPay(true);
       const primaryItem = cart[0];
+      const fullName = `${firstName} ${lastName}`.trim() || customerName;
+      const finalTotal = cartGrandTotal - (promoApplied ? cartSubtotal * 0.1 : 0);
+
       const res = await fetch('/api/whmcs/cart/checkout', {
         method: 'POST',
         headers: {
@@ -343,8 +519,13 @@ function CartInner() {
           clientId: client?.id || clientId || '177',
           productId: Number(String(primaryItem.id).replace(/[^0-9]/g, '')) || 1,
           billingCycle: primaryItem.cycle || 'Monthly',
-          domain: `${customerName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'sc'}-pbx.bdpbx.com`,
+          domain: `${(fullName || 'sc').toLowerCase().replace(/[^a-z0-9]/g, '')}-pbx.bdpbx.com`,
           paymentMethod: selectedGateway,
+          amount: finalTotal,
+          customerName: fullName,
+          customerEmail: email || customerEmail,
+          customerPhone: phoneNumber || customerPhone,
+          notes: orderNotes,
           systemUrl: typeof window !== 'undefined' ? window.location.origin : 'https://account.softcents.com',
           returnUrl:
             typeof window !== 'undefined'
@@ -362,7 +543,7 @@ function CartInner() {
         window.location.href = '/clientarea/services';
       }
     } catch (e: any) {
-      alert(e.message || 'Payment initiation error');
+      setCheckoutError(e.message || 'Payment initiation error');
     } finally {
       setLoadingPay(false);
     }
@@ -428,7 +609,7 @@ function CartInner() {
                   <div className="cart-sidebar sidebar">
                     {/* Categories Panel */}
                     <div
-                      menuItemName="Categories"
+                      data-menu-item-name="Categories"
                       className="panel card card-sidebar mb-3 panel-sidebar"
                     >
                       <div className="panel-heading card-header">
@@ -452,7 +633,7 @@ function CartInner() {
                             return (
                               <a
                                 key={grp.id}
-                                menuItemName={grp.name}
+                                data-menu-item-name={grp.name}
                                 href={`/cart?gid=${grp.id}`}
                                 onClick={(e) => {
                                   e.preventDefault();
@@ -472,7 +653,7 @@ function CartInner() {
 
                     {/* Actions Panel */}
                     <div
-                      menuItemName="Actions"
+                      data-menu-item-name="Actions"
                       className="panel card card-sidebar mb-3 panel-sidebar"
                     >
                       <div className="panel-heading card-header">
@@ -485,7 +666,7 @@ function CartInner() {
                       </div>
                       <div className="list-group collapsable-card-body">
                         <Link
-                          menuItemName="Domain Registration"
+                          data-menu-item-name="Domain Registration"
                           href="/domainchecker"
                           className="list-group-item list-group-item-action"
                           id="Secondary_Sidebar-Actions-Domain_Registration"
@@ -495,10 +676,12 @@ function CartInner() {
                           </span>
                         </Link>
                         <Link
-                          menuItemName="Domain Transfer"
+                          data-menu-item-name="Domain Transfer"
                           href="/cart?a=add&domain=transfer"
                           onClick={(e) => {
                             e.preventDefault();
+                            setIsCheckoutView(false);
+                            setViewCartView(false);
                             router.push('/cart?a=add&domain=transfer');
                           }}
                           className={`list-group-item list-group-item-action ${
@@ -512,10 +695,14 @@ function CartInner() {
                         </Link>
                         <button
                           type="button"
-                          menuItemName="View Cart"
-                          onClick={() => setViewCartView(true)}
+                          data-menu-item-name="View Cart"
+                          onClick={() => {
+                            setIsCheckoutView(false);
+                            setViewCartView(true);
+                            router.push('/cart?a=view');
+                          }}
                           className={`list-group-item list-group-item-action ${
-                            viewCartView ? 'active' : ''
+                            viewCartView && !isCheckoutView ? 'active' : ''
                           }`}
                           id="Secondary_Sidebar-Actions-View_Cart"
                         >
@@ -526,6 +713,25 @@ function CartInner() {
                             <span className="badge badge-info float-right">{cart.length}</span>
                           )}
                         </button>
+                        {cart.length > 0 && (
+                          <button
+                            type="button"
+                            data-menu-item-name="Checkout"
+                            onClick={() => {
+                              setIsCheckoutView(true);
+                              setViewCartView(true);
+                              router.push('/cart?a=checkout');
+                            }}
+                            className={`list-group-item list-group-item-action ${
+                              isCheckoutView ? 'active' : ''
+                            }`}
+                            id="Secondary_Sidebar-Actions-Checkout"
+                          >
+                            <span>
+                              <i className="fas fa-arrow-circle-right fa-fw"></i>&nbsp; Checkout
+                            </span>
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -551,9 +757,630 @@ function CartInner() {
                   {/* ========================================================= */}
                   <div className="cart-body">
                     {/* ======================================================= */}
-                    {/* VIEW 1: REVIEW & CHECKOUT (cart.php?a=view)             */}
+                    {/* VIEW: CHECKOUT (WHMCS standard_cart/checkout.tpl)       */}
                     {/* ======================================================= */}
-                    {viewCartView ? (
+                    {isCheckoutView ? (
+                      <div>
+                        <div className="header-lined">
+                          <h1 className="font-size-36">Checkout</h1>
+                        </div>
+
+                        {/* Collapsed Category Selector on Mobile */}
+                        <div className="sidebar-collapsed">
+                          <div className="panel card panel-default">
+                            <div className="m-0 panel-heading card-header">
+                              <h3 className="panel-title">
+                                <i className="fas fa-shopping-cart"></i>&nbsp; Categories
+                              </h3>
+                            </div>
+                            <div className="panel-body card-body">
+                              <form role="form">
+                                <select
+                                  className="form-control custom-select"
+                                  value={selectedGroupId}
+                                  onChange={(e) => handleGroupSelect(e.target.value)}
+                                >
+                                  {allGroups.map((grp) => (
+                                    <option key={grp.id} value={grp.id}>
+                                      {decodeHtml(grp.name)}
+                                    </option>
+                                  ))}
+                                  <option value="" disabled>
+                                    - Choose Another Category -
+                                  </option>
+                                </select>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Already Registered Bar */}
+                        <div className="already-registered clearfix">
+                          <div className="pull-right float-right">
+                            {!isLoggedIn && (
+                              <>
+                                {!isExistingUser ? (
+                                  <button
+                                    type="button"
+                                    className="btn btn-info"
+                                    id="btnAlreadyRegistered"
+                                    onClick={() => setIsExistingUser(true)}
+                                  >
+                                    Already Registered?
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="btn btn-warning"
+                                    id="btnNewUserSignup"
+                                    onClick={() => setIsExistingUser(false)}
+                                  >
+                                    Create a New Account
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+
+                          <p className="text-sm-left overflow-hidden">
+                            {isLoggedIn
+                              ? 'Review your details below and choose a preferred payment method to complete your order.'
+                              : 'Please enter your personal details and billing information to checkout.'}
+                          </p>
+                        </div>
+
+                        {/* Error feedback */}
+                        {checkoutError && (
+                          <div className="alert alert-danger checkout-error-feedback" role="alert">
+                            <p className="font-weight-bold mb-1">
+                              The following errors occurred before your order could be processed:
+                            </p>
+                            <ul className="mb-0 pl-4">
+                              <li>{checkoutError}</li>
+                            </ul>
+                          </div>
+                        )}
+
+                        <form method="post" onSubmit={handleCheckout} name="orderfrm" id="frmCheckout">
+                          {/* Existing Customer Sign-in */}
+                          {isExistingUser && !isLoggedIn && (
+                            <div id="containerExistingUserSignin">
+                              <div className="sub-heading">
+                                <span className="primary-bg-color">Existing Customer Login</span>
+                              </div>
+
+                              {loginError && (
+                                <div className="alert alert-danger" id="existingLoginMessage">
+                                  {loginError}
+                                </div>
+                              )}
+
+                              <div className="row">
+                                <div className="col-sm-6">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputLoginEmail" className="field-icon">
+                                      <i className="fas fa-envelope"></i>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name="loginemail"
+                                      id="inputLoginEmail"
+                                      className="field form-control"
+                                      placeholder="Email Address"
+                                      value={loginEmail}
+                                      onChange={(e) => setLoginEmail(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="col-sm-6">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputLoginPassword" className="field-icon">
+                                      <i className="fas fa-lock"></i>
+                                    </label>
+                                    <input
+                                      type="password"
+                                      name="loginpassword"
+                                      id="inputLoginPassword"
+                                      className="field form-control"
+                                      placeholder="Password"
+                                      value={loginPassword}
+                                      onChange={(e) => setLoginPassword(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="text-center mb-4">
+                                <button
+                                  type="button"
+                                  id="btnExistingLogin"
+                                  className="btn btn-primary btn-md"
+                                  onClick={handleExistingLogin}
+                                  disabled={loadingLogin}
+                                >
+                                  <span id="existingLoginButton">
+                                    {loadingLogin ? 'Please Wait...' : 'Login'}
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* New User / Personal Information & Billing Address */}
+                          {(!isExistingUser || isLoggedIn) && (
+                            <div id="containerNewUserSignup">
+                              {/* Personal Information */}
+                              <div className="sub-heading">
+                                <span className="primary-bg-color">Personal Information</span>
+                              </div>
+
+                              <div className="row">
+                                <div className="col-sm-6">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputFirstName" className="field-icon">
+                                      <i className="fas fa-user"></i>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name="firstname"
+                                      id="inputFirstName"
+                                      className="field form-control"
+                                      placeholder="First Name"
+                                      value={firstName}
+                                      onChange={(e) => setFirstName(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="col-sm-6">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputLastName" className="field-icon">
+                                      <i className="fas fa-user"></i>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name="lastname"
+                                      id="inputLastName"
+                                      className="field form-control"
+                                      placeholder="Last Name"
+                                      value={lastName}
+                                      onChange={(e) => setLastName(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="col-sm-6">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputEmail" className="field-icon">
+                                      <i className="fas fa-envelope"></i>
+                                    </label>
+                                    <input
+                                      type="email"
+                                      name="email"
+                                      id="inputEmail"
+                                      className="field form-control"
+                                      placeholder="Email Address"
+                                      value={email}
+                                      onChange={(e) => setEmail(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="col-sm-6">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputPhone" className="field-icon">
+                                      <i className="fas fa-phone"></i>
+                                    </label>
+                                    <input
+                                      type="tel"
+                                      name="phonenumber"
+                                      id="inputPhone"
+                                      className="field form-control"
+                                      placeholder="Phone Number"
+                                      value={phoneNumber}
+                                      onChange={(e) => setPhoneNumber(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Billing Address */}
+                              <div className="sub-heading">
+                                <span className="primary-bg-color">Billing Address</span>
+                              </div>
+
+                              <div className="row">
+                                <div className="col-sm-12">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputCompanyName" className="field-icon">
+                                      <i className="fas fa-building"></i>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name="companyname"
+                                      id="inputCompanyName"
+                                      className="field form-control"
+                                      placeholder="Company Name (Optional)"
+                                      value={companyName}
+                                      onChange={(e) => setCompanyName(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="col-sm-12">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputAddress1" className="field-icon">
+                                      <i className="far fa-building"></i>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name="address1"
+                                      id="inputAddress1"
+                                      className="field form-control"
+                                      placeholder="Street Address"
+                                      value={address1}
+                                      onChange={(e) => setAddress1(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="col-sm-12">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputAddress2" className="field-icon">
+                                      <i className="fas fa-map-marker-alt"></i>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name="address2"
+                                      id="inputAddress2"
+                                      className="field form-control"
+                                      placeholder="Street Address 2"
+                                      value={address2}
+                                      onChange={(e) => setAddress2(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="col-sm-4">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputCity" className="field-icon">
+                                      <i className="far fa-building"></i>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name="city"
+                                      id="inputCity"
+                                      className="field form-control"
+                                      placeholder="City"
+                                      value={city}
+                                      onChange={(e) => setCity(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="col-sm-5">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputState" className="field-icon">
+                                      <i className="fas fa-map-signs"></i>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name="state"
+                                      id="inputState"
+                                      className="field form-control"
+                                      placeholder="State"
+                                      value={stateVal}
+                                      onChange={(e) => setStateVal(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="col-sm-3">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputPostcode" className="field-icon">
+                                      <i className="fas fa-certificate"></i>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name="postcode"
+                                      id="inputPostcode"
+                                      className="field form-control"
+                                      placeholder="Postcode"
+                                      value={postcode}
+                                      onChange={(e) => setPostcode(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="col-sm-12">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputCountry" className="field-icon" id="inputCountryIcon">
+                                      <i className="fas fa-globe"></i>
+                                    </label>
+                                    <select
+                                      name="country"
+                                      id="inputCountry"
+                                      className="field form-control"
+                                      value={country}
+                                      onChange={(e) => setCountry(e.target.value)}
+                                    >
+                                      <option value="BD">Bangladesh</option>
+                                      <option value="US">United States</option>
+                                      <option value="GB">United Kingdom</option>
+                                      <option value="CA">Canada</option>
+                                      <option value="IN">India</option>
+                                      <option value="SG">Singapore</option>
+                                      <option value="AE">United Arab Emirates</option>
+                                      <option value="MY">Malaysia</option>
+                                      <option value="AU">Australia</option>
+                                      <option value="DE">Germany</option>
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Account Security (for guest signups) */}
+                              {!isLoggedIn && (
+                                <div id="containerNewUserSecurity">
+                                  <div className="sub-heading">
+                                    <span className="primary-bg-color">Account Security</span>
+                                  </div>
+
+                                  <div id="containerPassword" className="row">
+                                    <div className="col-sm-6">
+                                      <div className="form-group prepend-icon">
+                                        <label htmlFor="inputNewPassword1" className="field-icon">
+                                          <i className="fas fa-lock"></i>
+                                        </label>
+                                        <input
+                                          type="password"
+                                          name="password"
+                                          id="inputNewPassword1"
+                                          className="field form-control"
+                                          placeholder="Password"
+                                          value={password}
+                                          onChange={(e) => setPassword(e.target.value)}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="col-sm-6">
+                                      <div className="form-group prepend-icon">
+                                        <label htmlFor="inputNewPassword2" className="field-icon">
+                                          <i className="fas fa-lock"></i>
+                                        </label>
+                                        <input
+                                          type="password"
+                                          name="password2"
+                                          id="inputNewPassword2"
+                                          className="field form-control"
+                                          placeholder="Confirm Password"
+                                          value={confirmPassword}
+                                          onChange={(e) => setConfirmPassword(e.target.value)}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="col-sm-6 mb-3">
+                                      <button
+                                        type="button"
+                                        className="btn btn-default btn-sm generate-password"
+                                        onClick={handleGeneratePassword}
+                                      >
+                                        Generate Password
+                                      </button>
+                                    </div>
+                                    <div className="col-sm-6 mb-3">
+                                      <div className="password-strength-meter">
+                                        <div className="progress">
+                                          <div
+                                            className={`progress-bar ${
+                                              passwordStrength >= 75
+                                                ? 'bg-success'
+                                                : passwordStrength >= 50
+                                                ? 'bg-info'
+                                                : 'bg-warning'
+                                            }`}
+                                            role="progressbar"
+                                            style={{ width: `${passwordStrength}%` }}
+                                          ></div>
+                                        </div>
+                                        <p className="text-center small text-muted" id="passwordStrengthTextLabel">
+                                          Password Strength:{' '}
+                                          {passwordStrength >= 75
+                                            ? 'Strong'
+                                            : passwordStrength >= 50
+                                            ? 'Moderate'
+                                            : password
+                                            ? 'Weak'
+                                            : 'Enter a password'}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Payment Details */}
+                          <div className="sub-heading">
+                            <span className="primary-bg-color">Payment Details</span>
+                          </div>
+
+                          <div className="alert alert-success text-center large-text" role="alert" id="totalDueToday">
+                            Total Due Today: &nbsp;{' '}
+                            <strong id="totalCartPrice">
+                              {(cartGrandTotal - (promoApplied ? cartSubtotal * 0.1 : 0)).toLocaleString()}Tk
+                            </strong>
+                          </div>
+
+                          {/* Order Items Table in Checkout */}
+                          {cart.length > 0 && (
+                            <div className="card mb-4 border border-slate-200">
+                              <div className="card-header bg-light py-2 font-weight-bold d-flex justify-content-between align-items-center">
+                                <span>
+                                  <i className="fas fa-shopping-basket"></i>&nbsp; Order Items ({cart.length})
+                                </span>
+                                <button
+                                  type="button"
+                                  className="btn btn-link btn-xs p-0 text-primary"
+                                  onClick={() => {
+                                    setIsCheckoutView(false);
+                                    router.push('/cart?a=view');
+                                  }}
+                                >
+                                  Edit Cart
+                                </button>
+                              </div>
+                              <div className="table-responsive">
+                                <table className="table table-sm mb-0">
+                                  <thead className="thead-light">
+                                    <tr>
+                                      <th>Product / Service</th>
+                                      <th>Billing Cycle</th>
+                                      <th className="text-right">Price</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {cart.map((item, idx) => (
+                                      <tr key={idx}>
+                                        <td>
+                                          <strong>{item.name}</strong>
+                                          <div className="small text-muted">{item.groupName}</div>
+                                        </td>
+                                        <td>{item.cycle}</td>
+                                        <td className="text-right font-weight-bold">
+                                          {item.price.toLocaleString()}Tk
+                                          {item.setupFee > 0 && (
+                                            <div className="small text-muted">
+                                              +{item.setupFee.toLocaleString()}Tk Setup
+                                            </div>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Payment Gateways Selector */}
+                          <div id="paymentGatewaysContainer" className="form-group mb-4">
+                            <p className="small text-muted text-center mb-3">
+                              Please choose your preferred payment method.
+                            </p>
+
+                            <div className="text-center">
+                              <label className="radio-inline">
+                                <input
+                                  type="radio"
+                                  name="paymentmethod"
+                                  value="piprapay"
+                                  checked={selectedGateway === 'piprapay'}
+                                  onChange={() => setSelectedGateway('piprapay')}
+                                  className="payment-methods"
+                                />
+                                <strong>PipraPay</strong> (bKash, Nagad, Rocket, Cards)
+                              </label>
+                              <label className="radio-inline">
+                                <input
+                                  type="radio"
+                                  name="paymentmethod"
+                                  value="uddoktapay"
+                                  checked={selectedGateway === 'uddoktapay'}
+                                  onChange={() => setSelectedGateway('uddoktapay')}
+                                  className="payment-methods"
+                                />
+                                <strong>UddoktaPay</strong>
+                              </label>
+                              <label className="radio-inline">
+                                <input
+                                  type="radio"
+                                  name="paymentmethod"
+                                  value="reseller"
+                                  checked={selectedGateway === 'reseller'}
+                                  onChange={() => setSelectedGateway('reseller')}
+                                  className="payment-methods"
+                                />
+                                <strong>Account Credit Balance</strong>
+                              </label>
+                              <label className="radio-inline">
+                                <input
+                                  type="radio"
+                                  name="paymentmethod"
+                                  value="bank"
+                                  checked={selectedGateway === 'bank'}
+                                  onChange={() => setSelectedGateway('bank')}
+                                  className="payment-methods"
+                                />
+                                <strong>Bank Transfer</strong>
+                              </label>
+                            </div>
+                          </div>
+
+                          {/* Additional Notes */}
+                          <div className="sub-heading">
+                            <span className="primary-bg-color">Additional Notes</span>
+                          </div>
+
+                          <div className="row mb-3">
+                            <div className="col-sm-12">
+                              <div className="form-group">
+                                <textarea
+                                  name="notes"
+                                  className="field form-control"
+                                  rows={4}
+                                  placeholder="Please enter any special notes or instructions for your order..."
+                                  value={orderNotes}
+                                  onChange={(e) => setOrderNotes(e.target.value)}
+                                ></textarea>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Terms of Service & Complete Order */}
+                          <div className="text-center mt-4">
+                            <p>
+                              <label className="checkbox-inline">
+                                <input
+                                  type="checkbox"
+                                  name="accepttos"
+                                  id="accepttos"
+                                  checked={acceptTos}
+                                  onChange={(e) => setAcceptTos(e.target.checked)}
+                                />
+                                &nbsp; I have read and agree to the{' '}
+                                <a href="/tos" target="_blank" className="text-primary underline">
+                                  Terms of Service
+                                </a>
+                              </label>
+                            </p>
+
+                            <button
+                              type="submit"
+                              id="btnCompleteOrder"
+                              className="btn btn-primary btn-lg disable-on-click"
+                              disabled={cart.length === 0 || loadingPay || !acceptTos}
+                            >
+                              {loadingPay ? 'Processing...' : 'Complete Order'}&nbsp;
+                              <i className="fas fa-arrow-circle-right"></i>
+                            </button>
+                            <br />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsCheckoutView(false);
+                                router.push('/cart?a=view');
+                              }}
+                              className="btn btn-link mt-2"
+                            >
+                              &larr; Return to Cart
+                            </button>
+                          </div>
+                        </form>
+
+                        {/* Security message */}
+                        <div className="alert alert-warning checkout-security-msg">
+                          <i className="fas fa-lock"></i>
+                          This is a secure order environment and is provided with 256 bit SSL encryption. Your current IP address (<strong>103.145.118.2</strong>) is being logged.
+                          <div className="clearfix"></div>
+                        </div>
+                      </div>
+                    ) : viewCartView ? (
+                      /* ======================================================= */
+                      /* VIEW 1: REVIEW & CHECKOUT (cart.php?a=view)             */
+                      /* ======================================================= */
                       <div>
                         <div className="header-lined">
                           <h1 className="font-size-36">Review &amp; Checkout</h1>
@@ -599,7 +1426,10 @@ function CartInner() {
                                 </p>
                                 <button
                                   type="button"
-                                  onClick={() => setViewCartView(false)}
+                                  onClick={() => {
+                                    setViewCartView(false);
+                                    setIsCheckoutView(false);
+                                  }}
                                   className="btn btn-primary mt-3"
                                 >
                                   &larr; Browse Categories
@@ -722,151 +1552,6 @@ function CartInner() {
                                     </div>
                                   </div>
                                 </div>
-
-                                {/* Billing Details */}
-                                <div className="card mt-4 border border-slate-200">
-                                  <div className="card-header bg-light font-weight-bold">
-                                    <i className="fas fa-user"></i>&nbsp; Personal Information
-                                  </div>
-                                  <div className="card-body">
-                                    <div className="row">
-                                      <div className="col-md-6 form-group">
-                                        <label className="text-muted small">Full Name</label>
-                                        <input
-                                          type="text"
-                                          className="form-control"
-                                          value={customerName}
-                                          onChange={(e) => setCustomerName(e.target.value)}
-                                        />
-                                      </div>
-                                      <div className="col-md-6 form-group">
-                                        <label className="text-muted small">Email Address</label>
-                                        <input
-                                          type="email"
-                                          className="form-control"
-                                          value={customerEmail}
-                                          onChange={(e) => setCustomerEmail(e.target.value)}
-                                        />
-                                      </div>
-                                      <div className="col-12 form-group">
-                                        <label className="text-muted small">Phone Number</label>
-                                        <input
-                                          type="text"
-                                          className="form-control font-mono"
-                                          value={customerPhone}
-                                          onChange={(e) => setCustomerPhone(e.target.value)}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Payment Method Selector */}
-                                <div className="card mt-4 mb-4 border border-slate-200">
-                                  <div className="card-header bg-light font-weight-bold">
-                                    <i className="fas fa-credit-card"></i>&nbsp; Payment Method
-                                  </div>
-                                  <div className="card-body">
-                                    <div className="row">
-                                      <div className="col-md-6 mb-2">
-                                        <label
-                                          className={`card p-3 d-flex flex-row align-items-center justify-content-between h-100 cursor-pointer ${
-                                            selectedGateway === 'piprapay'
-                                              ? 'border-primary bg-light'
-                                              : ''
-                                          }`}
-                                        >
-                                          <div>
-                                            <input
-                                              type="radio"
-                                              name="paymentGateway"
-                                              checked={selectedGateway === 'piprapay'}
-                                              onChange={() => setSelectedGateway('piprapay')}
-                                              className="mr-2"
-                                            />
-                                            <strong>PipraPay</strong>
-                                            <div className="small text-muted">
-                                              bKash, Nagad, Cards (Auto)
-                                            </div>
-                                          </div>
-                                          <span className="badge badge-success">Instant</span>
-                                        </label>
-                                      </div>
-
-                                      <div className="col-md-6 mb-2">
-                                        <label
-                                          className={`card p-3 d-flex flex-row align-items-center justify-content-between h-100 cursor-pointer ${
-                                            selectedGateway === 'uddoktapay'
-                                              ? 'border-primary bg-light'
-                                              : ''
-                                          }`}
-                                        >
-                                          <div>
-                                            <input
-                                              type="radio"
-                                              name="paymentGateway"
-                                              checked={selectedGateway === 'uddoktapay'}
-                                              onChange={() => setSelectedGateway('uddoktapay')}
-                                              className="mr-2"
-                                            />
-                                            <strong>UddoktaPay</strong>
-                                            <div className="small text-muted">
-                                              bKash, Nagad, Rocket
-                                            </div>
-                                          </div>
-                                        </label>
-                                      </div>
-
-                                      <div className="col-md-6 mb-2">
-                                        <label
-                                          className={`card p-3 d-flex flex-row align-items-center justify-content-between h-100 cursor-pointer ${
-                                            selectedGateway === 'reseller'
-                                              ? 'border-primary bg-light'
-                                              : ''
-                                          }`}
-                                        >
-                                          <div>
-                                            <input
-                                              type="radio"
-                                              name="paymentGateway"
-                                              checked={selectedGateway === 'reseller'}
-                                              onChange={() => setSelectedGateway('reseller')}
-                                              className="mr-2"
-                                            />
-                                            <strong>Account Credit Balance</strong>
-                                            <div className="small text-muted">
-                                              Wallet balance deduction
-                                            </div>
-                                          </div>
-                                        </label>
-                                      </div>
-
-                                      <div className="col-md-6 mb-2">
-                                        <label
-                                          className={`card p-3 d-flex flex-row align-items-center justify-content-between h-100 cursor-pointer ${
-                                            selectedGateway === 'bank'
-                                              ? 'border-primary bg-light'
-                                              : ''
-                                          }`}
-                                        >
-                                          <div>
-                                            <input
-                                              type="radio"
-                                              name="paymentGateway"
-                                              checked={selectedGateway === 'bank'}
-                                              onChange={() => setSelectedGateway('bank')}
-                                              className="mr-2"
-                                            />
-                                            <strong>Bank Transfer</strong>
-                                            <div className="small text-muted">
-                                              City Bank / BRAC Bank
-                                            </div>
-                                          </div>
-                                        </label>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
                               </div>
                             )}
                           </div>
@@ -936,20 +1621,26 @@ function CartInner() {
                                 <div className="text-right">
                                   <button
                                     type="button"
-                                    onClick={handleCheckout}
-                                    disabled={cart.length === 0 || loadingPay}
+                                    onClick={() => {
+                                      setIsCheckoutView(true);
+                                      router.push('/cart?a=checkout');
+                                    }}
+                                    disabled={cart.length === 0}
                                     className={`btn btn-success btn-lg btn-checkout btn-block ${
                                       cart.length === 0 ? 'disabled' : ''
                                     }`}
                                     id="checkout"
                                   >
-                                    {loadingPay ? 'Processing...' : 'Checkout'}{' '}
+                                    Checkout{' '}
                                     <i className="fas fa-arrow-right"></i>
                                   </button>
                                   <br />
                                   <button
                                     type="button"
-                                    onClick={() => setViewCartView(false)}
+                                    onClick={() => {
+                                      setViewCartView(false);
+                                      setIsCheckoutView(false);
+                                    }}
                                     className="btn btn-link btn-continue-shopping"
                                     id="continueShopping"
                                   >
