@@ -29,17 +29,74 @@ function decodeHtml(html?: string | null): string {
     .replace(/&bull;/g, '•');
 }
 
+function normalizeDescription(desc?: string | null): string {
+  if (!desc) return '';
+  return desc
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '\n')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .trim();
+}
+
 function formatDescription(desc?: string | null): string {
   if (!desc) return '';
-  const decoded = decodeHtml(desc);
+  const normalized = normalizeDescription(desc);
+  const decoded = decodeHtml(normalized);
   if (decoded.includes('<br') || decoded.includes('<p') || decoded.includes('<ul')) {
     return decoded;
   }
   return decoded
-    .split(/\r?\n/)
+    .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
     .join('<br />');
+}
+
+function renderProductDescription(desc?: string | null, productId?: string | number) {
+  if (!desc) return null;
+
+  const normalized = normalizeDescription(desc);
+  const hasHtml = /<(?:ul|ol|table|div|p)\b/i.test(normalized);
+
+  if (hasHtml) {
+    return (
+      <div
+        id={productId ? `product${productId}-description` : undefined}
+        dangerouslySetInnerHTML={{ __html: decodeHtml(normalized) }}
+      />
+    );
+  }
+
+  const lines = normalized
+    .split('\n')
+    .map((l) => decodeHtml(l).trim())
+    .filter((l) => l.length > 0);
+
+  if (lines.length === 0) return null;
+
+  return (
+    <ul>
+      {lines.map((line, idx) => {
+        const colonIdx = line.indexOf(':');
+        if (colonIdx > 0 && colonIdx < line.length - 1) {
+          const part1 = line.slice(0, colonIdx).trim();
+          const part2 = line.slice(colonIdx + 1).trim();
+          return (
+            <li key={idx} id={productId ? `product${productId}-feature${idx + 1}` : undefined}>
+              <span className="feature-value">{part2}</span> {part1}
+            </li>
+          );
+        }
+        return (
+          <li key={idx} id={productId ? `product${productId}-feature${idx + 1}` : undefined}>
+            {line}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 function getProductPricing(p: any) {
@@ -2012,6 +2069,7 @@ function CartInner() {
                               }}
                               placeholder="Search products in this category..."
                               className="form-control"
+                              style={{ width: '100%' }}
                             />
                             {searchTerm && (
                               <div className="input-group-append">
@@ -2044,7 +2102,6 @@ function CartInner() {
                                 const inCart = cart.some(
                                   (item) => item.id === String(p.id)
                                 );
-                                const formattedDesc = formatDescription(p.description);
 
                                 return (
                                   <div className="col-md-6" key={p.id}>
@@ -2056,13 +2113,7 @@ function CartInner() {
                                       </header>
 
                                       <div className="product-desc">
-                                        <p
-                                          id={`product${p.id}-description`}
-                                          dangerouslySetInnerHTML={{
-                                            __html: formattedDesc,
-                                          }}
-                                        />
-                                        <ul></ul>
+                                        {renderProductDescription(p.description, p.id)}
                                       </div>
 
                                       <footer>

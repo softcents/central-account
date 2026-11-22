@@ -25,7 +25,7 @@ function InvoiceContent() {
     : null;
 
   const status = (invoice?.status || 'Unpaid').toUpperCase();
-  const amount = parseFloat(invoice?.total || '1500.00');
+  const amount = parseFloat(String(invoice?.total || '1500.00'));
 
   const items = invoice?.items && invoice.items.length > 0
     ? invoice.items
@@ -265,7 +265,9 @@ function InvoiceContent() {
           <tbody>
             {items.map((item: any, idx: number) => (
               <tr key={idx}>
-                <td>{item.description}</td>
+                <td style={{ whiteSpace: 'pre-line' }}>
+                  {item.description ? String(item.description).replace(/\\r\\n|\\n|\\r/g, '\n') : ''}
+                </td>
                 <td className="text-right font-weight-bold">
                   ৳{parseFloat(item.amount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })} BDT
                 </td>
