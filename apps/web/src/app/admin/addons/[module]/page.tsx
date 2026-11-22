@@ -104,7 +104,7 @@ const MODULES_MAP: Record<string, ModuleMetadata> = {
     defaultSettings: {
       api_url: 'https://vsms.softcents.com',
       api_token: '14|OCq2yZelYts6BhSf1mmK4RQO6HX4Q98RLiuxxDO6190d0518',
-      caller_id: '369',
+      caller_id: '376',
       default_due_audio_id: '419',
       default_overdue_audio_id: '420',
       default_welcome_audio_id: '421',
