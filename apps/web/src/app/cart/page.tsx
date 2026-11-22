@@ -92,13 +92,14 @@ function getProductPricing(p: any) {
   }
 
   if (p.paytype === 'onetime') {
-    const priceVal = m >= 0 ? m : 0;
+    const priceVal = m > 0 ? m : (setup > 0 ? setup : 0);
+    const extraSetup = m > 0 && setup > 0 ? setup : 0;
     return {
       displayPrice: `৳${priceVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} BDT`,
       priceVal,
       cycle: 'One Time',
-      setupFee: setup > 0 ? setup : 0,
-      isFree: false,
+      setupFee: extraSetup,
+      isFree: priceVal === 0 && extraSetup === 0,
     };
   }
 
@@ -200,7 +201,7 @@ function CartInner() {
   const groupCounts = useMemo(() => {
     const map: Record<string, number> = {};
     for (const p of allProducts) {
-      if (p.retired !== '1') {
+      if (p.retired !== '1' && p.product_hidden !== '1') {
         map[p.gid] = (map[p.gid] || 0) + 1;
       }
     }
@@ -268,10 +269,10 @@ function CartInner() {
     return allProducts.filter((p: any) => {
       if (String(p.gid) !== String(selectedGroupId)) return false;
       if (p.retired === '1') return false;
-      if (!showHidden && p.product_hidden === '1') return false;
+      if (!showHidden && p.product_hidden === '1' && String(p.id) !== String(rawPid)) return false;
       return true;
     });
-  }, [allProducts, selectedGroupId, showHidden]);
+  }, [allProducts, selectedGroupId, showHidden, rawPid]);
 
   const filteredProducts = useMemo(() => {
     if (!searchTerm.trim()) return groupProducts;
@@ -364,9 +365,13 @@ function CartInner() {
       const primaryItem = cart[0];
       const res = await fetch('/api/whmcs/cart/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Protection': '1',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
         body: JSON.stringify({
-          clientId: activeClient?.id || '177',
+          clientId: client?.id || clientId || '177',
           productId: Number(String(primaryItem.id).replace(/[^0-9]/g, '')) || 1,
           billingCycle: primaryItem.cycle || 'Monthly',
           domain: `${customerName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'sc'}-pbx.bdpbx.com`,

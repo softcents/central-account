@@ -110,6 +110,9 @@ export function useActiveClient() {
   const allQuotes = (whmcsData?.quotes || []) as any[];
   const quotes = allQuotes.filter((q: any) => String(q.userid) === String(clientId));
 
+  const allOrders = (whmcsData?.orders || []) as any[];
+  const orders = allOrders.filter((o: any) => String(o.userid) === String(clientId));
+
   return {
     clientId,
     client,
@@ -122,6 +125,7 @@ export function useActiveClient() {
     tickets,
     openTickets,
     quotes,
+    orders,
     isLoaded,
   };
 }

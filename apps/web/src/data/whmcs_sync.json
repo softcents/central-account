@@ -13782,6 +13782,24 @@
   ],
   "orders": [
     {
+      "id": "97027",
+      "ordernum": "97027",
+      "userid": "177",
+      "date": "2026-11-22",
+      "invoiceid": "97027",
+      "status": "Pending",
+      "amount": 490
+    },
+    {
+      "id": "28830",
+      "ordernum": "28830",
+      "userid": "177",
+      "date": "2026-11-22",
+      "invoiceid": "28830",
+      "status": "Pending",
+      "amount": 1500
+    },
+    {
       "id": "7",
       "ordernum": "3298431383",
       "userid": "3",
@@ -15423,6 +15441,44 @@
     }
   ],
   "invoices": [
+    {
+      "id": "97027",
+      "userid": "177",
+      "invoicenum": "97027",
+      "date": "2026-11-22",
+      "duedate": "2026-11-29",
+      "subtotal": 490,
+      "credit": 0,
+      "tax": 0,
+      "total": 490,
+      "status": "Unpaid",
+      "paymentmethod": "piprapay",
+      "items": [
+        {
+          "description": "Basic",
+          "amount": 490
+        }
+      ]
+    },
+    {
+      "id": "28830",
+      "userid": "177",
+      "invoicenum": "28830",
+      "date": "2026-11-22",
+      "duedate": "2026-11-29",
+      "subtotal": 1500,
+      "credit": 0,
+      "tax": 0,
+      "total": 1500,
+      "status": "Unpaid",
+      "paymentmethod": "piprapay",
+      "items": [
+        {
+          "description": "New Service Subscription",
+          "amount": 1500
+        }
+      ]
+    },
     {
       "id": "87487",
       "userid": "177",
@@ -48933,6 +48989,50 @@
   ],
   "smsLogs": [
     {
+      "id": "SMS-1795345297954",
+      "recipient": "8801711000111",
+      "message": "New Invoice Generated!\n\nDear Softcents,\nA new invoice #97027 has been created for your account.\n\nAmount: ৳490.00 BDT \nDue Date: 2026-11-29\n\nPlease pay before the due date to avoid service interruption.\n\nPay Online: https://account.softcents.com/viewinvoice?id=97027\n\nThank you!",
+      "sender": "8809617777121",
+      "status": "Delivered",
+      "date": "2026-11-22T11:01:37.954Z",
+      "charge": 1.9500000000000002,
+      "remaining_balance": 2887.76,
+      "template": "InvoiceCreated"
+    },
+    {
+      "id": "SMS-1795345297572",
+      "recipient": "8801711000111",
+      "message": "Order Confirmed!\n\nHi Softcents, \nGreat news! Your order has been accepted and is being processed.\n\nOrder Number: 97027 \nTotal Amount: 490\n\nThank you for choosing us!",
+      "sender": "8809617777121",
+      "status": "Delivered",
+      "date": "2026-11-22T11:01:37.572Z",
+      "charge": 0.78,
+      "remaining_balance": 2889.7099999999996,
+      "template": "AcceptOrder"
+    },
+    {
+      "id": "SMS-1795344829832",
+      "recipient": "8801711000111",
+      "message": "New Invoice Generated!\n\nDear Softcents,\nA new invoice #28830 has been created for your account.\n\nAmount: ৳1500.00 BDT \nDue Date: 2026-11-29\n\nPlease pay before the due date to avoid service interruption.\n\nPay Online: https://account.softcents.com/viewinvoice?id=28830\n\nThank you!",
+      "sender": "8809617777121",
+      "status": "Delivered",
+      "date": "2026-11-22T10:53:49.832Z",
+      "charge": 1.9500000000000002,
+      "remaining_balance": 2890.4900000000002,
+      "template": "InvoiceCreated"
+    },
+    {
+      "id": "SMS-1795344829371",
+      "recipient": "8801711000111",
+      "message": "Order Confirmed!\n\nHi Softcents, \nGreat news! Your order has been accepted and is being processed.\n\nOrder Number: 28830 \nTotal Amount: 1500\n\nThank you for choosing us!",
+      "sender": "8809617777121",
+      "status": "Delivered",
+      "date": "2026-11-22T10:53:49.371Z",
+      "charge": 0.78,
+      "remaining_balance": 2892.4399999999996,
+      "template": "AcceptOrder"
+    },
+    {
       "id": "SMS-1795319837648",
       "recipient": "8801711000111",
       "message": "URGENT: Final Notice of Overdue Payment\n\nDear Softcents, \nThis is our final reminder. Invoice #607 is now 58 days past due and your service is at risk of termination.\n\nAmount Due: ৳539.00 BDT\n\nTo prevent permanent data loss and service deletion, please pay NOW.\n\nPay Link: https://account.softcents.com/viewinvoice?id=607\n\nIgnore if already paid.",
@@ -49572,6 +49672,26 @@
     }
   ],
   "voiceLogs": [
+    {
+      "id": "VOICE-861",
+      "call_id": 861,
+      "phone_number": "01329646689",
+      "caller_id": 376,
+      "audio_id": 419,
+      "audio_title": "Softcents Due Bill Reminder Voice (IVR)",
+      "status": "Initiated (Ringing)",
+      "date": "2026-11-22T07:00:51.580Z"
+    },
+    {
+      "id": "VOICE-860",
+      "call_id": 860,
+      "phone_number": "01329646689",
+      "caller_id": 376,
+      "audio_id": 419,
+      "audio_title": "Softcents Due Bill Reminder Voice (IVR)",
+      "status": "Initiated (Ringing)",
+      "date": "2026-11-22T06:57:03.837Z"
+    },
     {
       "id": "VOICE-859",
       "call_id": 859,

@@ -5,6 +5,18 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { WhmcsFooter } from '@/components/WhmcsFooter';
+import whmcsData from '@/data/whmcs_sync.json';
+
+function decodeHtml(html?: string | null): string {
+  if (!html) return '';
+  return html
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&bull;/g, '•');
+}
 import {
   Search,
   Globe,
@@ -40,153 +52,16 @@ export default function HomePage() {
   };
 
   const productCategories = [
-    {
-      id: 2,
-      title: 'Cloud PBX',
-      description: 'Free IP Number • IVR • Call Center • Extensions • Call Recording',
-      link: '/cart?gid=2',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 15,
-      title: 'Bulk SMS- (Your IP Number To SMS)',
-      description: 'Fast Delivery • High Accuracy • Full API Access',
-      link: '/cart?gid=15',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 3,
-      title: 'USA Advance Linux Shared Hosting',
-      description: 'USA Advance Linux Shared Hosting',
-      link: '/cart?gid=3',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 6,
-      title: 'BDIX Advance Linux Shared Hosting',
-      description: 'BDIX Advance Linux Shared Hosting',
-      link: '/cart?gid=6',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 5,
-      title: 'IP Phone Number',
-      description: 'Reliable voice connectivity for your business.',
-      link: '/cart?gid=5',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 7,
-      title: 'Singapore Advance Linux Shared Hosting',
-      description: 'Singapore Advance Linux Shared Hosting',
-      link: '/cart?gid=7',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 8,
-      title: 'Indian Advance Linux Shared Hosting',
-      description: 'Indian Advance Linux Shared Hosting',
-      link: '/cart?gid=8',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 9,
-      title: 'VPS SERVER (USA)',
-      description: 'VPS SERVER (USA)',
-      link: '/cart?gid=9',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 10,
-      title: 'VPS SERVER (UK)',
-      description: 'VPS SERVER (UK)',
-      link: '/cart?gid=10',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 11,
-      title: 'VPS SERVER (DE)',
-      description: 'VPS SERVER (DE)',
-      link: '/cart?gid=11',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 12,
-      title: 'VPS SERVER (FR)',
-      description: 'VPS SERVER (FR)',
-      link: '/cart?gid=12',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 13,
-      title: 'VPS SERVER (BD)',
-      description: 'VPS SERVER (BD)',
-      link: '/cart?gid=13',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 14,
-      title: 'Dedicated Server (BD)',
-      description: 'Dedicated Server (BD)',
-      link: '/cart?gid=14',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 16,
-      title: 'IP Phone Namber (VIP)',
-      description: 'Stand out with a unique, memorable, and prestige-enhancing VIP number.',
-      link: '/cart?gid=16',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 17,
-      title: 'Voice SMS TOOL (Your IP To Voice)',
-      description: 'Reliable Calling & Messaging Services for Your Business',
-      link: '/cart?gid=17',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 18,
-      title: 'Location-Based SMS (Tower Targeting)',
-      description: 'Reach the right audience instantly with precision targeting',
-      link: '/cart?gid=18',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 19,
-      title: 'Masking SMS',
-      description: 'Send Your Brand Name SMS',
-      link: '/cart?gid=19',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 20,
-      title: 'Voice SMS',
-      description: 'Reach Thousands Instantly with Voice Broadcast',
-      link: '/cart?gid=20',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 21,
-      title: 'Dedicated IP pbx',
-      description: 'Dedicated IP PBX Telephone in Bangladesh',
-      link: '/cart?gid=21',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 22,
-      title: 'BDPBX',
-      description: 'Bangladesh Hosted IP-PBX Solution',
-      link: '/cart?gid=22',
-      buttonText: 'Browse Products',
-    },
-    {
-      id: 23,
-      title: 'Advance Cloud PBX',
-      description: 'IVR • Call Center • Extensions • Call Recording, Call history, Api',
-      link: '/cart?gid=23',
-      buttonText: 'Browse Products',
-    },
+    ...(whmcsData?.productGroups || [])
+      .filter((g: any) => g.hidden !== '1')
+      .sort((a: any, b: any) => parseInt(a.order || '999') - parseInt(b.order || '999'))
+      .map((g: any) => ({
+        id: g.id,
+        title: decodeHtml(g.name),
+        description: decodeHtml(g.tagline || g.headline || g.name),
+        link: `/cart?gid=${g.id}`,
+        buttonText: 'Browse Products',
+      })),
     {
       id: 'reg-domain',
       title: 'Register a New Domain',

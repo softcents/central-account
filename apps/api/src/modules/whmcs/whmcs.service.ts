@@ -254,7 +254,14 @@ export class WhmcsService {
     const product = (this.syncData?.products || []).find((p: any) => String(p.id) === String(payload.productId));
 
     const invoiceId = String(Date.now()).slice(-5);
-    const amount = Number(product?.pricing?.monthly || product?.price || 1500);
+    const amount = Number(
+      (payload.billingCycle === 'Annually' && product?.annually && product.annually !== '-1.00' ? product.annually : null) ||
+      (product?.monthly && product.monthly !== '-1.00' && product.monthly !== '0.00' ? product.monthly : null) ||
+      (product?.msetupfee && product.msetupfee !== '0.00' ? product.msetupfee : null) ||
+      product?.pricing?.monthly ||
+      product?.price ||
+      1500
+    );
 
     // Create Invoice in memory
     const newInvoice: any = {
@@ -269,7 +276,7 @@ export class WhmcsService {
       total: amount,
       status: 'Unpaid',
       paymentmethod: payload.paymentMethod,
-      items: [{ description: product?.name || 'New Service Subscription', amount }],
+      items: [{ description: product?.product_name || product?.name || 'New Service Subscription', amount }],
     };
 
     if (!this.syncData.invoices) this.syncData.invoices = [];
@@ -303,11 +310,11 @@ export class WhmcsService {
 
     // Trigger selected payment gateway
     if (payload.paymentMethod === 'piprapay') {
-      const gatewaySettings = this.syncData.gateways?.find((g: any) => g.gateway === 'piprapay') || {};
+      const gatewaySettings = this.syncData.gateways?.find((g: any) => g.gateway === 'piprapay' || g.id === 'piprapay') || {};
       const res = await this.piprapay.createCharge({
-        apiKey: gatewaySettings.apikey || 'demo_api_key',
-        baseUrl: gatewaySettings.baseUrl || 'https://pay.piprapay.com',
-        version: gatewaySettings.piprapay_version || 'V3+',
+        apiKey: gatewaySettings.apiKey || gatewaySettings.apikey || 'b3e91bb98e0d874acb860272f240000b48a47368010ed81017',
+        baseUrl: gatewaySettings.baseUrl || 'https://epay.softcents.com/api',
+        version: gatewaySettings.version || gatewaySettings.piprapay_version || 'V3+',
         invoiceId,
         amount,
         fullName: client?.name || 'Valued Customer',

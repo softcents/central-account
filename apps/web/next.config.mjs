@@ -45,6 +45,22 @@ const nextConfig = {
         destination: '/cart?group=:slug*',
       },
       {
+        source: '/orders',
+        destination: '/cart',
+      },
+      {
+        source: '/order',
+        destination: '/cart',
+      },
+      {
+        source: '/order.php',
+        destination: '/cart',
+      },
+      {
+        source: '/orders.php',
+        destination: '/clientarea/orders',
+      },
+      {
         source: '/login.php',
         destination: '/login',
       },

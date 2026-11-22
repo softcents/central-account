@@ -31,6 +31,18 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { useActiveClient } from '@/hooks/useActiveClient';
+import whmcsData from '@/data/whmcs_sync.json';
+
+function decodeHtml(html?: string | null): string {
+  if (!html) return '';
+  return html
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&bull;/g, '•');
+}
 
 export function ClientHeader() {
   const pathname = usePathname();
@@ -282,6 +294,14 @@ export function ClientHeader() {
                         My Services
                       </Link>
                       <Link
+                        href={`/clientarea/orders${impQuery}`}
+                        onClick={() => setDropdown(null)}
+                        className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-800 font-medium"
+                      >
+                        <ShoppingBag className="w-4 h-4 mr-2 text-indigo-600" />
+                        My Orders
+                      </Link>
+                      <Link
                         href={`/cart${impQuery}`}
                         onClick={() => setDropdown(null)}
                         className="flex items-center px-3 py-2 hover:bg-slate-50 text-emerald-700 font-semibold"
@@ -382,6 +402,14 @@ export function ClientHeader() {
                       >
                         <CreditCard className="w-4 h-4 mr-2 text-[#f39c12]" />
                         My Invoices
+                      </Link>
+                      <Link
+                        href={`/clientarea/orders${impQuery}`}
+                        onClick={() => setDropdown(null)}
+                        className="flex items-center px-3 py-2 hover:bg-slate-50 text-slate-800 font-medium"
+                      >
+                        <ShoppingBag className="w-4 h-4 mr-2 text-indigo-600" />
+                        My Orders
                       </Link>
                       <Link
                         href={`/clientarea/quotes${impQuery}`}
@@ -512,30 +540,22 @@ export function ClientHeader() {
                         onClick={() => setDropdown(null)}
                         className="block px-3.5 py-2 font-bold text-slate-900 hover:bg-slate-50 border-b border-slate-100"
                       >
-                        Browse All
+                        Browse All Categories
                       </Link>
                       <div className="py-1">
-                        <Link href="/cart?gid=2" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">Cloud PBX</Link>
-                        <Link href="/cart?gid=15" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">Bulk SMS- (Your IP Number To SMS)</Link>
-                        <Link href="/cart?gid=3" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">USA Advance Linux Shared Hosting</Link>
-                        <Link href="/cart?gid=6" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">BDIX Advance Linux Shared Hosting</Link>
-                        <Link href="/cart?gid=5" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">IP Phone Number</Link>
-                        <Link href="/cart?gid=7" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">Singapore Advance Linux Shared Hosting</Link>
-                        <Link href="/cart?gid=8" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">Indian Advance Linux Shared Hosting</Link>
-                        <Link href="/cart?gid=9" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">VPS SERVER (USA)</Link>
-                        <Link href="/cart?gid=10" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">VPS SERVER (UK)</Link>
-                        <Link href="/cart?gid=11" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">VPS SERVER (DE)</Link>
-                        <Link href="/cart?gid=12" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">VPS SERVER (FR)</Link>
-                        <Link href="/cart?gid=13" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">VPS SERVER (BD)</Link>
-                        <Link href="/cart?gid=14" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">Dedicated Server (BD)</Link>
-                        <Link href="/cart?gid=16" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">IP Phone Namber (VIP)</Link>
-                        <Link href="/cart?gid=17" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">Voice SMS TOOL (Your IP To Voice)</Link>
-                        <Link href="/cart?gid=18" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">Location-Based SMS (Tower Targeting)</Link>
-                        <Link href="/cart?gid=19" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">Masking SMS</Link>
-                        <Link href="/cart?gid=20" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">Voice SMS</Link>
-                        <Link href="/cart?gid=21" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">Dedicated IP pbx</Link>
-                        <Link href="/cart?gid=22" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">BDPBX</Link>
-                        <Link href="/cart?gid=23" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700">Advance Cloud PBX</Link>
+                        {(whmcsData?.productGroups || [])
+                          .filter((g: any) => g.hidden !== '1')
+                          .sort((a: any, b: any) => parseInt(a.order || '999') - parseInt(b.order || '999'))
+                          .map((g: any) => (
+                            <Link
+                              key={g.id}
+                              href={`/cart?gid=${g.id}`}
+                              onClick={() => setDropdown(null)}
+                              className="block px-3.5 py-1.5 hover:bg-slate-50 text-slate-700"
+                            >
+                              {decodeHtml(g.name)}
+                            </Link>
+                          ))}
                       </div>
                       <div className="border-t border-slate-100 py-1">
                         <Link href="/cart?a=add&domain=register" onClick={() => setDropdown(null)} className="block px-3.5 py-1.5 hover:bg-slate-50 text-[#0d6efd] font-semibold">
@@ -748,12 +768,20 @@ export function ClientHeader() {
               </button>
               {mobileStoreOpen && (
                 <div className="pl-9 pr-2 py-1 space-y-1 text-xs max-h-60 overflow-y-auto">
-                  <Link href="/cart" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 text-slate-900 font-bold">Browse All</Link>
-                  <Link href="/cart?gid=2" onClick={() => setMobileMenuOpen(false)} className="block py-1 text-slate-600">Cloud PBX</Link>
-                  <Link href="/cart?gid=15" onClick={() => setMobileMenuOpen(false)} className="block py-1 text-slate-600">Bulk SMS- (Your IP Number To SMS)</Link>
-                  <Link href="/cart?gid=3" onClick={() => setMobileMenuOpen(false)} className="block py-1 text-slate-600">USA Advance Linux Shared Hosting</Link>
-                  <Link href="/cart?gid=6" onClick={() => setMobileMenuOpen(false)} className="block py-1 text-slate-600">BDIX Advance Linux Shared Hosting</Link>
-                  <Link href="/cart?gid=5" onClick={() => setMobileMenuOpen(false)} className="block py-1 text-slate-600">IP Phone Number</Link>
+                  <Link href="/cart" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 text-slate-900 font-bold">Browse All Categories</Link>
+                  {(whmcsData?.productGroups || [])
+                    .filter((g: any) => g.hidden !== '1')
+                    .sort((a: any, b: any) => parseInt(a.order || '999') - parseInt(b.order || '999'))
+                    .map((g: any) => (
+                      <Link
+                        key={g.id}
+                        href={`/cart?gid=${g.id}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block py-1 text-slate-600 hover:text-slate-900"
+                      >
+                        {decodeHtml(g.name)}
+                      </Link>
+                    ))}
                   <Link href="/cart?a=add&domain=register" onClick={() => setMobileMenuOpen(false)} className="block py-1 text-[#0d6efd] font-bold">Register a New Domain</Link>
                   <Link href="/cart?a=add&domain=transfer" onClick={() => setMobileMenuOpen(false)} className="block py-1 text-[#198754] font-bold">Transfer Domains to Us</Link>
                 </div>
