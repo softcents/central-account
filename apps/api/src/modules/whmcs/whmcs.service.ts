@@ -255,7 +255,7 @@ export class WhmcsService {
     const amount = Number(product?.pricing?.monthly || product?.price || 1500);
 
     // Create Invoice in memory
-    const newInvoice = {
+    const newInvoice: any = {
       id: invoiceId,
       userid: String(payload.clientId),
       invoicenum: invoiceId,
@@ -272,7 +272,32 @@ export class WhmcsService {
 
     if (!this.syncData.invoices) this.syncData.invoices = [];
     this.syncData.invoices.unshift(newInvoice);
+
+    // Create Order in memory
+    const orderId = String(Date.now()).slice(-5);
+    const newOrder: any = {
+      id: orderId,
+      ordernum: orderId,
+      userid: String(payload.clientId),
+      date: new Date().toISOString().split('T')[0],
+      invoiceid: invoiceId,
+      status: 'Pending',
+      amount,
+    };
+    if (!this.syncData.orders) this.syncData.orders = [];
+    this.syncData.orders.unshift(newOrder);
+
     this.saveSyncData();
+
+    // Trigger Automated SMS Hooks: Order Accepted & Invoice Created
+    if (client) {
+      try {
+        await this.smsAddon.sendAcceptOrder(client, newOrder);
+        await this.smsAddon.sendInvoiceCreated(client, newInvoice);
+      } catch (smsErr: any) {
+        this.logger.warn(`Could not send checkout SMS: ${smsErr.message}`);
+      }
+    }
 
     // Trigger selected payment gateway
     if (payload.paymentMethod === 'piprapay') {
@@ -319,7 +344,18 @@ export class WhmcsService {
     } else {
       // Internal wallet credit
       newInvoice.status = 'Paid';
+      newInvoice.datepaid = new Date().toISOString().split('T')[0];
+      newOrder.status = 'Active';
       this.saveSyncData();
+
+      if (client?.phonenumber) {
+        try {
+          await this.smsAddon.sendInvoicePaid(client, newInvoice);
+        } catch (smsErr: any) {
+          this.logger.warn(`Could not send wallet paid SMS: ${smsErr.message}`);
+        }
+      }
+
       return {
         success: true,
         invoiceId,
@@ -361,13 +397,45 @@ export class WhmcsService {
         date: new Date().toISOString(),
       });
 
+      // Update related order status to Active if exists
+      const relatedOrder = (this.syncData.orders || []).find((o: any) => String(o.invoiceid) === String(invoiceId));
+      if (relatedOrder) {
+        relatedOrder.status = 'Active';
+      }
+
       this.saveSyncData();
       this.logger.log(`Invoice #${invoiceId} marked Paid via ${gateway} (Trx: ${transId})`);
 
       const client = this.getClient(inv.userid);
       if (client?.phonenumber) {
-        await this.smsAddon.sendPaymentReceivedNotification(client.phonenumber, invoiceId, amount);
+        try {
+          await this.smsAddon.sendInvoicePaid(client, inv);
+        } catch (smsErr: any) {
+          this.logger.warn(`Could not send InvoicePaid SMS: ${smsErr.message}`);
+        }
       }
     }
+  }
+
+  /**
+   * Cancel Invoice and trigger automated cancellation notice
+   */
+  async cancelInvoice(invoiceId: string | number) {
+    this.loadSyncData();
+    const inv = (this.syncData.invoices || []).find((i: any) => String(i.id) === String(invoiceId));
+    if (inv) {
+      inv.status = 'Cancelled';
+      this.saveSyncData();
+      const client = this.getClient(inv.userid);
+      if (client?.phonenumber) {
+        try {
+          await this.smsAddon.sendInvoiceCancelled(client, inv);
+        } catch (smsErr: any) {
+          this.logger.warn(`Could not send InvoiceCancelled SMS: ${smsErr.message}`);
+        }
+      }
+      return { success: true, message: `Invoice #${invoiceId} cancelled.` };
+    }
+    return { success: false, message: 'Invoice not found.' };
   }
 }

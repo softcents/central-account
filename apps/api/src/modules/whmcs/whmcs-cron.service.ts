@@ -97,12 +97,7 @@ export class WhmcsCronService {
               // Send SMS notification
               const client = this.whmcs.getClient(service.userid);
               if (client?.phonenumber) {
-                await this.whmcs.smsAddon.sendInvoiceNotification(
-                  client.phonenumber,
-                  newInvId,
-                  amount,
-                  service.nextduedate,
-                );
+                await this.whmcs.smsAddon.sendInvoiceCreated(client, newInvoice);
                 remindersSent++;
               }
             }
@@ -145,10 +140,7 @@ export class WhmcsCronService {
 
               const client = this.whmcs.getClient(service.userid);
               if (client?.phonenumber) {
-                await this.whmcs.smsAddon.sendSms({
-                  numbers: client.phonenumber,
-                  message: `SoftCents: Your service (${service.domain || service.name}) has been temporarily suspended due to non-payment. Please pay your pending invoice to restore immediately: https://account.softcents.com/viewinvoice`,
-                });
+                await this.whmcs.smsAddon.sendAfterModuleSuspend(client, service);
                 remindersSent++;
               }
             }
@@ -157,6 +149,55 @@ export class WhmcsCronService {
       }
     } catch (err: any) {
       logs.push(`Error during overdue suspension: ${err.message}`);
+    }
+
+    // 3. Overdue Invoice Reminders
+    try {
+      const invoices = (this.whmcs as any).syncData?.invoices || [];
+      for (const inv of invoices) {
+        if (inv.status === 'Unpaid' && inv.duedate) {
+          // Prevent spamming on the same day
+          if (inv.last_reminder_date === todayStr) {
+            continue;
+          }
+
+          const dueDate = new Date(inv.duedate);
+          const diffDays = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 3600 * 24));
+          const client = this.whmcs.getClient(inv.userid);
+
+          if (client?.phonenumber) {
+            let sentStage = '';
+            if (diffDays >= 8 && diffDays <= 45 && inv.last_reminder_stage !== 'third') {
+              await this.whmcs.smsAddon.sendInvoiceReminder(client, inv, 'third', diffDays);
+              sentStage = 'third';
+              remindersSent++;
+              logs.push(`Dispatched Final 3rd Overdue SMS for Invoice #${inv.id} (${diffDays} days overdue)`);
+            } else if (diffDays >= 4 && diffDays < 8 && inv.last_reminder_stage !== 'second') {
+              await this.whmcs.smsAddon.sendInvoiceReminder(client, inv, 'second', diffDays);
+              sentStage = 'second';
+              remindersSent++;
+              logs.push(`Dispatched 2nd Overdue SMS for Invoice #${inv.id} (${diffDays} days overdue)`);
+            } else if (diffDays >= 1 && diffDays < 4 && inv.last_reminder_stage !== 'first') {
+              await this.whmcs.smsAddon.sendInvoiceReminder(client, inv, 'first', diffDays);
+              sentStage = 'first';
+              remindersSent++;
+              logs.push(`Dispatched 1st Overdue SMS for Invoice #${inv.id} (${diffDays} days overdue)`);
+            } else if (diffDays === 0 && inv.last_reminder_stage !== 'due') {
+              await this.whmcs.smsAddon.sendInvoiceReminder(client, inv, 'due', 0);
+              sentStage = 'due';
+              remindersSent++;
+              logs.push(`Dispatched Due Date SMS for Invoice #${inv.id}`);
+            }
+
+            if (sentStage) {
+              inv.last_reminder_date = todayStr;
+              inv.last_reminder_stage = sentStage;
+            }
+          }
+        }
+      }
+    } catch (err: any) {
+      logs.push(`Error during invoice reminders: ${err.message}`);
     }
 
     return {

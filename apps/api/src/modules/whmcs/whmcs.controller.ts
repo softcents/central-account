@@ -188,9 +188,35 @@ export class WhmcsController {
     return this.whmcs.smsAddon.checkBalance();
   }
 
+  @Get('addons/sms/settings')
+  async getSmsSettings() {
+    return { success: true, settings: this.whmcs.smsAddon.getSettings() };
+  }
+
+  @Post('addons/sms/settings')
+  async updateSmsSettings(@Body() body: any) {
+    return this.whmcs.smsAddon.updateSettings(body);
+  }
+
+  @Get('addons/sms/templates')
+  async getSmsTemplates() {
+    return { success: true, templates: this.whmcs.smsAddon.getTemplates() };
+  }
+
+  @Post('addons/sms/templates/:id')
+  async updateSmsTemplate(@Param('id') id: string, @Body() body: any) {
+    return this.whmcs.smsAddon.updateTemplate(Number(id), body);
+  }
+
   @Post('addons/sms/send')
   async sendSms(@Body() body: { numbers: string | string[]; message: string; senderId?: string }) {
     return this.whmcs.smsAddon.sendSms(body);
+  }
+
+  @Post('addons/sms/trigger-reminders')
+  async triggerSmsReminders() {
+    const res = await this.whmcsCron.runAutomationCycle();
+    return { success: true, message: 'SMS Automation & Reminder Cycle Executed', ...res };
   }
 
   // ADDONS: WhatsApp Pro
@@ -273,6 +299,12 @@ export class WhmcsController {
   @Post('cart/checkout')
   async checkout(@Body() body: any) {
     return this.whmcs.checkout(body);
+  }
+
+  // INVOICES: Cancel
+  @Post('invoices/:id/cancel')
+  async cancelInvoice(@Param('id') id: string) {
+    return this.whmcs.cancelInvoice(id);
   }
 
   // PROVISIONING: Manual or Hook trigger
