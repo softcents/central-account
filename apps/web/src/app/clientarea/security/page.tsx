@@ -3,19 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ClientHeader } from '@/components/ClientHeader';
-import {
-  ShieldCheck,
-  Lock,
-  KeyRound,
-  CheckCircle2,
-  AlertTriangle,
-  QrCode,
-  Smartphone,
-  Copy,
-  Check,
-  ArrowLeft,
-  X,
-} from 'lucide-react';
+import { WhmcsFooter } from '@/components/WhmcsFooter';
 
 export default function ClientSecurityPage() {
   const [currPassword, setCurrPassword] = useState('');
@@ -78,259 +66,309 @@ export default function ClientSecurityPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans pb-16">
+    <div className="bg-[#f8f9fa] min-h-screen text-slate-800">
       <ClientHeader />
 
-      <main className="max-w-[1000px] mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
-              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#1A4D80]" />
-              <span>Security Settings</span>
-            </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Manage your password credentials, two-factor authentication (TOTP), and session security.
-            </p>
-          </div>
-
-          <div>
-            <Link
-              href="/clientarea"
-              className="px-3.5 py-1.5 border border-slate-300 rounded text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors inline-block"
-            >
-              &larr; Back to Client Area
-            </Link>
-          </div>
+      {/* WHMCS Master Breadcrumb */}
+      <nav className="master-breadcrumb" aria-label="breadcrumb">
+        <div className="container">
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">
+              <Link href="/clientarea">Portal Home</Link>
+            </li>
+            <li className="breadcrumb-item">
+              <Link href="/clientarea">Client Area</Link>
+            </li>
+            <li className="breadcrumb-item active" aria-current="page">
+              Security Settings
+            </li>
+          </ol>
         </div>
+      </nav>
 
-        {pwdMsg && (
-          <div
-            className={`p-3.5 rounded-lg text-xs font-semibold flex items-center space-x-2 border shadow-xs ${
-              pwdMsg.type === 'success'
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                : 'bg-rose-50 text-rose-800 border-rose-300'
-            }`}
-          >
-            {pwdMsg.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-            )}
-            <span>{pwdMsg.text}</span>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          {/* Change Password Card */}
-          <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6 space-y-4">
-            <h2 className="text-sm font-bold text-slate-800 flex items-center space-x-2 pb-2 border-b border-slate-100">
-              <Lock className="w-4 h-4 text-[#1A4D80]" />
-              <span>Change Portal Password</span>
-            </h2>
-            <form onSubmit={handlePasswordChange} className="space-y-3.5 text-xs">
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Existing Password</label>
-                <input
-                  type="password"
-                  value={currPassword}
-                  onChange={(e) => setCurrPassword(e.target.value)}
-                  placeholder="Enter current password"
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:outline-none focus:border-[#1A4D80]"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">New Password (Min. 8 characters)</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter secure new password"
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:outline-none focus:border-[#1A4D80]"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Confirm New Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Re-enter new password"
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:outline-none focus:border-[#1A4D80]"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-[#1A4D80] hover:bg-[#143d66] text-white py-2.5 rounded text-xs font-bold transition-colors shadow-sm"
-              >
-                Save New Password
-              </button>
-            </form>
-          </div>
-
-          {/* Two-Factor Authentication Card */}
-          <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6 space-y-4">
-            <h2 className="text-sm font-bold text-slate-800 flex items-center space-x-2 pb-2 border-b border-slate-100">
-              <KeyRound className="w-4 h-4 text-emerald-600" />
-              <span>Two-Factor Authentication (2FA)</span>
-            </h2>
-
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Two-factor authentication adds an extra layer of protection to your client account. When signing in, you will be required to enter both your password and an authenticator code (TOTP) from your mobile device.
-            </p>
-
-            <div
-              className={`p-3.5 rounded-lg border text-xs flex items-center justify-between ${
-                twoFaEnabled
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                  : 'bg-amber-50 border-amber-300 text-amber-900'
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                {twoFaEnabled ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                ) : (
-                  <AlertTriangle className="w-5 h-5 text-amber-600" />
-                )}
-                <div>
-                  <div className="font-bold">
-                    {twoFaEnabled ? '2FA is Enabled & Active' : '2FA is Currently Disabled'}
+      {/* WHMCS Main Body Section */}
+      <section id="main-body">
+        <div className="container">
+          <div className="row">
+            {/* Left Sidebar (col-lg-4 col-xl-3) */}
+            <div className="col-lg-4 col-xl-3">
+              <div className="sidebar">
+                {/* My Account Menu Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-user mr-1 text-muted"></i> My Account
+                    </h3>
                   </div>
-                  <div className="text-[11px] opacity-80">
-                    {twoFaEnabled
-                      ? 'Your login is protected with TOTP authenticator.'
-                      : 'Recommended to protect high-value domain & hosting assets.'}
+                  <div className="list-group list-group-flush">
+                    <Link href="/clientarea/profile" className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-user fa-fw mr-2 text-muted"></i> My Details</span>
+                    </Link>
+                    <Link href="/clientarea/contacts" className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-users fa-fw mr-2 text-muted"></i> Contacts/Sub-Accounts</span>
+                    </Link>
+                    <Link href="/clientarea/security" className="list-group-item list-group-item-action active">
+                      <span><i className="fas fa-lock fa-fw mr-2"></i> Security Settings</span>
+                    </Link>
+                    <Link href="/clientarea/emails" className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-envelope fa-fw mr-2 text-muted"></i> Email History</span>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Actions Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-arrow-left mr-1 text-muted"></i> Actions
+                    </h3>
+                  </div>
+                  <div className="list-group list-group-flush">
+                    <Link href="/clientarea" className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-home fa-fw mr-2 text-muted"></i> Back to Client Area</span>
+                    </Link>
                   </div>
                 </div>
               </div>
             </div>
 
-            {twoFaEnabled ? (
-              <button
-                onClick={handleDisable2Fa}
-                className="w-full bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded text-xs font-bold transition-colors shadow-sm"
-              >
-                Disable Two-Factor Authentication
-              </button>
-            ) : (
-              <button
-                onClick={() => setTwoFaModalOpen(true)}
-                className="w-full bg-[#5cb85c] hover:bg-[#4cae4c] text-white py-2.5 rounded text-xs font-bold transition-colors shadow-sm flex items-center justify-center space-x-1.5"
-              >
-                <Smartphone className="w-4 h-4" />
-                <span>Configure Two-Factor Auth &rarr;</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* 2FA SETUP MODAL */}
-        {twoFaModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
-              <div className="bg-[#1A4D80] text-white p-4 flex items-center justify-between">
-                <div className="flex items-center space-x-2 font-bold text-sm">
-                  <Smartphone className="w-4 h-4" />
-                  <span>Setup Google / Microsoft Authenticator</span>
-                </div>
-                <button
-                  onClick={() => {
-                    setTwoFaModalOpen(false);
-                    setTwoFaMsg(null);
-                  }}
-                  className="text-white/80 hover:text-white"
-                >
-                  ✕
-                </button>
+            {/* Right Primary Content (col-lg-8 col-xl-9) */}
+            <div className="col-lg-8 col-xl-9 primary-content">
+              <div className="header-lined">
+                <h1>Security Settings</h1>
               </div>
 
-              <div className="p-5 space-y-4 text-xs">
-                {twoFaMsg && (
-                  <div
-                    className={`p-3 rounded font-semibold flex items-center space-x-2 border ${
-                      twoFaMsg.type === 'success'
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                        : 'bg-rose-50 text-rose-800 border-rose-300'
-                    }`}
-                  >
-                    {twoFaMsg.type === 'success' ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    ) : (
-                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                    )}
-                    <span>{twoFaMsg.text}</span>
-                  </div>
-                )}
+              {pwdMsg && (
+                <div
+                  className={`alert mb-4 p-3 rounded ${
+                    pwdMsg.type === 'success' ? 'alert-success bg-green-100 text-green-800' : 'alert-danger bg-red-100 text-red-800'
+                  }`}
+                >
+                  <i className={`fas fa-${pwdMsg.type === 'success' ? 'check-circle' : 'exclamation-triangle'} mr-2`}></i>
+                  {pwdMsg.text}
+                </div>
+              )}
 
-                <div className="space-y-1 text-slate-700">
-                  <strong>Step 1: Scan QR Code</strong>
-                  <p className="text-slate-500 text-[11px]">
-                    Open Google Authenticator, Microsoft Authenticator, or 1Password and scan this code:
+              {/* Two-Factor Authentication Card */}
+              <div className="card mb-4">
+                <div className="card-header">
+                  <h3 className="card-title m-0">
+                    <i className="fas fa-shield-alt mr-1 text-primary"></i> Two-Factor Authentication
+                  </h3>
+                </div>
+                <div className="card-body">
+                  <p className="mb-2">
+                    Two-Factor Authentication status:{' '}
+                    <strong>{twoFaEnabled ? 'Enabled' : 'Disabled'}</strong>
                   </p>
-                </div>
 
-                {/* QR Code Placeholder Representation */}
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded flex flex-col items-center justify-center space-y-2">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=otpauth://totp/SoftCents:client@softcents.com?secret=${twoFaSecret}&issuer=SoftCents`}
-                    alt="2FA QR Code"
-                    className="w-36 h-36 border border-slate-300 rounded shadow-xs"
-                  />
-                  <div className="text-[11px] text-slate-500 text-center">
-                    Can't scan? Enter secret key manually:
-                  </div>
-                  <div className="flex items-center space-x-1 font-mono font-bold bg-white px-2 py-1 border border-slate-300 rounded text-slate-800">
-                    <span>{twoFaSecret}</span>
-                    <button
-                      onClick={handleCopySecret}
-                      className="text-slate-500 hover:text-[#1A4D80] p-1"
-                      title="Copy Secret"
-                    >
-                      {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <form onSubmit={handleVerify2Fa} className="space-y-3 pt-2">
-                  <div className="space-y-1">
-                    <strong className="text-slate-700">Step 2: Enter 6-digit Code</strong>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={totpCode}
-                      onChange={(e) => setTotpCode(e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="000000"
-                      className="w-full text-center font-mono font-bold text-lg tracking-widest bg-slate-50 border border-slate-300 rounded p-2 focus:border-[#1A4D80] focus:outline-none"
-                      required
-                    />
+                  <div className="alert alert-warning mb-3">
+                    <i className="fas fa-info-circle mr-1"></i> Two-factor authentication adds an extra layer of security to your account by requiring more than just a password to log in.
                   </div>
 
-                  <div className="flex items-center justify-end space-x-2 pt-2">
+                  {twoFaEnabled ? (
                     <button
                       type="button"
-                      onClick={() => setTwoFaModalOpen(false)}
-                      className="px-4 py-2 border border-slate-300 rounded font-semibold text-slate-700 hover:bg-slate-50"
+                      onClick={handleDisable2Fa}
+                      className="btn btn-danger"
                     >
-                      Cancel
+                      <i className="fas fa-times mr-1"></i> Disable Two-Factor Authentication
                     </button>
+                  ) : (
                     <button
-                      type="submit"
-                      className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-5 py-2 rounded font-bold"
+                      type="button"
+                      onClick={() => setTwoFaModalOpen(true)}
+                      className="btn btn-success"
                     >
-                      Verify &amp; Enable 2FA
+                      <i className="fas fa-key mr-1"></i> Enable Two-Factor Authentication
                     </button>
-                  </div>
-                </form>
+                  )}
+                </div>
+              </div>
+
+              {/* Change Password Card */}
+              <div className="card mb-4">
+                <div className="card-header">
+                  <h3 className="card-title m-0">
+                    <i className="fas fa-lock mr-1 text-muted"></i> Change Password
+                  </h3>
+                </div>
+                <div className="card-body">
+                  <form onSubmit={handlePasswordChange}>
+                    <div className="form-group mb-3">
+                      <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                        Existing Password
+                      </label>
+                      <input
+                        type="password"
+                        value={currPassword}
+                        onChange={(e) => setCurrPassword(e.target.value)}
+                        className="form-control"
+                        style={{
+                          maxWidth: '400px',
+                          padding: '8px 12px',
+                          borderRadius: '4px',
+                          border: '1px solid #ced4da',
+                          fontSize: '13px',
+                        }}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group mb-3">
+                      <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="form-control"
+                        style={{
+                          maxWidth: '400px',
+                          padding: '8px 12px',
+                          borderRadius: '4px',
+                          border: '1px solid #ced4da',
+                          fontSize: '13px',
+                        }}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group mb-4">
+                      <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                        Confirm New Password
+                      </label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="form-control"
+                        style={{
+                          maxWidth: '400px',
+                          padding: '8px 12px',
+                          borderRadius: '4px',
+                          border: '1px solid #ced4da',
+                          fontSize: '13px',
+                        }}
+                        required
+                      />
+                    </div>
+
+                    <div className="d-flex" style={{ gap: '10px' }}>
+                      <button type="submit" className="btn btn-primary">
+                        Save Changes
+                      </button>
+                      <button
+                        type="reset"
+                        onClick={() => {
+                          setCurrPassword('');
+                          setNewPassword('');
+                          setConfirmPassword('');
+                        }}
+                        className="btn btn-default"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
-        )}
-      </main>
+        </div>
+      </section>
+
+      {/* 2FA Setup Modal */}
+      {twoFaModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 1050,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '15px',
+          }}
+        >
+          <div className="card max-w-md w-100" style={{ maxWidth: '480px', width: '100%' }}>
+            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h3 className="card-title text-white m-0" style={{ fontSize: '16px' }}>
+                <i className="fas fa-qrcode mr-1"></i> Setup Two-Factor Authentication
+              </h3>
+              <button
+                type="button"
+                onClick={() => setTwoFaModalOpen(false)}
+                className="close text-white"
+                style={{ background: 'none', border: 0, fontSize: '20px', cursor: 'pointer' }}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="card-body">
+              {twoFaMsg && (
+                <div className={`alert mb-3 ${twoFaMsg.type === 'success' ? 'alert-success' : 'alert-danger'}`}>
+                  {twoFaMsg.text}
+                </div>
+              )}
+
+              <p className="small text-muted mb-2">
+                Scan this QR code with Google Authenticator or enter secret key manually:
+              </p>
+
+              <div className="text-center my-3">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=otpauth://totp/SoftCents:client@softcents.com?secret=${twoFaSecret}&issuer=SoftCents`}
+                  alt="2FA QR Code"
+                  style={{ display: 'inline-block', border: '1px solid #ddd', padding: '5px', borderRadius: '4px' }}
+                />
+                <div className="mt-2 font-monospace font-weight-bold" style={{ letterSpacing: '1px' }}>
+                  {twoFaSecret}
+                  <button
+                    type="button"
+                    onClick={handleCopySecret}
+                    className="btn btn-default btn-xs ml-2"
+                  >
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              <form onSubmit={handleVerify2Fa}>
+                <div className="form-group mb-3">
+                  <label className="font-weight-bold small mb-1">Enter 6-digit Code</label>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="000000"
+                    className="form-control text-center font-monospace font-weight-bold"
+                    style={{ fontSize: '18px', letterSpacing: '3px' }}
+                    required
+                  />
+                </div>
+                <div className="d-flex justify-content-end" style={{ gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setTwoFaModalOpen(false)}
+                    className="btn btn-default"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-success">
+                    Verify &amp; Enable
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <WhmcsFooter />
     </div>
   );
 }

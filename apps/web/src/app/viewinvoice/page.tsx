@@ -3,7 +3,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Printer, Download, CreditCard, CheckCircle, ShieldCheck, RefreshCw, AlertCircle } from 'lucide-react';
 import whmcsData from '@/data/whmcs_sync.json';
 
 function InvoiceContent() {
@@ -111,151 +110,164 @@ function InvoiceContent() {
   };
 
   return (
-    <div className="max-w-[850px] mx-auto bg-white border border-slate-300 rounded shadow-md p-4 sm:p-8 md:p-12 space-y-6 relative overflow-hidden">
-      {/* Status Stamp / Watermark */}
-      <div className="absolute top-8 right-8 text-right pointer-events-none select-none">
-        {status === 'UNPAID' ? (
-          <div className="border-4 border-rose-600 text-rose-600 font-extrabold text-2xl sm:text-3xl px-4 py-1.5 uppercase tracking-widest rotate-[-12deg] opacity-80 inline-block">
-            UNPAID
-          </div>
-        ) : status === 'PAID' ? (
-          <div className="border-4 border-emerald-600 text-emerald-600 font-extrabold text-2xl sm:text-3xl px-4 py-1.5 uppercase tracking-widest rotate-[-12deg] opacity-80 inline-block">
-            PAID
-          </div>
-        ) : (
-          <div className="border-4 border-slate-400 text-slate-500 font-extrabold text-2xl sm:text-3xl px-4 py-1.5 uppercase tracking-widest rotate-[-12deg] opacity-80 inline-block">
-            {status}
-          </div>
-        )}
-      </div>
-
-      {/* Invoice Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6">
-        <div>
-          <img
-            src="/whmcs/logo.png"
-            alt="SoftCents Systems"
-            className="h-10 w-auto object-contain mb-2"
-          />
-          <h1 className="text-xl font-bold text-slate-900">INVOICE #{invoiceId}</h1>
-          <div className="text-xs text-slate-500 space-y-0.5 mt-1">
-            <div>Invoice Date: <strong>{invoice?.date || '20/11/2025'}</strong></div>
-            <div>Due Date: <strong>{invoice?.duedate || '26/11/2025'}</strong></div>
-          </div>
+    <div className="invoice-container">
+      {/* Invoice Header Row */}
+      <div className="row invoice-header mb-4">
+        <div className="col-12 col-sm-6 text-left">
+          <p>
+            <img
+              src="/whmcs/logo.png"
+              alt="SoftCents Systems Ltd."
+              style={{ maxHeight: '42px', width: 'auto' }}
+            />
+          </p>
+          <h3 className="mt-2" style={{ fontSize: '20px', fontWeight: 'bold' }}>
+            Invoice #{invoice?.invoicenum || invoiceId}
+          </h3>
         </div>
 
-        <div className="text-right space-y-2 pt-2">
-          <button
-            onClick={() => window.print()}
-            className="flex items-center space-x-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded font-medium text-xs border border-slate-300 shadow-sm transition-colors"
-          >
-            <Printer className="w-3.5 h-3.5 text-slate-500" />
-            <span>Print Invoice</span>
-          </button>
-        </div>
-      </div>
+        <div className="col-12 col-sm-6 text-center text-sm-right">
+          <div className="invoice-status">
+            {status === 'UNPAID' ? (
+              <span className="unpaid">Unpaid</span>
+            ) : status === 'PAID' ? (
+              <span className="paid">Paid</span>
+            ) : status === 'CANCELLED' ? (
+              <span className="cancelled">Cancelled</span>
+            ) : (
+              <span className="refunded">{status}</span>
+            )}
+          </div>
 
-      {/* Pay Now Strip (for Unpaid invoices) */}
-      {status === 'UNPAID' && (
-        <div className="bg-slate-50 border border-slate-200 rounded p-4 space-y-3 text-xs">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="font-bold text-slate-800 text-sm">Payment Method</div>
-              <p className="text-slate-500">Pay securely via bKash, Nagad, Rocket, or Debit/Credit Cards</p>
+          {status === 'UNPAID' && (
+            <div className="small-text text-muted mt-2">
+              Due Date: <strong>{invoice?.duedate || '-'}</strong>
             </div>
-            <div className="flex items-center space-x-2">
+          )}
+        </div>
+      </div>
+
+      <hr className="my-4" />
+
+      {/* Pay To / Invoiced To Row */}
+      <div className="row justify-content-between mb-4">
+        <div className="col-12 col-sm-6 text-left">
+          <strong className="d-block mb-1 text-uppercase" style={{ fontSize: '12px', color: '#666' }}>
+            Invoiced To
+          </strong>
+          <address style={{ fontSize: '13px', lineHeight: '1.6', fontStyle: 'normal' }}>
+            <strong>{client?.name || invoice?.clientName || 'Valued Customer'}</strong><br />
+            {client?.company && <>{client.company}<br /></>}
+            {client?.address1 || 'Dhaka, Bangladesh'}<br />
+            {client?.city || 'Dhaka'}, Bangladesh<br />
+            {client?.phone && <span className="text-muted">{client.phone}<br /></span>}
+            <span style={{ color: '#0d6efd' }}>{client?.email || ''}</span>
+          </address>
+        </div>
+
+        <div className="col-12 col-sm-6 text-sm-right">
+          <strong className="d-block mb-1 text-uppercase" style={{ fontSize: '12px', color: '#666' }}>
+            Pay To
+          </strong>
+          <address style={{ fontSize: '13px', lineHeight: '1.6', fontStyle: 'normal' }}>
+            <strong>SoftCents Systems Ltd.</strong><br />
+            Suite #502, BDBL Bhaban, Kawran Bazar<br />
+            Dhaka - 1215, Bangladesh<br />
+            Hotline: +880 9617 510 510<br />
+            <span style={{ color: '#0d6efd' }}>billing@softcents.com</span>
+          </address>
+        </div>
+      </div>
+
+      {/* Payment Method & Date Info */}
+      <div className="row mb-4">
+        <div className="col-12 col-sm-6 text-left">
+          <strong>Invoice Date:</strong> {invoice?.date || '-'}<br />
+          <strong>Due Date:</strong> {invoice?.duedate || '-'}
+        </div>
+
+        <div className="col-12 col-sm-6 text-sm-right">
+          <strong>Payment Method:</strong><br />
+          {status === 'UNPAID' ? (
+            <div className="d-inline-flex flex-column align-items-sm-end mt-1">
               <select
                 value={paymentGateway}
                 onChange={(e) => setPaymentGateway(e.target.value)}
-                className="p-2 border border-slate-300 rounded bg-white text-xs font-semibold focus:outline-none"
+                className="form-control d-inline-block"
+                style={{
+                  maxWidth: '260px',
+                  padding: '6px 10px',
+                  fontSize: '13px',
+                  borderRadius: '4px',
+                  border: '1px solid #ced4da',
+                }}
               >
-                <option value="piprapay">PipraPay (bKash / Nagad / Rocket / Cards)</option>
-                <option value="uddoktapay">UddoktaPay (bKash / Nagad Checkout)</option>
-                <option value="reseller">Reseller Wallet Credit</option>
-                <option value="bank">Bank Transfer (City Bank / BRAC Bank)</option>
+                <option value="piprapay">PipraPay (bKash / Nagad / Cards)</option>
+                <option value="uddoktapay">UddoktaPay (Auto QR / bKash / Rocket)</option>
+                <option value="reseller">Reseller Account Wallet Balance</option>
+                <option value="bank">Direct Bank Transfer (City Bank / Brac)</option>
               </select>
+
               <button
+                type="button"
                 onClick={handlePayNow}
                 disabled={loadingPay}
-                className="bg-[#5cb85c] hover:bg-[#4cae4c] disabled:opacity-50 text-white px-5 py-2 rounded font-bold transition-colors shadow-sm flex items-center space-x-1.5"
+                className="btn btn-success mt-2"
+                style={{ fontWeight: 'bold', padding: '8px 24px' }}
               >
                 {loadingPay ? (
                   <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Connecting...</span>
+                    <i className="fas fa-spinner fa-spin mr-1"></i> Processing...
                   </>
                 ) : (
-                  <span>Pay Now &rarr;</span>
+                  <>
+                    <i className="fas fa-credit-card mr-1"></i> Pay Now (৳{amount.toFixed(2)} BDT)
+                  </>
                 )}
               </button>
             </div>
-          </div>
-
-          {showBankInfo && (
-            <div className="bg-sky-50 border border-sky-200 text-sky-900 p-3.5 rounded text-xs space-y-1.5">
-              <div className="font-bold flex items-center space-x-1.5">
-                <CreditCard className="w-4 h-4 text-sky-700" />
-                <span>Bank Deposit / Wire Transfer Instructions</span>
-              </div>
-              <div className="text-slate-700 space-y-0.5 pt-1">
-                <div>• <strong>Bank Name:</strong> The City Bank Limited</div>
-                <div>• <strong>Account Name:</strong> Softcents Systems Ltd.</div>
-                <div>• <strong>Account Number:</strong> 15024410001</div>
-                <div>• <strong>Branch:</strong> Kawran Bazar Branch, Dhaka</div>
-                <div>• <strong>Routing Number:</strong> 225262728</div>
-                <div className="text-[11px] text-slate-500 pt-1">
-                  After transfer, please send the deposit slip or transaction reference to <strong>billing@softcents.com</strong> or WhatsApp <strong>+880 1711 000 111</strong>.
-                </div>
-              </div>
-            </div>
+          ) : (
+            <span className="text-success font-weight-bold">
+              <i className="fas fa-check-circle mr-1"></i> Paid ({invoice?.paymentmethod || 'PipraPay'})
+            </span>
           )}
-
-          {payError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 p-2.5 rounded text-xs flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-              <span>{payError}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Invoiced To / Pay To Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs text-slate-600">
-        <div>
-          <h3 className="font-bold text-slate-800 text-sm mb-1 uppercase tracking-wider">Invoiced To</h3>
-          <div className="font-bold text-slate-900 text-sm">{client?.name || invoice?.clientName || 'Valued Customer'}</div>
-          {client?.company && <div>{client.company}</div>}
-          <div>{client?.address1 || 'Dhaka, Bangladesh'}</div>
-          <div>{client?.city || 'Dhaka'}, Bangladesh</div>
-          <div className="text-slate-500 mt-1">{client?.phone || ''}</div>
-          <div className="text-[#1A4D80]">{client?.email || ''}</div>
-        </div>
-
-        <div>
-          <h3 className="font-bold text-slate-800 text-sm mb-1 uppercase tracking-wider">Pay To</h3>
-          <div className="font-bold text-slate-900 text-sm">SoftCents Systems Ltd.</div>
-          <div>Suite #502, BDBL Bhaban, Kawran Bazar</div>
-          <div>Dhaka - 1215, Bangladesh</div>
-          <div className="text-slate-500 mt-1">Hotline: +880 9617 510 510</div>
-          <div className="text-[#1A4D80]">billing@softcents.com</div>
         </div>
       </div>
 
+      {/* Bank Transfer Instructions Modal / Box */}
+      {showBankInfo && (
+        <div className="card mb-4 border-info">
+          <div className="card-header bg-info text-white font-weight-bold">
+            <i className="fas fa-university mr-1"></i> Bank Account Information
+          </div>
+          <div className="card-body" style={{ fontSize: '13px', lineHeight: '1.6' }}>
+            <p className="mb-2"><strong>City Bank Ltd.</strong><br />Account Name: SoftCents Systems Ltd.<br />Account No: 1503847291001<br />Branch: Kawran Bazar Branch, Dhaka</p>
+            <small className="text-muted">After transfer, email reference or deposit slip to billing@softcents.com.</small>
+          </div>
+        </div>
+      )}
+
+      {payError && (
+        <div className="alert alert-danger mb-4 p-3 bg-red-100 text-red-800 rounded">
+          <i className="fas fa-exclamation-triangle mr-1"></i> {payError}
+        </div>
+      )}
+
       {/* Line Items Table */}
-      <div className="border border-slate-200 rounded overflow-hidden">
-        <table className="w-full text-xs text-left">
-          <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+      <div className="table-responsive mb-4">
+        <table className="table table-list" style={{ margin: '15px 0' }}>
+          <thead>
             <tr>
-              <th className="py-2.5 px-4">Description</th>
-              <th className="py-2.5 px-4 text-right">Amount</th>
+              <th>Description</th>
+              <th className="text-right" style={{ width: '160px' }}>Amount</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {items.map((item: any, idx: number) => (
               <tr key={idx}>
-                <td className="py-3 px-4 text-slate-800">{item.description}</td>
-                <td className="py-3 px-4 text-right font-bold text-slate-900">
-                  ৳{parseFloat(item.amount || '0').toFixed(2)} BDT
+                <td>{item.description}</td>
+                <td className="text-right font-weight-bold">
+                  ৳{parseFloat(item.amount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })} BDT
                 </td>
               </tr>
             ))}
@@ -263,42 +275,73 @@ function InvoiceContent() {
         </table>
       </div>
 
-      {/* Totals Summary */}
-      <div className="flex justify-end text-xs">
-        <div className="w-64 space-y-2 border border-slate-200 rounded p-4 bg-slate-50">
-          <div className="flex justify-between text-slate-600">
-            <span>Subtotal:</span>
-            <span>৳{amount.toFixed(2)} BDT</span>
-          </div>
-          <div className="flex justify-between text-slate-600">
-            <span>Credit Applied:</span>
-            <span>৳0.00 BDT</span>
-          </div>
-          <div className="flex justify-between font-bold text-slate-900 text-sm border-t border-slate-300 pt-2">
-            <span>Total Balance Due:</span>
-            <span className={status === 'UNPAID' ? 'text-rose-600' : 'text-emerald-600'}>
-              ৳{amount.toFixed(2)} BDT
-            </span>
-          </div>
+      {/* Subtotals Summary Table */}
+      <div className="row justify-content-end mb-4">
+        <div className="col-12 col-md-5">
+          <table className="table" style={{ fontSize: '13px' }}>
+            <tbody>
+              <tr>
+                <td className="text-right"><strong>Sub Total:</strong></td>
+                <td className="text-right">৳{amount.toFixed(2)} BDT</td>
+              </tr>
+              <tr>
+                <td className="text-right"><strong>Credit:</strong></td>
+                <td className="text-right">৳0.00 BDT</td>
+              </tr>
+              <tr style={{ fontSize: '15px', borderTop: '2px solid #ddd' }}>
+                <td className="text-right"><strong>Total:</strong></td>
+                <td className={`text-right font-weight-bold ${status === 'UNPAID' ? 'text-danger' : 'text-success'}`}>
+                  ৳{amount.toFixed(2)} BDT
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Transactions Table (if any) */}
-      {invoice && status === 'PAID' && (
-        <div className="border-t border-slate-200 pt-4 space-y-2 text-xs">
-          <h4 className="font-bold text-slate-800">Transactions / Payments</h4>
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="w-4 h-4 text-emerald-600" />
-              <span>Payment received via <strong>{invoice.paymentmethod || 'PipraPay'}</strong></span>
-            </div>
-            <span className="font-bold">৳{amount.toFixed(2)} BDT</span>
-          </div>
+      {/* Transactions History if Paid */}
+      {status === 'PAID' && (
+        <div className="mb-4">
+          <h4 style={{ fontSize: '15px', fontWeight: 'bold' }}>Transactions</h4>
+          <table className="table table-list">
+            <thead>
+              <tr>
+                <th>Transaction Date</th>
+                <th>Gateway</th>
+                <th>Transaction ID</th>
+                <th className="text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{invoice?.date || '-'}</td>
+                <td>{invoice?.paymentmethod || 'PipraPay'}</td>
+                <td>TXN-{invoiceId}-9982</td>
+                <td className="text-right font-weight-bold">৳{amount.toFixed(2)} BDT</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Footer Notes */}
-      <div className="text-center text-[11px] text-slate-400 border-t border-slate-200 pt-4">
+      <hr className="my-4" />
+
+      {/* Print & Back buttons */}
+      <div className="d-flex justify-content-between align-items-center d-print-none">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="btn btn-default"
+        >
+          <i className="fas fa-print mr-1"></i> Print
+        </button>
+
+        <Link href="/clientarea/invoices" className="btn btn-default">
+          &larr; Back to Client Area
+        </Link>
+      </div>
+
+      <div className="text-center text-muted mt-4 d-print-block" style={{ fontSize: '11px' }}>
         Thank you for choosing SoftCents Systems Ltd. This is a computer-generated invoice and requires no physical signature.
       </div>
     </div>
@@ -307,8 +350,14 @@ function InvoiceContent() {
 
 export default function ViewInvoicePage() {
   return (
-    <div className="min-h-screen bg-slate-100 py-10 px-4 font-sans">
-      <Suspense fallback={<div className="text-center py-20 text-slate-500">Loading Invoice...</div>}>
+    <div className="min-h-screen bg-[#f8f9fa] py-8 px-2 font-sans">
+      <Suspense
+        fallback={
+          <div className="text-center py-20 text-muted">
+            <i className="fas fa-spinner fa-spin fa-2x mr-2"></i> Loading Invoice...
+          </div>
+        }
+      >
         <InvoiceContent />
       </Suspense>
     </div>

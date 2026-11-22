@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
+import { WhmcsFooter } from '@/components/WhmcsFooter';
 import {
   Server,
   Box,
@@ -417,27 +418,114 @@ export default function ServiceDetailsPage() {
   const status = service.domainstatus || 'Active';
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans pb-16">
+    <div className="min-h-screen bg-[#f8f9fa] text-slate-800">
       <ClientHeader />
 
-      {/* Breadcrumb Navigation */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-[1240px] mx-auto px-4 py-3 flex items-center text-xs text-slate-500">
-          <Link href="/clientarea" className="hover:text-[#1A4D80]">
-            Portal Home
-          </Link>
-          <ChevronRight className="w-3 h-3 mx-2 text-slate-400" />
-          <Link href="/clientarea/services" className="hover:text-[#1A4D80]">
-            My Products &amp; Services
-          </Link>
-          <ChevronRight className="w-3 h-3 mx-2 text-slate-400" />
-          <span className="font-semibold text-slate-800">
-            {service.product_name || service.package}
-          </span>
+      {/* WHMCS Master Breadcrumb */}
+      <nav className="master-breadcrumb" aria-label="breadcrumb">
+        <div className="container">
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">
+              <Link href="/clientarea">Portal Home</Link>
+            </li>
+            <li className="breadcrumb-item">
+              <Link href="/clientarea/services">Client Area</Link>
+            </li>
+            <li className="breadcrumb-item">
+              <Link href="/clientarea/services">My Products &amp; Services</Link>
+            </li>
+            <li className="breadcrumb-item active" aria-current="page">
+              Product Details
+            </li>
+          </ol>
         </div>
-      </div>
+      </nav>
 
-      <main className="max-w-[1240px] mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
+      {/* WHMCS Main Body Section */}
+      <section id="main-body">
+        <div className="container">
+          <div className="row">
+            {/* Left Sidebar (col-lg-4 col-xl-3) */}
+            <div className="col-lg-4 col-xl-3">
+              <div className="sidebar">
+                {/* Overview Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-cube mr-1 text-muted"></i> Overview
+                    </h3>
+                  </div>
+                  <div className="list-group list-group-flush">
+                    <a href="#overview" className="list-group-item list-group-item-action active">
+                      <span>Information</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Actions Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-plus mr-1 text-muted"></i> Actions
+                    </h3>
+                  </div>
+                  <div className="list-group list-group-flush">
+                    {isPbx ? (
+                      <button
+                        type="button"
+                        onClick={handlePbxSso}
+                        disabled={ssoLoading}
+                        className="list-group-item list-group-item-action text-left"
+                      >
+                        <span><i className="fas fa-sign-in-alt fa-fw mr-2 text-success"></i> Login to PBX Console</span>
+                      </button>
+                    ) : isBhpanel ? (
+                      <button
+                        type="button"
+                        onClick={() => handleBhpanelSso('cpanel')}
+                        className="list-group-item list-group-item-action text-left"
+                      >
+                        <span><i className="fas fa-sign-in-alt fa-fw mr-2 text-success"></i> Login to bhPanel</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleCpanelSso('cpanel')}
+                        className="list-group-item list-group-item-action text-left"
+                      >
+                        <span><i className="fas fa-sign-in-alt fa-fw mr-2 text-success"></i> Login to cPanel</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setPasswordModalOpen(true)}
+                      className="list-group-item list-group-item-action text-left"
+                    >
+                      <span><i className="fas fa-key fa-fw mr-2 text-warning"></i> Change Password</span>
+                    </button>
+                    <Link href="/cart" className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-level-up-alt fa-fw mr-2 text-info"></i> Upgrade/Downgrade</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setCancelModalOpen(true)}
+                      className="list-group-item list-group-item-action text-left text-danger"
+                    >
+                      <span><i className="fas fa-ban fa-fw mr-2 text-danger"></i> Request Cancellation</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Primary Content (col-lg-8 col-xl-9) */}
+            <div className="col-lg-8 col-xl-9 primary-content">
+              <div className="header-lined">
+                <h1>Managing {service.product_name || service.package}</h1>
+                <p className="text-muted">{service.domain || service.username || `Service #${service.id}`}</p>
+              </div>
+
+              <div className="space-y-6" id="overview">
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
           <div>
@@ -1448,7 +1536,13 @@ export default function ServiceDetailsPage() {
             </div>
           </div>
         )}
-      </main>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <WhmcsFooter />
     </div>
   );
 }

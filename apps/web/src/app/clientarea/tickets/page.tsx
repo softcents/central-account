@@ -2,189 +2,231 @@
 
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
+import { WhmcsFooter } from '@/components/WhmcsFooter';
 import { useActiveClient } from '@/hooks/useActiveClient';
-import { HelpCircle, Search, MessageSquare, PlusCircle } from 'lucide-react';
 
 function ClientTicketsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const { clientId, client, impQuery, tickets, openTickets, isLoaded } = useActiveClient();
+  const { clientId, client, impQuery, tickets, isLoaded } = useActiveClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
-  const rawTickets = tickets;
+  const rawTickets = tickets || [];
 
-  const filtered = rawTickets.filter(
-    (t: any) =>
-      (t.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(t.tid || t.id).includes(searchTerm)
-  );
+  const openCount = rawTickets.filter((t: any) => (t.status || '').toLowerCase() === 'open').length;
+  const answeredCount = rawTickets.filter((t: any) => (t.status || '').toLowerCase() === 'answered').length;
+  const customerReplyCount = rawTickets.filter((t: any) => (t.status || '').toLowerCase().includes('customer')).length;
+  const closedCount = rawTickets.filter((t: any) => (t.status || '').toLowerCase() === 'closed').length;
+
+  const filtered = rawTickets.filter((t: any) => {
+    const matchesSearch =
+      !searchTerm.trim() ||
+      String(t.tid || t.id || '').includes(searchTerm) ||
+      (t.title || t.subject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.deptname || t.department || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === 'ALL' || (t.status || '').toUpperCase() === statusFilter.toUpperCase();
+    return matchesSearch && matchesStatus;
+  });
 
   return (
-    <main className="max-w-[1240px] mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
-            <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-[#d9534f]" />
-            <span>Support Tickets ({rawTickets.length})</span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Track communication with our 24/7 technical and billing engineers for {client?.name || 'Customer'}.
-          </p>
-        </div>
-        <div>
-          <Link
-            href={`/support/new${impQuery}`}
-            className="w-full sm:w-auto text-center bg-[#d9534f] hover:bg-[#c9302c] text-white px-4 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
-          >
-            + Open New Ticket
-          </Link>
-        </div>
-      </div>
+    <div className="bg-[#f8f9fa] min-h-screen text-slate-800">
+      <ClientHeader />
 
-      <div className="bg-white p-3 rounded-lg border border-slate-200 flex items-center max-w-sm shadow-sm text-xs">
-        <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
-        <input
-          type="text"
-          placeholder="Search ticket..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full focus:outline-none"
-        />
-      </div>
+      {/* WHMCS Master Breadcrumb */}
+      <nav className="master-breadcrumb" aria-label="breadcrumb">
+        <div className="container">
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Portal Home</Link>
+            </li>
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Client Area</Link>
+            </li>
+            <li className="breadcrumb-item active" aria-current="page">
+              Support Tickets
+            </li>
+          </ol>
+        </div>
+      </nav>
 
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-        {/* Mobile View: Cards (< sm) */}
-        <div className="block sm:hidden divide-y divide-slate-100">
-          {filtered.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 text-xs px-4">
-              <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-              <p className="font-semibold text-slate-700">No support tickets found.</p>
-              <Link
-                href={`/support/new${impQuery}`}
-                className="mt-3 inline-block bg-[#d9534f] hover:bg-[#c9302c] text-white px-4 py-1.5 rounded text-xs font-bold"
-              >
-                + Open New Ticket
-              </Link>
-            </div>
-          ) : (
-            filtered.map((t: any) => (
-              <div key={t.id} className="p-3.5 space-y-2 hover:bg-slate-50 transition-colors">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="font-bold text-xs text-slate-900 truncate">
-                      {t.title}
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
-                      #{t.tid || t.id} &bull; {t.dept_name || 'Technical Support'}
-                    </div>
+      {/* WHMCS Main Body Section */}
+      <section id="main-body">
+        <div className="container">
+          <div className="row">
+            {/* Left Sidebar (col-lg-4 col-xl-3) */}
+            <div className="col-lg-4 col-xl-3">
+              <div className="sidebar">
+                {/* Status Filter Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-filter mr-1 text-muted"></i> View
+                    </h3>
                   </div>
-                  <span
-                    className={`font-bold px-2 py-0.5 rounded-full text-[10px] shrink-0 ${
-                      (t.status || '').toLowerCase() === 'open'
-                        ? 'bg-rose-100 text-rose-800'
-                        : (t.status || '').toLowerCase() === 'closed'
-                        ? 'bg-slate-100 text-slate-700'
-                        : 'bg-emerald-100 text-emerald-800'
-                    }`}
-                  >
-                    {t.status}
-                  </span>
+                  <div className="list-group list-group-flush">
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('ALL')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'ALL' ? 'active' : ''}`}
+                    >
+                      <span>All Tickets</span>
+                      <span className="badge float-right">{rawTickets.length}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('OPEN')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'OPEN' ? 'active' : ''}`}
+                    >
+                      <span>Open</span>
+                      <span className="badge float-right">{openCount}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('ANSWERED')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'ANSWERED' ? 'active' : ''}`}
+                    >
+                      <span>Answered</span>
+                      <span className="badge float-right">{answeredCount}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('CUSTOMER-REPLY')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'CUSTOMER-REPLY' ? 'active' : ''}`}
+                    >
+                      <span>Customer-Reply</span>
+                      <span className="badge float-right">{customerReplyCount}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('CLOSED')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'CLOSED' ? 'active' : ''}`}
+                    >
+                      <span>Closed</span>
+                      <span className="badge float-right">{closedCount}</span>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-50 text-slate-600">
-                  <div className="text-[11px] text-slate-500 font-mono">
-                    {t.date || '-'}
+                {/* Actions Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-plus mr-1 text-muted"></i> Actions
+                    </h3>
                   </div>
-                  <Link
-                    href={`/support/${t.id}${impQuery}`}
-                    className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold text-xs transition-colors border border-slate-300"
-                  >
-                    View &rarr;
-                  </Link>
+                  <div className="list-group list-group-flush">
+                    <Link href={`/support/new${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-comments fa-fw mr-2 text-muted"></i> Open Ticket</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            </div>
 
-        {/* Desktop View: Table (>= sm) */}
-        <div className="hidden sm:block overflow-x-auto w-full">
-          <table className="w-full text-left text-xs border-collapse min-w-[550px]">
-            <thead>
-              <tr className="bg-[#eef3f7] border-b border-slate-200 text-slate-700 font-bold">
-                <th className="py-3 px-4">Ticket ID</th>
-                <th className="py-3 px-4">Department</th>
-                <th className="py-3 px-4">Subject</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-center">Date</th>
-                <th className="py-3 px-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500">
-                    <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="font-semibold text-slate-700">No support tickets found.</p>
-                    <Link
-                      href={`/support/new${impQuery}`}
-                      className="mt-3 inline-block bg-[#d9534f] hover:bg-[#c9302c] text-white px-4 py-1.5 rounded text-xs font-bold transition-colors"
-                    >
-                      + Open New Ticket
-                    </Link>
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((t: any) => (
-                  <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#1A4D80]">
-                      #{t.tid || t.id}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-600">{t.dept_name || 'Technical Support'}</td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-900">{t.title}</td>
-                    <td className="py-3.5 px-4 text-center">
-                      <span
-                        className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
-                          (t.status || '').toLowerCase() === 'open'
-                            ? 'bg-rose-100 text-rose-800'
-                            : (t.status || '').toLowerCase() === 'closed'
-                            ? 'bg-slate-100 text-slate-700'
-                            : 'bg-emerald-100 text-emerald-800'
-                        }`}
-                      >
-                        {t.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-center text-slate-500 font-mono text-[11px]">
-                      {t.date}
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <Link
-                        href={`/support/${t.id}${impQuery}`}
-                        className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold transition-colors border border-slate-300 inline-block"
-                      >
-                        View &rarr;
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+            {/* Right Primary Content (col-lg-8 col-xl-9) */}
+            <div className="col-lg-8 col-xl-9 primary-content">
+              <div className="header-lined">
+                <h1>Support Tickets</h1>
+              </div>
+
+              {/* Search filter row */}
+              <div className="mb-3 d-flex justify-content-between align-items-center" style={{ gap: '10px' }}>
+                <div className="text-muted" style={{ fontSize: '13px' }}>
+                  Showing {filtered.length} of {rawTickets.length} entries
+                </div>
+                <div style={{ maxWidth: '280px', width: '100%' }}>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search..."
+                    className="form-control"
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      borderRadius: '4px',
+                      border: '1px solid #ced4da',
+                      width: '100%',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* WHMCS table.table-list */}
+              <div className="table-container clearfix">
+                <table className="table table-list">
+                  <thead>
+                    <tr>
+                      <th>Department</th>
+                      <th>Subject</th>
+                      <th className="text-center">Status</th>
+                      <th className="text-center">Last Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="text-center text-muted p-4">
+                          No Tickets Found
+                        </td>
+                      </tr>
+                    ) : (
+                      filtered.map((t: any) => {
+                        const statusLower = (t.status || 'open').toLowerCase().replace(' ', '-');
+
+                        return (
+                          <tr
+                            key={t.id || t.tid}
+                            onClick={() => router.push(`/support/${t.id || t.tid}${impQuery}`)}
+                            className="cursor-pointer"
+                          >
+                            <td>{t.deptname || t.department || 'Technical Support'}</td>
+                            <td>
+                              <span className="font-weight-bold" style={{ color: '#0d6efd' }}>
+                                #{t.tid || t.id}
+                              </span>
+                              {' - '}
+                              <span>{t.title || t.subject}</span>
+                            </td>
+                            <td className="text-center">
+                              <span className={`label status status-${statusLower}`}>
+                                {t.status || 'Open'}
+                              </span>
+                            </td>
+                            <td className="text-center text-muted" style={{ fontSize: '12px' }}>
+                              {t.lastreply || t.date || '-'}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </main>
+      </section>
+
+      <WhmcsFooter />
+    </div>
   );
 }
 
 export default function ClientTicketsPage() {
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans">
-      <ClientHeader />
-      <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Tickets...</div>}>
-        <ClientTicketsContent />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa] text-slate-500">
+          <i className="fas fa-spinner fa-spin fa-2x mr-2"></i> Loading Tickets...
+        </div>
+      }
+    >
+      <ClientTicketsContent />
+    </Suspense>
   );
 }

@@ -4,26 +4,13 @@ import React, { useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
-import {
-  Users,
-  UserPlus,
-  ShieldCheck,
-  CheckCircle2,
-  Trash2,
-  Save,
-  Mail,
-  Phone,
-  Building,
-  KeyRound,
-  ChevronRight,
-  ArrowLeft,
-  AlertCircle,
-} from 'lucide-react';
+import { WhmcsFooter } from '@/components/WhmcsFooter';
 import whmcsData from '@/data/whmcs_sync.json';
 
 function ContactsContent() {
   const searchParams = useSearchParams();
   const impersonate = searchParams.get('impersonate') || searchParams.get('userid');
+  const impQuery = impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : '';
 
   // Filter contacts
   const initialContacts = useMemo(() => {
@@ -182,314 +169,387 @@ function ContactsContent() {
             : c
         )
       );
-      setSaveMsg('Contact details updated successfully!');
+      setSaveMsg('Contact updated successfully!');
     }
-    setTimeout(() => setSaveMsg(null), 3000);
+
+    setTimeout(() => setSaveMsg(null), 4000);
   };
 
   const handleDelete = () => {
+    if (selectedContactId === 'new') return;
     if (confirm('Are you sure you want to delete this contact?')) {
       setContactsList((prev) => prev.filter((c) => String(c.id) !== String(selectedContactId)));
-      setSelectedContactId('new');
-      setSaveMsg('Contact deleted successfully.');
-      setTimeout(() => setSaveMsg(null), 3000);
+      handleSelectContact('new');
     }
   };
 
   return (
-    <main className="max-w-[1240px] mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
-      {/* Breadcrumbs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
-            <Users className="w-5 h-5 sm:w-6 sm:h-6 text-[#1A4D80]" />
-            <span>Contacts &amp; Sub-Accounts</span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Authorize additional personnel to access your account, open support tickets, view invoices, and receive email copies.
-          </p>
-        </div>
+    <div className="bg-[#f8f9fa] min-h-screen text-slate-800">
+      <ClientHeader />
 
-        <div>
-          <Link
-            href="/clientarea"
-            className="px-3.5 py-1.5 border border-slate-300 rounded text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors inline-block"
-          >
-            &larr; Back to Client Area
-          </Link>
+      {/* WHMCS Master Breadcrumb */}
+      <nav className="master-breadcrumb" aria-label="breadcrumb">
+        <div className="container">
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Portal Home</Link>
+            </li>
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Client Area</Link>
+            </li>
+            <li className="breadcrumb-item active" aria-current="page">
+              Contacts/Sub-Accounts
+            </li>
+          </ol>
         </div>
-      </div>
+      </nav>
 
-      {saveMsg && (
-        <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-lg text-xs font-semibold text-emerald-800 flex items-center space-x-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>{saveMsg}</span>
-        </div>
-      )}
+      {/* WHMCS Main Body Section */}
+      <section id="main-body">
+        <div className="container">
+          <div className="row">
+            {/* Left Sidebar (col-lg-4 col-xl-3) */}
+            <div className="col-lg-4 col-xl-3">
+              <div className="sidebar">
+                {/* My Account Menu Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-user mr-1 text-muted"></i> My Account
+                    </h3>
+                  </div>
+                  <div className="list-group list-group-flush">
+                    <Link href={`/clientarea/profile${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-user fa-fw mr-2 text-muted"></i> My Details</span>
+                    </Link>
+                    <Link href={`/clientarea/contacts${impQuery}`} className="list-group-item list-group-item-action active">
+                      <span><i className="fas fa-users fa-fw mr-2"></i> Contacts/Sub-Accounts</span>
+                    </Link>
+                    <Link href={`/clientarea/security${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-lock fa-fw mr-2 text-muted"></i> Security Settings</span>
+                    </Link>
+                    <Link href={`/clientarea/emails${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-envelope fa-fw mr-2 text-muted"></i> Email History</span>
+                    </Link>
+                  </div>
+                </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-        {/* LEFT COLUMN: Contact Selector */}
-        <div className="space-y-4">
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-            <div className="bg-[#1A4D80] text-white px-4 py-3 font-bold text-xs uppercase tracking-wider flex items-center justify-between">
-              <span>Choose Contact</span>
-              <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-mono">
-                {contactsList.length}
-              </span>
+                {/* Choose Contact Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-address-book mr-1 text-muted"></i> Choose Contact
+                    </h3>
+                  </div>
+                  <div className="card-body">
+                    <select
+                      value={selectedContactId}
+                      onChange={(e) => handleSelectContact(e.target.value)}
+                      className="form-control"
+                      style={{
+                        padding: '6px 10px',
+                        fontSize: '13px',
+                        borderRadius: '4px',
+                        border: '1px solid #ced4da',
+                        width: '100%',
+                      }}
+                    >
+                      <option value="new">+ Add New Contact</option>
+                      {contactsList.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.firstname} {c.lastname} {c.companyname ? `(${c.companyname})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="divide-y divide-slate-100 text-xs">
-              <button
-                onClick={() => handleSelectContact('new')}
-                className={`w-full text-left px-4 py-3 flex items-center space-x-2 transition-colors ${
-                  selectedContactId === 'new'
-                    ? 'bg-[#1A4D80] text-white font-bold'
-                    : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>+ Add New Contact</span>
-              </button>
+            {/* Right Primary Content (col-lg-8 col-xl-9) */}
+            <div className="col-lg-8 col-xl-9 primary-content">
+              <div className="header-lined">
+                <h1>Contacts/Sub-Accounts</h1>
+              </div>
 
-              {contactsList.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => handleSelectContact(String(c.id))}
-                  className={`w-full text-left px-4 py-3 transition-colors ${
-                    selectedContactId === String(c.id)
-                      ? 'bg-[#1A4D80] text-white font-bold'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="truncate font-semibold">
-                    {c.firstname} {c.lastname}
-                  </div>
-                  <div
-                    className={`text-[11px] truncate ${
-                      selectedContactId === String(c.id) ? 'text-white/80' : 'text-slate-500'
-                    }`}
-                  >
-                    {c.email}
-                  </div>
-                </button>
-              ))}
+              {saveMsg && (
+                <div className="alert alert-success mb-3 p-3 bg-green-100 text-green-800 rounded">
+                  <i className="fas fa-check-circle mr-1"></i> {saveMsg}
+                </div>
+              )}
+
+              {/* Contact Details Card */}
+              <div className="card mb-4">
+                <div className="card-header">
+                  <h3 className="card-title m-0">
+                    <i className="fas fa-user-circle mr-1 text-muted"></i>{' '}
+                    {selectedContactId === 'new' ? 'Add New Contact' : 'Edit Contact Details'}
+                  </h3>
+                </div>
+                <div className="card-body">
+                  <form onSubmit={handleSubmit}>
+                    <div className="row mb-3">
+                      <div className="col-md-6 mb-2 mb-md-0">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          First Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                          className="form-control"
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                          required
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          Last Name
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                          className="form-control"
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="row mb-3">
+                      <div className="col-md-6 mb-2 mb-md-0">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          Company Name
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.company}
+                          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                          className="form-control"
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className="form-control"
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="row mb-3">
+                      <div className="col-md-6 mb-2 mb-md-0">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          Phone Number
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          className="form-control"
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          Address 1
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.address1}
+                          onChange={(e) => setFormData({ ...formData, address1: e.target.value })}
+                          className="form-control"
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="row mb-4">
+                      <div className="col-md-4 mb-2 mb-md-0">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          City
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.city}
+                          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                          className="form-control"
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                        />
+                      </div>
+                      <div className="col-md-4 mb-2 mb-md-0">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          State
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.state}
+                          onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                          className="form-control"
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                        />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          Postcode
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.postcode}
+                          onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
+                          className="form-control"
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Sub-account Access Toggle */}
+                    <div className="card mb-4 bg-light">
+                      <div className="card-body">
+                        <label className="d-flex align-items-center cursor-pointer mb-0">
+                          <input
+                            type="checkbox"
+                            checked={formData.isSubaccount}
+                            onChange={(e) => setFormData({ ...formData, isSubaccount: e.target.checked })}
+                            className="mr-2"
+                          />
+                          <span className="font-weight-bold">
+                            Activate Sub-Account (Allows client login access)
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Email Preferences */}
+                    <div className="mb-4">
+                      <label className="font-weight-bold d-block mb-2" style={{ fontSize: '13px' }}>
+                        Email Notifications
+                      </label>
+                      <div className="row">
+                        <div className="col-sm-6 mb-1">
+                          <label className="d-flex align-items-center">
+                            <input type="checkbox" defaultChecked className="mr-2" /> General Emails
+                          </label>
+                        </div>
+                        <div className="col-sm-6 mb-1">
+                          <label className="d-flex align-items-center">
+                            <input type="checkbox" defaultChecked className="mr-2" /> Invoice Emails
+                          </label>
+                        </div>
+                        <div className="col-sm-6 mb-1">
+                          <label className="d-flex align-items-center">
+                            <input type="checkbox" defaultChecked className="mr-2" /> Support Emails
+                          </label>
+                        </div>
+                        <div className="col-sm-6 mb-1">
+                          <label className="d-flex align-items-center">
+                            <input type="checkbox" defaultChecked className="mr-2" /> Product Emails
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Submit & Delete Buttons */}
+                    <div className="d-flex justify-content-between align-items-center pt-3 border-top">
+                      <div>
+                        {selectedContactId !== 'new' && (
+                          <button
+                            type="button"
+                            onClick={handleDelete}
+                            className="btn btn-danger"
+                          >
+                            <i className="fas fa-trash mr-1"></i> Delete Contact
+                          </button>
+                        )}
+                      </div>
+                      <div className="d-flex" style={{ gap: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectContact('new')}
+                          className="btn btn-default"
+                        >
+                          Cancel
+                        </button>
+                        <button type="submit" className="btn btn-primary font-weight-bold">
+                          Save Changes
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* RIGHT COLUMN: Contact Edit Form */}
-        <div className="lg:col-span-3 space-y-6">
-          <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-lg shadow-sm p-4 sm:p-6 space-y-6 text-xs">
-            <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-900">
-                {selectedContactId === 'new' ? 'Add New Contact Details' : 'Edit Contact Details'}
-              </h2>
-              {selectedContactId !== 'new' && (
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  className="text-rose-600 hover:text-rose-800 text-xs font-semibold flex items-center space-x-1"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete Contact</span>
-                </button>
-              )}
-            </div>
-
-            {/* Profile Fields Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-slate-600 font-semibold mb-1">First Name *</label>
-                <input
-                  type="text"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:border-[#1A4D80] focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 font-semibold mb-1">Last Name</label>
-                <input
-                  type="text"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:border-[#1A4D80] focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 font-semibold mb-1">Company Name</label>
-                <input
-                  type="text"
-                  value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:border-[#1A4D80] focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 font-semibold mb-1">Email Address *</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:border-[#1A4D80] focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 font-semibold mb-1">Phone Number</label>
-                <input
-                  type="text"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:border-[#1A4D80] focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 font-semibold mb-1">Street Address</label>
-                <input
-                  type="text"
-                  value={formData.address1}
-                  onChange={(e) => setFormData({ ...formData, address1: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:border-[#1A4D80] focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 font-semibold mb-1">City</label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:border-[#1A4D80] focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 font-semibold mb-1">Country</label>
-                <select
-                  value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:border-[#1A4D80] focus:outline-none font-semibold"
-                >
-                  <option value="Bangladesh">Bangladesh</option>
-                  <option value="United States">United States</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                  <option value="India">India</option>
-                  <option value="Canada">Canada</option>
-                  <option value="Singapore">Singapore</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Sub-account Access Toggle */}
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
-              <label className="flex items-start space-x-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.isSubaccount}
-                  onChange={(e) => setFormData({ ...formData, isSubaccount: e.target.checked })}
-                  className="mt-0.5"
-                />
-                <div>
-                  <span className="font-bold text-slate-900 block">
-                    Activate Sub-Account Login Access
-                  </span>
-                  <span className="text-slate-500 text-[11px]">
-                    Allow this contact to sign in to the SoftCents client area using their own password.
-                  </span>
-                </div>
-              </label>
-
-              {formData.isSubaccount && (
-                <div className="pt-3 border-t border-slate-200 space-y-3">
-                  <h4 className="font-bold text-slate-800">Permissions</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" defaultChecked />
-                      <span>Modify Master Account Profile</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" defaultChecked />
-                      <span>View &amp; Manage Products &amp; Services</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" defaultChecked />
-                      <span>View &amp; Pay Invoices</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" defaultChecked />
-                      <span>View &amp; Open Support Tickets</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" defaultChecked />
-                      <span>View &amp; Manage Domains</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" defaultChecked />
-                      <span>View Email History</span>
-                    </label>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Email Notification Preferences */}
-            <div className="space-y-2">
-              <h4 className="font-bold text-slate-800">Email Notification Types</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-slate-700">
-                <label className="flex items-center space-x-2">
-                  <input type="checkbox" defaultChecked />
-                  <span>General Emails</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input type="checkbox" defaultChecked />
-                  <span>Invoice &amp; Billing Emails</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input type="checkbox" defaultChecked />
-                  <span>Support Ticket Emails</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input type="checkbox" defaultChecked />
-                  <span>Product Service Emails</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input type="checkbox" defaultChecked />
-                  <span>Domain Renewal Notices</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end space-x-3">
-              <button
-                type="submit"
-                className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-6 py-2.5 rounded font-bold transition-colors flex items-center space-x-1.5 shadow-sm"
-              >
-                <Save className="w-4 h-4" />
-                <span>Save Changes</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </main>
+      <WhmcsFooter />
+    </div>
   );
 }
 
 export default function ClientContactsPage() {
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans">
-      <ClientHeader />
-      <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading Contacts...</div>}>
-        <ContactsContent />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center text-muted">
+          <i className="fas fa-spinner fa-spin fa-2x mr-2"></i> Loading Contacts...
+        </div>
+      }
+    >
+      <ContactsContent />
+    </Suspense>
   );
 }

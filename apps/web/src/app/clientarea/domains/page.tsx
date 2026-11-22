@@ -2,185 +2,255 @@
 
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
+import { WhmcsFooter } from '@/components/WhmcsFooter';
 import { useActiveClient } from '@/hooks/useActiveClient';
-import { Globe, Search, RefreshCw, CheckCircle2, ShieldCheck, PlusCircle } from 'lucide-react';
 
 function ClientDomainsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { clientId, client, impQuery, domains, isLoaded } = useActiveClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
-  const rawDomains = domains;
+  const rawDomains = domains || [];
 
-  const filtered = rawDomains.filter((d: any) =>
-    (d.domain || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const activeCount = rawDomains.filter((d: any) => (d.status || '').toLowerCase() === 'active').length;
+  const expiredCount = rawDomains.filter((d: any) => (d.status || '').toLowerCase() === 'expired').length;
+  const pendingCount = rawDomains.filter((d: any) => (d.status || '').toLowerCase() === 'pending').length;
+
+  const filtered = rawDomains.filter((d: any) => {
+    const matchesSearch =
+      !searchTerm.trim() ||
+      (d.domain || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (d.registrar || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === 'ALL' || (d.status || '').toUpperCase() === statusFilter.toUpperCase();
+    return matchesSearch && matchesStatus;
+  });
 
   return (
-    <main className="max-w-[1240px] mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
-            <Globe className="w-5 h-5 sm:w-6 sm:h-6 text-[#28a745]" />
-            <span>My Domains ({rawDomains.length})</span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Manage DNS nameservers, whois contact protection, and automatic renewals for {client?.name || 'Customer'}.
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Link
-            href={`/cart?a=renew${impQuery}`}
-            className="w-full sm:w-auto text-center bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
-          >
-            Renew Domains
-          </Link>
-          <Link
-            href={`/cart?a=add&domain=register${impQuery}`}
-            className="w-full sm:w-auto text-center bg-[#28a745] hover:bg-[#218838] text-white px-3 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
-          >
-            + Register New Domain
-          </Link>
-        </div>
-      </div>
+    <div className="bg-[#f8f9fa] min-h-screen text-slate-800">
+      <ClientHeader />
 
-      <div className="bg-white p-3 rounded-lg border border-slate-200 flex items-center max-w-sm shadow-sm text-xs">
-        <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
-        <input
-          type="text"
-          placeholder="Search domain..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full focus:outline-none"
-        />
-      </div>
+      {/* WHMCS Master Breadcrumb */}
+      <nav className="master-breadcrumb" aria-label="breadcrumb">
+        <div className="container">
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Portal Home</Link>
+            </li>
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Client Area</Link>
+            </li>
+            <li className="breadcrumb-item active" aria-current="page">
+              My Domains
+            </li>
+          </ol>
+        </div>
+      </nav>
 
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-        {/* Mobile View: Cards (< sm) */}
-        <div className="block sm:hidden divide-y divide-slate-100">
-          {filtered.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 text-xs px-4">
-              <Globe className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-              <p className="font-semibold text-slate-700">No domains registered yet.</p>
-              <Link
-                href={`/cart?a=add&domain=register${impQuery}`}
-                className="mt-3 inline-block bg-[#28a745] hover:bg-[#218838] text-white px-4 py-1.5 rounded text-xs font-bold"
-              >
-                + Register New Domain
-              </Link>
-            </div>
-          ) : (
-            filtered.map((d: any) => (
-              <div key={d.id} className="p-3.5 space-y-2 hover:bg-slate-50 transition-colors">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="font-bold text-sm text-[#1A4D80]">
-                      {d.domain}
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
-                      Registrar: {d.registrar || 'Softcents Registrar'}
-                    </div>
+      {/* WHMCS Main Body Section */}
+      <section id="main-body">
+        <div className="container">
+          <div className="row">
+            {/* Left Sidebar (col-lg-4 col-xl-3) */}
+            <div className="col-lg-4 col-xl-3">
+              <div className="sidebar">
+                {/* Status Filter Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-filter mr-1 text-muted"></i> View
+                    </h3>
                   </div>
-                  <span
-                    className={`font-bold px-2 py-0.5 rounded-full text-[10px] shrink-0 ${
-                      (d.status || '').toLowerCase() === 'active'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-rose-100 text-rose-800'
-                    }`}
-                  >
-                    {d.status || 'Active'}
-                  </span>
+                  <div className="list-group list-group-flush">
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('ALL')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'ALL' ? 'active' : ''}`}
+                    >
+                      <span>All Domains</span>
+                      <span className="badge float-right">{rawDomains.length}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('ACTIVE')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'ACTIVE' ? 'active' : ''}`}
+                    >
+                      <span>Active</span>
+                      <span className="badge float-right">{activeCount}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('EXPIRED')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'EXPIRED' ? 'active' : ''}`}
+                    >
+                      <span>Expired</span>
+                      <span className="badge float-right">{expiredCount}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('PENDING')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'PENDING' ? 'active' : ''}`}
+                    >
+                      <span>Pending</span>
+                      <span className="badge float-right">{pendingCount}</span>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-50 text-slate-600">
-                  <div className="text-[11px]">
-                    Expires: <span className="font-mono font-medium text-slate-800">{d.expirydate || '-'}</span>
+                {/* Actions Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-plus mr-1 text-muted"></i> Actions
+                    </h3>
                   </div>
-                  <Link
-                    href={`/clientarea/domains/${d.id}${impQuery}`}
-                    className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold text-xs transition-colors border border-slate-300"
-                  >
-                    Manage &rarr;
-                  </Link>
+                  <div className="list-group list-group-flush">
+                    <Link href={`/cart?a=renew${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-sync fa-fw mr-2 text-muted"></i> Renew Domains</span>
+                    </Link>
+                    <Link href={`/domainchecker${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-globe fa-fw mr-2 text-muted"></i> Register a New Domain</span>
+                    </Link>
+                    <Link href={`/cart?a=add&domain=transfer${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-exchange-alt fa-fw mr-2 text-muted"></i> Transfer Domains to Us</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            </div>
 
-        {/* Desktop View: Table (>= sm) */}
-        <div className="hidden sm:block overflow-x-auto w-full">
-          <table className="w-full text-left text-xs border-collapse min-w-[550px]">
-            <thead>
-              <tr className="bg-[#eef3f7] border-b border-slate-200 text-slate-700 font-bold">
-                <th className="py-3 px-4">Domain</th>
-                <th className="py-3 px-4">Registrar</th>
-                <th className="py-3 px-4">Registration Period</th>
-                <th className="py-3 px-4 text-center">Expiry Date</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500">
-                    <Globe className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="font-semibold text-slate-700">No domains found.</p>
-                    <Link
-                      href={`/cart?a=add&domain=register${impQuery}`}
-                      className="mt-3 inline-block bg-[#28a745] hover:bg-[#218838] text-white px-4 py-1.5 rounded text-xs font-bold transition-colors"
-                    >
-                      + Register New Domain
-                    </Link>
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((d: any) => (
-                  <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-[#1A4D80]">{d.domain}</td>
-                    <td className="py-3.5 px-4 text-slate-600">{d.registrar || 'Pipra / LogicBoxes'}</td>
-                    <td className="py-3.5 px-4 text-slate-700">{d.registrationperiod || 1} Year</td>
-                    <td className="py-3.5 px-4 text-center font-mono text-slate-700">{d.expirydate || '-'}</td>
-                    <td className="py-3.5 px-4 text-center">
-                      <span
-                        className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
-                          (d.status || '').toLowerCase() === 'active'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
-                      >
-                        {d.status || 'Active'}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <Link
-                        href={`/clientarea/domains/${d.id}${impQuery}`}
-                        className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1 rounded font-semibold transition-colors border border-slate-300 inline-block"
-                      >
-                        Manage &rarr;
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+            {/* Right Primary Content (col-lg-8 col-xl-9) */}
+            <div className="col-lg-8 col-xl-9 primary-content">
+              <div className="header-lined">
+                <h1>My Domains</h1>
+              </div>
+
+              {/* Bulk Action Buttons matching WHMCS clientareadomains.tpl */}
+              <div className="mb-3 d-flex flex-wrap align-items-center justify-content-between" style={{ gap: '10px' }}>
+                <div className="btn-group btn-group-sm" role="group">
+                  <button type="button" className="btn btn-default btn-sm mr-1">
+                    <i className="fas fa-globe fa-fw mr-1"></i> Manage Nameservers
+                  </button>
+                  <button type="button" className="btn btn-default btn-sm mr-1">
+                    <i className="fas fa-user fa-fw mr-1"></i> Contact Info
+                  </button>
+                  <Link href={`/cart?a=renew${impQuery}`} className="btn btn-default btn-sm">
+                    <i className="fas fa-sync fa-fw mr-1"></i> Auto Renew Status
+                  </Link>
+                </div>
+
+                <div style={{ maxWidth: '280px', width: '100%' }}>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search..."
+                    className="form-control"
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      borderRadius: '4px',
+                      border: '1px solid #ced4da',
+                      width: '100%',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* WHMCS table.table-list */}
+              <div className="table-container clearfix">
+                <table className="table table-list">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '30px' }} className="text-center"></th>
+                      <th style={{ width: '40px' }} className="text-center"></th>
+                      <th>Domain</th>
+                      <th className="text-center">Registration Date</th>
+                      <th className="text-center">Next Due Date</th>
+                      <th className="text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center text-muted p-4">
+                          No Domains Found
+                        </td>
+                      </tr>
+                    ) : (
+                      filtered.map((d: any) => {
+                        const statusLower = (d.status || 'Active').toLowerCase();
+
+                        return (
+                          <tr
+                            key={d.id}
+                            onClick={() => router.push(`/clientarea/domains/${d.id}${impQuery}`)}
+                            className="cursor-pointer"
+                          >
+                            <td className="text-center" onClick={(e) => e.stopPropagation()}>
+                              <input type="checkbox" name="domids[]" value={d.id} />
+                            </td>
+                            <td className="text-center py-0" style={{ verticalAlign: 'middle' }}>
+                              <i className="fas fa-lock text-success" title="SSL Active" style={{ fontSize: '15px' }}></i>
+                            </td>
+                            <td>
+                              <a
+                                href={`http://${d.domain}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="font-weight-bold"
+                              >
+                                {d.domain}
+                              </a>
+                              <br />
+                              <small className="text-muted">
+                                <i className="fas fa-check text-success fa-fw mr-1"></i>
+                                Auto Renew Enabled
+                              </small>
+                            </td>
+                            <td className="text-center" style={{ verticalAlign: 'middle' }}>
+                              {d.registrationdate || d.regdate || '-'}
+                            </td>
+                            <td className="text-center" style={{ verticalAlign: 'middle' }}>
+                              {d.nextduedate || d.expirydate || '-'}
+                            </td>
+                            <td className="text-center" style={{ verticalAlign: 'middle' }}>
+                              <span className={`label status status-${statusLower}`}>
+                                {d.status || 'Active'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </main>
+      </section>
+
+      <WhmcsFooter />
+    </div>
   );
 }
 
 export default function ClientDomainsPage() {
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans">
-      <ClientHeader />
-      <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Domains...</div>}>
-        <ClientDomainsContent />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa] text-slate-500">
+          <i className="fas fa-spinner fa-spin fa-2x mr-2"></i> Loading Domains...
+        </div>
+      }
+    >
+      <ClientDomainsContent />
+    </Suspense>
   );
 }

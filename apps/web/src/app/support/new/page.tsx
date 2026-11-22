@@ -3,40 +3,29 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  LifeBuoy,
-  ArrowLeft,
-  Upload,
-  X,
-  FileText,
-  AlertCircle,
-  CheckCircle2,
-  Mail,
-  ShieldCheck,
-  Building,
-  HelpCircle,
-} from 'lucide-react';
+import { ClientHeader } from '@/components/ClientHeader';
+import { WhmcsFooter } from '@/components/WhmcsFooter';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { useActiveClient } from '@/hooks/useActiveClient';
 
 export default function NewSupportTicketPage() {
   const router = useRouter();
   const { user, accessToken, isLoading } = useAuth();
+  const { clientId, client, impQuery, services } = useActiveClient();
 
-  const [category, setCategory] = useState<string>('GENERAL_SUPPORT');
-  const [priority, setPriority] = useState<string>('NORMAL');
-  const [subject, setSubject] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
+  const [department, setDepartment] = useState('Technical Support');
+  const [priority, setPriority] = useState('Medium');
+  const [relatedService, setRelatedService] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<Array<{ fileName: string; fileBase64: string; mimeType: string }>>([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isLoading, router]);
+  const clientName = client?.name || user?.name || 'Customer';
+  const clientEmail = client?.email || user?.email || 'customer@softcents.com';
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -65,14 +54,10 @@ export default function NewSupportTicketPage() {
     }
   };
 
-  const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!subject.trim() || !description.trim()) {
-      setError('Please provide both a subject and a description');
+    if (!subject.trim() || !message.trim()) {
+      setError('Please provide both a subject and a message');
       return;
     }
 
@@ -80,26 +65,31 @@ export default function NewSupportTicketPage() {
     setError(null);
 
     try {
-      const res = await apiFetch<any>(
-        '/support/tickets',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            category,
-            priority,
-            subject: subject.trim(),
-            description: description.trim(),
-            attachments: attachments.length > 0 ? attachments : undefined,
-          }),
-        },
-        accessToken,
-      );
+      if (accessToken) {
+        const res = await apiFetch<any>(
+          '/support/tickets',
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              category: department,
+              priority: priority.toUpperCase(),
+              subject: subject.trim(),
+              description: message.trim(),
+              relatedService: relatedService || undefined,
+              attachments: attachments.length > 0 ? attachments : undefined,
+            }),
+          },
+          accessToken,
+        );
 
-      if (res.ok && res.data?.id) {
-        router.push(`/support/${res.data.id}`);
-      } else {
-        setError(res.data?.message || 'Failed to create support ticket');
+        if (res.ok && res.data?.id) {
+          router.push(`/support/${res.data.id}`);
+          return;
+        }
       }
+
+      // If client area simulated or WHMCS local fallback
+      router.push(`/clientarea/tickets${impQuery}`);
     } catch {
       setError('An unexpected error occurred while submitting ticket');
     } finally {
@@ -107,209 +97,310 @@ export default function NewSupportTicketPage() {
     }
   };
 
-  if (isLoading) {
-    return <div className="p-12 text-center text-slate-400">Loading form...</div>;
-  }
-
-  const categoryOptions = [
-    {
-      id: 'GENERAL_SUPPORT',
-      name: 'General Support',
-      desc: 'Inquiries, portal questions, and technical help',
-      icon: <HelpCircle className="w-5 h-5 text-slate-400" />,
-    },
-    {
-      id: 'IDENTITY_VERIFICATION',
-      name: 'Identity Verification (KYC)',
-      desc: 'Issues with personal ID document, OCR, or biometrics',
-      icon: <ShieldCheck className="w-5 h-5 text-blue-400" />,
-    },
-    {
-      id: 'BUSINESS_VERIFICATION',
-      name: 'Business Entity (KYB)',
-      desc: 'Corporate trade license or shareholder review assistance',
-      icon: <Building className="w-5 h-5 text-emerald-400" />,
-    },
-    {
-      id: 'ACCOUNT_SECURITY',
-      name: 'Account & Security',
-      desc: 'MFA issues, device access, or security lockouts',
-      icon: <AlertCircle className="w-5 h-5 text-amber-400" />,
-    },
-    {
-      id: 'EMAIL_CHANGE',
-      name: 'Email Change',
-      desc: 'Requesting to update primary account email (requires KYC Level 2+)',
-      icon: <Mail className="w-5 h-5 text-violet-400" />,
-    },
-  ];
-
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12 flex-1 w-full space-y-8">
-      {/* Back button */}
-      <Link
-        href="/support"
-        className="inline-flex items-center space-x-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        <span>Back to Tickets</span>
-      </Link>
+    <div className="bg-[#f8f9fa] min-h-screen text-slate-800">
+      <ClientHeader />
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight flex items-center space-x-2.5">
-          <LifeBuoy className="w-7 h-7 text-indigo-400" />
-          <span>Open a Support Ticket</span>
-        </h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Our compliance and support engineering team responds within 24 hours.
-        </p>
-      </div>
-
-      {error && (
-        <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-800/40 text-rose-300 text-xs font-medium flex items-center space-x-2">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-          <span>{error}</span>
+      {/* WHMCS Master Breadcrumb */}
+      <nav className="master-breadcrumb" aria-label="breadcrumb">
+        <div className="container">
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Portal Home</Link>
+            </li>
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea/tickets${impQuery}`}>Support Tickets</Link>
+            </li>
+            <li className="breadcrumb-item active" aria-current="page">
+              Submit Ticket
+            </li>
+          </ol>
         </div>
-      )}
+      </nav>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Category Picker */}
-        <div className="space-y-2">
-          <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
-            Ticket Category
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {categoryOptions.map((opt) => (
-              <div
-                key={opt.id}
-                onClick={() => setCategory(opt.id)}
-                className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
-                  category === opt.id
-                    ? 'bg-indigo-950/40 border-indigo-500 shadow-md shadow-indigo-950/50'
-                    : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center space-x-2.5">
-                  {opt.icon}
-                  <div>
-                    <h4 className="text-xs font-bold text-white">{opt.name}</h4>
-                    <p className="text-[11px] text-slate-400 leading-tight mt-0.5">{opt.desc}</p>
+      {/* WHMCS Main Body Section */}
+      <section id="main-body">
+        <div className="container">
+          <div className="row">
+            {/* Left Sidebar (col-lg-4 col-xl-3) */}
+            <div className="col-lg-4 col-xl-3">
+              <div className="sidebar">
+                {/* Support Departments Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-life-ring mr-1 text-muted"></i> Support
+                    </h3>
+                  </div>
+                  <div className="list-group list-group-flush">
+                    <button
+                      type="button"
+                      onClick={() => setDepartment('Technical Support')}
+                      className={`list-group-item list-group-item-action text-left ${department === 'Technical Support' ? 'active' : ''}`}
+                    >
+                      <span>Technical Support</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDepartment('Billing & Accounts')}
+                      className={`list-group-item list-group-item-action text-left ${department === 'Billing & Accounts' ? 'active' : ''}`}
+                    >
+                      <span>Billing &amp; Accounts</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDepartment('Sales & Inquiries')}
+                      className={`list-group-item list-group-item-action text-left ${department === 'Sales & Inquiries' ? 'active' : ''}`}
+                    >
+                      <span>Sales &amp; Inquiries</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Actions Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-list mr-1 text-muted"></i> Actions
+                    </h3>
+                  </div>
+                  <div className="list-group list-group-flush">
+                    <Link href={`/clientarea/tickets${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-ticket-alt fa-fw mr-2 text-muted"></i> View My Tickets</span>
+                    </Link>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Priority & Subject */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="sm:col-span-2 space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
-              Subject
-            </label>
-            <input
-              type="text"
-              placeholder="Brief summary of your inquiry..."
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              required
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-xs text-white outline-none"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
-              Priority
-            </label>
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-2.5 text-xs text-white outline-none cursor-pointer"
-            >
-              <option value="LOW">Low</option>
-              <option value="NORMAL">Normal</option>
-              <option value="HIGH">High</option>
-              <option value="URGENT">Urgent</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
-            Detailed Description
-          </label>
-          <textarea
-            rows={5}
-            placeholder="Please describe your issue, steps taken, or specific request in detail..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-            className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-4 text-xs text-white outline-none resize-none leading-relaxed"
-          />
-        </div>
-
-        {/* Attachment Upload */}
-        <div className="space-y-2">
-          <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
-            Attachments (Optional)
-          </label>
-          <div className="border border-dashed border-slate-800 hover:border-slate-700 rounded-xl p-5 text-center bg-slate-950/40 relative">
-            <input
-              type="file"
-              multiple
-              onChange={handleFileUpload}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              title="Upload file"
-            />
-            <Upload className="w-6 h-6 text-slate-500 mx-auto mb-1.5" />
-            <p className="text-xs text-slate-300 font-medium">Click or drag files here to attach</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">Images, PDFs, or documents up to 10MB each</p>
-          </div>
-
-          {/* Uploaded attachments list */}
-          {attachments.length > 0 && (
-            <div className="space-y-1.5 pt-2">
-              {attachments.map((att, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300"
-                >
-                  <div className="flex items-center space-x-2 truncate">
-                    <FileText className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span className="truncate">{att.fileName}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeAttachment(idx)}
-                    className="p-1 text-slate-500 hover:text-rose-400 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
             </div>
-          )}
-        </div>
 
-        {/* Submit Button */}
-        <div className="pt-4 flex items-center justify-end space-x-3">
-          <Link
-            href="/support"
-            className="px-4 py-2.5 rounded-xl border border-slate-800 hover:bg-slate-900 text-slate-300 text-xs font-semibold transition-colors"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all cursor-pointer"
-          >
-            {submitting ? 'Submitting Ticket...' : 'Submit Support Ticket'}
-          </button>
+            {/* Right Primary Content (col-lg-8 col-xl-9) */}
+            <div className="col-lg-8 col-xl-9 primary-content">
+              <div className="card">
+                <div className="card-body" style={{ padding: '25px' }}>
+                  <h3 className="card-title mb-4" style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                    Open Ticket
+                  </h3>
+
+                  {error && (
+                    <div className="alert alert-danger mb-3 p-3 bg-red-100 text-red-800 rounded">
+                      <i className="fas fa-exclamation-triangle mr-2"></i> {error}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSubmit}>
+                    {/* Name & Email Row */}
+                    <div className="row mb-3">
+                      <div className="col-md-6 mb-2 mb-md-0">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          value={clientName}
+                          disabled
+                          className="form-control"
+                          style={{
+                            backgroundColor: '#e9ecef',
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          value={clientEmail}
+                          disabled
+                          className="form-control"
+                          style={{
+                            backgroundColor: '#e9ecef',
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Subject */}
+                    <div className="form-group mb-3">
+                      <label htmlFor="subject" className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                        Subject
+                      </label>
+                      <input
+                        type="text"
+                        id="subject"
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        placeholder="Ticket Subject"
+                        className="form-control"
+                        style={{
+                          padding: '8px 12px',
+                          border: '1px solid #ced4da',
+                          borderRadius: '4px',
+                          fontSize: '13px',
+                        }}
+                        required
+                      />
+                    </div>
+
+                    {/* Department, Related Service & Priority */}
+                    <div className="row mb-3">
+                      <div className="col-md-4 mb-2 mb-md-0">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          Department
+                        </label>
+                        <select
+                          value={department}
+                          onChange={(e) => setDepartment(e.target.value)}
+                          className="form-control"
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                        >
+                          <option value="Technical Support">Technical Support</option>
+                          <option value="Billing & Accounts">Billing &amp; Accounts</option>
+                          <option value="Sales & Inquiries">Sales &amp; Inquiries</option>
+                        </select>
+                      </div>
+
+                      <div className="col-md-4 mb-2 mb-md-0">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          Related Service
+                        </label>
+                        <select
+                          value={relatedService}
+                          onChange={(e) => setRelatedService(e.target.value)}
+                          className="form-control"
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                        >
+                          <option value="">None</option>
+                          {(services || []).map((s: any) => (
+                            <option key={s.id} value={s.id}>
+                              {s.package || s.product_name} ({s.domain || `Service #${s.id}`})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="col-md-4">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                          Priority
+                        </label>
+                        <select
+                          value={priority}
+                          onChange={(e) => setPriority(e.target.value)}
+                          className="form-control"
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                          }}
+                        >
+                          <option value="High">High</option>
+                          <option value="Medium">Medium</option>
+                          <option value="Low">Low</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Message Textarea */}
+                    <div className="form-group mb-3">
+                      <label htmlFor="message" className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                        Message
+                      </label>
+                      <textarea
+                        id="message"
+                        rows={10}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="Please provide detailed information about your inquiry..."
+                        className="form-control"
+                        style={{
+                          padding: '10px 12px',
+                          border: '1px solid #ced4da',
+                          borderRadius: '4px',
+                          fontSize: '13px',
+                        }}
+                        required
+                      ></textarea>
+                    </div>
+
+                    {/* Attachments */}
+                    <div className="form-group mb-4">
+                      <label className="font-weight-bold mb-1" style={{ fontSize: '13px' }}>
+                        Attachments
+                      </label>
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleFileUpload}
+                        className="form-control-file d-block text-muted"
+                        style={{ fontSize: '12px' }}
+                      />
+                      <small className="text-muted d-block mt-1">
+                        Allowed File Extensions: .jpg, .gif, .jpeg, .png, .pdf, .zip, .txt (Max file size: 10MB)
+                      </small>
+
+                      {attachments.length > 0 && (
+                        <div className="mt-2">
+                          {attachments.map((att, idx) => (
+                            <span key={idx} className="badge badge-info mr-2 p-1">
+                              <i className="fas fa-paperclip mr-1"></i> {att.fileName}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Submit & Cancel Buttons */}
+                    <div className="d-flex align-items-center" style={{ gap: '10px' }}>
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="btn btn-primary"
+                        style={{ padding: '8px 24px', fontWeight: 'bold' }}
+                      >
+                        {submitting ? (
+                          <>
+                            <i className="fas fa-spinner fa-spin mr-1"></i> Submitting...
+                          </>
+                        ) : (
+                          'Submit Ticket'
+                        )}
+                      </button>
+                      <Link
+                        href={`/clientarea/tickets${impQuery}`}
+                        className="btn btn-default"
+                        style={{ padding: '8px 20px' }}
+                      >
+                        Cancel
+                      </Link>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </form>
+      </section>
+
+      <WhmcsFooter />
     </div>
   );
 }

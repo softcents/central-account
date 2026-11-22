@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
+import { WhmcsFooter } from '@/components/WhmcsFooter';
 import {
   User,
   CheckCircle2,
@@ -237,91 +238,103 @@ function ProfileContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans pb-20">
+    <div className="bg-[#f8f9fa] min-h-screen text-slate-800">
       <ClientHeader />
 
-      <main className="max-w-[1200px] mx-auto px-4 py-6 sm:py-8 space-y-6">
-        {/* Breadcrumb & Navigation */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-          <div>
-            <div className="flex items-center space-x-2 text-xs text-slate-500 mb-1">
-              <Link href={`/clientarea${impQuery}`} className="hover:text-[#1A4D80]">
-                Portal Home
-              </Link>
-              <span>/</span>
-              <Link href={`/clientarea${impQuery}`} className="hover:text-[#1A4D80]">
-                Client Area
-              </Link>
-              <span>/</span>
-              <span className="text-slate-800 font-semibold">My Details</span>
+      {/* WHMCS Master Breadcrumb */}
+      <nav className="master-breadcrumb" aria-label="breadcrumb">
+        <div className="container">
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Portal Home</Link>
+            </li>
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Client Area</Link>
+            </li>
+            <li className="breadcrumb-item active" aria-current="page">
+              My Details
+            </li>
+          </ol>
+        </div>
+      </nav>
+
+      {/* WHMCS Main Body Section */}
+      <section id="main-body">
+        <div className="container">
+          <div className="row">
+            {/* Left Sidebar (col-lg-4 col-xl-3) */}
+            <div className="col-lg-4 col-xl-3">
+              <div className="sidebar">
+                {/* My Account Menu Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-user mr-1 text-muted"></i> My Account
+                    </h3>
+                  </div>
+                  <div className="list-group list-group-flush">
+                    <Link
+                      href={`/clientarea/profile${impQuery}`}
+                      className="list-group-item list-group-item-action active"
+                    >
+                      <span><i className="fas fa-user fa-fw mr-2"></i> My Details</span>
+                    </Link>
+                    <Link
+                      href={`/clientarea/contacts${impQuery}`}
+                      className="list-group-item list-group-item-action"
+                    >
+                      <span><i className="fas fa-users fa-fw mr-2 text-muted"></i> Contacts/Sub-Accounts</span>
+                    </Link>
+                    <Link
+                      href={`/clientarea/security${impQuery}`}
+                      className="list-group-item list-group-item-action"
+                    >
+                      <span><i className="fas fa-lock fa-fw mr-2 text-muted"></i> Security Settings</span>
+                    </Link>
+                    <Link
+                      href={`/clientarea/emails${impQuery}`}
+                      className="list-group-item list-group-item-action"
+                    >
+                      <span><i className="fas fa-envelope fa-fw mr-2 text-muted"></i> Email History</span>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Actions Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-arrow-left mr-1 text-muted"></i> Actions
+                    </h3>
+                  </div>
+                  <div className="list-group list-group-flush">
+                    <Link href={`/clientarea${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-home fa-fw mr-2 text-muted"></i> Back to Client Area</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center space-x-2">
-              <User className="w-6 h-6 text-[#1A4D80]" />
-              <span>My Details</span>
-            </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Review and update your personal information, address, preferences, and identity verification details.
-            </p>
-          </div>
 
-          <div className="flex items-center space-x-2">
-            <Link
-              href={`/clientarea${impQuery}`}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-slate-300 text-slate-700 rounded-md text-xs font-semibold bg-white hover:bg-slate-50 transition-colors shadow-sm"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Dashboard</span>
-            </Link>
-          </div>
-        </div>
+            {/* Right Primary Content (col-lg-8 col-xl-9) */}
+            <div className="col-lg-8 col-xl-9 primary-content">
+              <div className="header-lined">
+                <h1>My Details</h1>
+              </div>
 
-        {/* Quick Tabs Menu (WHMCS Twenty-One Sidebar / Sub-nav) */}
-        <div className="flex items-center space-x-1 border-b border-slate-200 overflow-x-auto pb-1 text-xs font-semibold">
-          <Link
-            href={`/clientarea/profile${impQuery}`}
-            className="px-4 py-2 border-b-2 border-[#1A4D80] text-[#1A4D80] bg-white rounded-t font-bold flex items-center space-x-1.5"
-          >
-            <User className="w-3.5 h-3.5" />
-            <span>My Details</span>
-          </Link>
-          <Link
-            href={`/clientarea/contacts${impQuery}`}
-            className="px-4 py-2 text-slate-600 hover:text-[#1A4D80] hover:bg-slate-100 rounded-t flex items-center space-x-1.5 transition-colors"
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>Contacts / Sub-Accounts</span>
-          </Link>
-          <Link
-            href={`/clientarea/security${impQuery}`}
-            className="px-4 py-2 text-slate-600 hover:text-[#1A4D80] hover:bg-slate-100 rounded-t flex items-center space-x-1.5 transition-colors"
-          >
-            <KeyRound className="w-3.5 h-3.5" />
-            <span>Change Password / Security</span>
-          </Link>
-          <Link
-            href={`/clientarea/emails${impQuery}`}
-            className="px-4 py-2 text-slate-600 hover:text-[#1A4D80] hover:bg-slate-100 rounded-t flex items-center space-x-1.5 transition-colors"
-          >
-            <History className="w-3.5 h-3.5" />
-            <span>Email History</span>
-          </Link>
-        </div>
+              {/* Success Alert Banner */}
+              {saved && (
+                <div className="alert alert-success mb-3 p-3 bg-green-100 text-green-800 rounded">
+                  <i className="fas fa-check-circle mr-1"></i> Changes Saved Successfully
+                </div>
+              )}
 
-        {/* Success Alert Banner */}
-        {saved && (
-          <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-md flex items-center space-x-2 text-sm shadow-sm animate-fade-in">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span className="font-semibold">Changes Saved Successfully</span>
-          </div>
-        )}
-
-        {/* Error Alert Banner */}
-        {errorMessage && (
-          <div className="bg-rose-50 border border-rose-300 text-rose-800 px-4 py-3 rounded-md flex items-center space-x-2 text-sm shadow-sm">
-            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-            <span className="font-semibold">{errorMessage}</span>
-          </div>
-        )}
+              {/* Error Alert Banner */}
+              {errorMessage && (
+                <div className="alert alert-danger mb-3 p-3 bg-red-100 text-red-800 rounded">
+                  <i className="fas fa-exclamation-triangle mr-1"></i> {errorMessage}
+                </div>
+              )}
 
         {/* Main Details Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -832,7 +845,12 @@ function ProfileContent() {
             </button>
           </div>
         </form>
-      </main>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <WhmcsFooter />
     </div>
   );
 }

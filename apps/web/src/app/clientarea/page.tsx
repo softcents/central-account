@@ -4,23 +4,8 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
+import { WhmcsFooter } from '@/components/WhmcsFooter';
 import { useActiveClient } from '@/hooks/useActiveClient';
-import {
-  Box,
-  Globe,
-  CreditCard,
-  MessageSquare,
-  Search,
-  ExternalLink,
-  ChevronRight,
-  AlertCircle,
-  Clock,
-  ArrowRight,
-  FileText,
-  ShieldCheck,
-  KeyRound,
-  RefreshCw,
-} from 'lucide-react';
 
 function ClientAreaHomeContent() {
   const router = useRouter();
@@ -109,346 +94,341 @@ function ClientAreaHomeContent() {
   const companyName = client?.company || client?.companyname || 'SoftCents Systems Ltd.';
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans">
+    <div className="bg-[#f8f9fa] min-h-screen text-slate-800">
       <ClientHeader />
 
-      <main className="max-w-[1240px] mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        {/* Welcome Banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-          <div>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900">
-              Welcome Back, {clientName}!
-            </h1>
-            <p className="text-xs text-slate-500">
-              {companyName} &bull; Client Portal &amp; Management Console
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            {/* 5-digit WHMCS Support PIN Widget */}
-            <div className="bg-white border border-slate-300 rounded px-3 py-1.5 shadow-xs flex items-center space-x-2 text-xs">
-              <KeyRound className="w-4 h-4 text-amber-500 shrink-0" />
-              <div>
-                <span className="text-[10px] text-slate-500 block leading-tight">SUPPORT PIN</span>
-                <span className="font-mono font-bold text-slate-900 tracking-wider">
-                  {supportPinLoading ? '...' : (supportPin || '50410')}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={fetchSupportPin}
-                title="Generate new PIN"
-                className="text-slate-400 hover:text-slate-600 ml-1"
-              >
-                <RefreshCw className={`w-3 h-3 ${supportPinLoading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-
-            <Link
-              href={`/cart${impQuery}`}
-              className="w-full sm:w-auto text-center bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-3 sm:px-4 py-2 rounded shadow-sm text-xs font-bold inline-block transition-colors"
-            >
-              + Order New Services
-            </Link>
-          </div>
+      {/* WHMCS Master Breadcrumb */}
+      <nav className="master-breadcrumb" aria-label="breadcrumb">
+        <div className="container">
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Portal Home</Link>
+            </li>
+            <li className="breadcrumb-item active" aria-current="page">
+              Client Area
+            </li>
+          </ol>
         </div>
+      </nav>
 
-        {/* 4 WHMCS Twenty-One Tiles (Services, Domains, Tickets, Invoices) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {/* Services Tile */}
-          <Link
-            href={`/clientarea/services${impQuery}`}
-            className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
-          >
-            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-              <Box className="w-6 h-6 sm:w-7 sm:h-7 text-[#007bff]" />
-              <div className="text-xl sm:text-2xl font-bold text-slate-900">
-                {activeServices.length > 0 ? activeServices.length : services.length}
-              </div>
-            </div>
-            <div className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wide">
-              Services
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#007bff]"></div>
-          </Link>
-
-          {/* Domains Tile */}
-          <Link
-            href={`/clientarea/domains${impQuery}`}
-            className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
-          >
-            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-              <Globe className="w-6 h-6 sm:w-7 sm:h-7 text-[#28a745]" />
-              <div className="text-xl sm:text-2xl font-bold text-slate-900">{domains.length}</div>
-            </div>
-            <div className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wide">
-              Domains
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#28a745]"></div>
-          </Link>
-
-          {/* Tickets Tile */}
-          <Link
-            href={`/clientarea/tickets${impQuery}`}
-            className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
-          >
-            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-              <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7 text-[#dc3545]" />
-              <div className="text-xl sm:text-2xl font-bold text-slate-900">{openTickets.length}</div>
-            </div>
-            <div className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wide">
-              Tickets
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#dc3545]"></div>
-          </Link>
-
-          {/* Invoices Tile */}
-          <Link
-            href={`/clientarea/invoices${impQuery}`}
-            className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
-          >
-            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-              <CreditCard className="w-6 h-6 sm:w-7 sm:h-7 text-[#f0ad4e]" />
-              <div className="text-xl sm:text-2xl font-bold text-slate-900">{unpaidInvoices.length}</div>
-            </div>
-            <div className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wide">
-              Unpaid Invoices
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#f0ad4e]"></div>
-          </Link>
-        </div>
-
-        {/* Unpaid Invoice Alert Banner */}
-        {unpaidInvoices.length > 0 && (
-          <div className="bg-amber-50 border-l-4 border-amber-500 p-3 sm:p-4 rounded-r shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-            <div className="flex items-start sm:items-center space-x-2.5 sm:space-x-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
-              <div>
-                <span className="font-bold text-amber-900">
-                  You have {unpaidInvoices.length} unpaid invoice{unpaidInvoices.length > 1 ? 's' : ''} (Invoice #{unpaidInvoices[0].id} due on {unpaidInvoices[0].duedate || '-'}).
-                </span>
-                <span className="text-amber-800 ml-1 block sm:inline">
-                  Pay now to avoid service disruption.
-                </span>
-              </div>
-            </div>
-            <Link
-              href={`/viewinvoice?id=${unpaidInvoices[0].id}`}
-              className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-3 sm:px-4 py-1.5 rounded font-bold transition-colors text-center shrink-0"
-            >
-              Pay Now (৳{parseFloat(unpaidInvoices[0].total || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })} BDT) &rarr;
-            </Link>
-          </div>
-        )}
-
-        {/* Domain Search Banner */}
-        <div className="bg-[#1A4D80] text-white p-4 sm:p-6 rounded-lg shadow-sm">
-          <h2 className="text-sm sm:text-base font-bold mb-1">Find your new domain name</h2>
-          <p className="text-xs text-white/80 mb-3">
-            Register .com, .net, .org, or .com.bd domains with instant DNS provisioning
-          </p>
-          <form onSubmit={handleDomainSubmit} className="flex flex-col sm:flex-row max-w-xl bg-white rounded overflow-hidden p-1 gap-1 sm:gap-0">
-            <input
-              type="text"
-              value={domainSearch}
-              onChange={(e) => setDomainSearch(e.target.value)}
-              placeholder="Enter your desired domain name..."
-              className="flex-1 px-3 py-2 text-xs text-slate-800 focus:outline-none w-full"
-            />
-            <button
-              type="submit"
-              className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-5 py-2 rounded text-xs font-bold transition-colors w-full sm:w-auto text-center"
-            >
-              Search
-            </button>
-          </form>
-        </div>
-
-        {/* Active Products & Services */}
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-          <div className="bg-[#f5f7f8] px-3 sm:px-4 py-3 border-b border-slate-200 font-bold text-xs text-slate-800 flex items-center justify-between">
-            <span className="flex items-center space-x-1.5">
-              <Box className="w-4 h-4 text-[#007bff]" />
-              <span>Your Active Products/Services ({displayServices.length})</span>
-            </span>
-            <Link
-              href={`/clientarea/services${impQuery}`}
-              className="text-[#1A4D80] hover:underline font-semibold"
-            >
-              View All &rarr;
-            </Link>
-          </div>
-
-          {/* Mobile Card Layout (visible on small mobile screens < sm) */}
-          <div className="block sm:hidden divide-y divide-slate-100">
-            {displayServices.length > 0 ? (
-              displayServices.map((s: any) => (
-                <div key={s.id} className="p-3 space-y-2 hover:bg-slate-50 transition-colors">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-slate-800 text-xs truncate">
-                        {s.package || s.product_name}
-                      </div>
-                      {s.group_name && (
-                        <div className="text-[10px] text-slate-500 font-medium">
-                          {s.group_name}
-                        </div>
-                      )}
-                      <div className="text-[11px] text-[#1A4D80] font-mono mt-0.5 truncate">
-                        {s.domain || s.server_name || (s.username ? `User: ${s.username}` : 'Direct Service')}
-                      </div>
-                    </div>
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                        (s.domainstatus || '').toLowerCase() === 'active'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : (s.domainstatus || '').toLowerCase() === 'suspended'
-                          ? 'bg-rose-100 text-rose-800'
-                          : 'bg-amber-100 text-amber-800'
-                      }`}
-                    >
-                      {s.domainstatus || 'Active'}
+      {/* WHMCS Main Body Section */}
+      <section id="main-body">
+        <div className="container">
+          <div className="row">
+            {/* Left Sidebar (col-lg-4 col-xl-3) */}
+            <div className="col-lg-4 col-xl-3">
+              <div className="sidebar">
+                {/* Your Info Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-user mr-1 text-muted"></i> Your Info
+                    </h3>
+                  </div>
+                  <div className="card-body">
+                    <strong>{clientName}</strong><br />
+                    {companyName && <>{companyName}<br /></>}
+                    {client?.address1 && <>{client.address1}<br /></>}
+                    <span>{client?.city || 'Dhaka'}, {client?.country || 'Bangladesh'}</span><br />
+                    <span className="text-muted" style={{ wordBreak: 'break-all' }}>
+                      {client?.email || 'customer@softcents.com'}
                     </span>
                   </div>
-
-                  <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-50">
-                    <div>
-                      <span className="font-mono font-bold text-slate-900">
-                        {s.billingcycle === 'Free Account' || parseFloat(s.amount || '0') === 0
-                          ? 'Free'
-                          : `৳${parseFloat(s.amount || '0').toFixed(2)}`}
-                      </span>
-                      <span className="text-slate-400 ml-1">({s.billingcycle || 'Monthly'})</span>
-                    </div>
-                    <Link
-                      href={`/clientarea/services/${s.id}${impQuery}`}
-                      className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-2.5 py-1 rounded text-[11px] font-semibold transition-colors"
-                    >
-                      Manage
+                  <div className="card-footer">
+                    <Link href={`/clientarea/profile${impQuery}`} className="btn btn-default btn-sm btn-block">
+                      <i className="fas fa-pencil-alt mr-1"></i> Update
                     </Link>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="py-8 text-center text-slate-500 px-4">
-                <Box className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="font-semibold text-slate-700 text-xs">No active products or services found.</p>
-                <Link
-                  href={`/cart${impQuery}`}
-                  className="mt-3 inline-block bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-1.5 rounded text-xs font-bold"
-                >
-                  + Order New Service
-                </Link>
+
+                {/* Support PIN Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-key mr-1 text-muted"></i> Support PIN
+                    </h3>
+                  </div>
+                  <div className="card-body text-center">
+                    <div style={{ fontSize: '26px', fontWeight: 'bold', fontFamily: 'monospace', color: '#0d6efd', letterSpacing: '3px', marginBottom: '6px' }}>
+                      {supportPinLoading ? '...' : (supportPin || '50410')}
+                    </div>
+                    <small className="text-muted d-block mb-2">
+                      Provide this PIN when contacting support
+                    </small>
+                    <button type="button" onClick={fetchSupportPin} className="btn btn-default btn-xs">
+                      <i className={`fas fa-sync mr-1 ${supportPinLoading ? 'fa-spin' : ''}`}></i> Generate New PIN
+                    </button>
+                  </div>
+                </div>
+
+                {/* Shortcuts Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-bookmark mr-1 text-muted"></i> Shortcuts
+                    </h3>
+                  </div>
+                  <div className="list-group list-group-flush">
+                    <Link href={`/cart${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-shopping-cart fa-fw mr-2 text-muted"></i> Order New Services</span>
+                    </Link>
+                    <Link href={`/domainchecker${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-globe fa-fw mr-2 text-muted"></i> Register a New Domain</span>
+                    </Link>
+                    <Link href={`/support/new${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-comments fa-fw mr-2 text-muted"></i> Open New Ticket</span>
+                    </Link>
+                    <Link href="/login" className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-arrow-left fa-fw mr-2 text-muted"></i> Logout</span>
+                    </Link>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Desktop & Tablet Table Layout (visible on >= sm screens) */}
-          <div className="hidden sm:block overflow-x-auto w-full">
-            <table className="w-full text-left text-xs border-collapse min-w-[620px]">
-              <thead>
-                <tr className="bg-[#eef3f7] border-b border-slate-200 text-slate-700 font-bold">
-                  <th className="py-2.5 px-4">Product / Service</th>
-                  <th className="py-2.5 px-4">Domain / Server</th>
-                  <th className="py-2.5 px-4">Pricing</th>
-                  <th className="py-2.5 px-4">Next Due Date</th>
-                  <th className="py-2.5 px-4 text-center">Status</th>
-                  <th className="py-2.5 px-4 text-right"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {displayServices.length > 0 ? (
-                  displayServices.map((s: any) => (
-                    <tr key={s.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3 px-4 font-bold text-slate-800">
-                        <div>{s.package || s.product_name}</div>
-                        {s.group_name && (
-                          <div className="text-[11px] font-normal text-slate-500">
-                            {s.group_name}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        {s.domain ? (
-                          <span className="text-[#1A4D80] font-medium">{s.domain}</span>
-                        ) : s.server_name ? (
-                          <span className="text-slate-600 font-mono text-[11px]">{s.server_name}</span>
-                        ) : s.username ? (
-                          <span className="text-slate-600 text-[11px]">User: {s.username}</span>
-                        ) : (
-                          <span className="text-slate-400 italic">None</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-slate-700">
-                        {s.billingcycle === 'Free Account' || parseFloat(s.amount || '0') === 0
-                          ? 'Free'
-                          : `৳${parseFloat(s.amount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })} BDT ${s.billingcycle || ''}`}
-                      </td>
-                      <td className="py-3 px-4 text-slate-600">
-                        {s.nextduedate_display || (s.nextduedate && s.nextduedate !== '0000-00-00' ? s.nextduedate : '-')}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-bold ${
-                            (s.domainstatus || '').toLowerCase() === 'active'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : (s.domainstatus || '').toLowerCase() === 'suspended'
-                              ? 'bg-rose-100 text-rose-800'
-                              : 'bg-amber-100 text-amber-800'
-                          }`}
-                        >
-                          {s.domainstatus || 'Active'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <Link
-                          href={`/clientarea/services/${s.id}${impQuery}`}
-                          className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-3 py-1 rounded text-[11px] font-semibold transition-colors inline-block"
-                        >
-                          Manage
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-500">
-                      <Box className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                      <p className="font-semibold text-slate-700">No active products or services found.</p>
-                      <p className="text-xs text-slate-400 mt-1">Order your first cloud VPS, web hosting, or VoIP service today.</p>
-                      <Link
-                        href={`/cart${impQuery}`}
-                        className="mt-3 inline-block bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-1.5 rounded text-xs font-bold transition-colors"
-                      >
-                        + Order New Service
+            {/* Right Primary Content (col-lg-8 col-xl-9) */}
+            <div className="col-lg-8 col-xl-9 primary-content">
+              {/* Top 4 Twenty-One Tiles */}
+              <div className="tiles mb-4">
+                <div className="row no-gutters">
+                  <div className="col-6 col-xl-3">
+                    <Link href={`/clientarea/services${impQuery}`} className="tile">
+                      <i className="fas fa-cube"></i>
+                      <div className="stat">{activeServices.length > 0 ? activeServices.length : services.length}</div>
+                      <div className="title">Services</div>
+                      <div className="highlight bg-color-blue"></div>
+                    </Link>
+                  </div>
+                  <div className="col-6 col-xl-3">
+                    <Link href={`/clientarea/domains${impQuery}`} className="tile">
+                      <i className="fas fa-globe"></i>
+                      <div className="stat">{domains.length}</div>
+                      <div className="title">Domains</div>
+                      <div className="highlight bg-color-green"></div>
+                    </Link>
+                  </div>
+                  <div className="col-6 col-xl-3">
+                    <Link href={`/clientarea/tickets${impQuery}`} className="tile">
+                      <i className="fas fa-comments"></i>
+                      <div className="stat">{openTickets.length}</div>
+                      <div className="title">Tickets</div>
+                      <div className="highlight bg-color-red"></div>
+                    </Link>
+                  </div>
+                  <div className="col-6 col-xl-3">
+                    <Link href={`/clientarea/invoices${impQuery}`} className="tile">
+                      <i className="fas fa-credit-card"></i>
+                      <div className="stat">{unpaidInvoices.length}</div>
+                      <div className="title">Invoices</div>
+                      <div className="highlight bg-color-gold"></div>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* Overdue / Unpaid Invoices Panel */}
+              {unpaidInvoices.length > 0 && (
+                <div className="card card-accent-gold mb-3">
+                  <div className="card-header">
+                    <div className="float-right">
+                      <Link href={`/clientarea/invoices${impQuery}`} className="btn btn-default btn-xs bg-color-gold text-white font-weight-bold">
+                        View All
                       </Link>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </main>
+                    </div>
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-credit-card mr-1 text-warning"></i> Overdue Invoices
+                    </h3>
+                  </div>
+                  <div className="card-body p-0">
+                    <table className="table table-list mb-0" style={{ border: 0, margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>Invoice #</th>
+                          <th>Invoice Date</th>
+                          <th>Due Date</th>
+                          <th>Total</th>
+                          <th>Status</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {unpaidInvoices.slice(0, 3).map((inv: any) => (
+                          <tr key={inv.id}>
+                            <td><strong>#{inv.invoicenum || inv.id}</strong></td>
+                            <td>{inv.date || '-'}</td>
+                            <td>{inv.duedate || '-'}</td>
+                            <td><strong>৳{parseFloat(inv.total || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })} BDT</strong></td>
+                            <td><span className="label status status-unpaid">Unpaid</span></td>
+                            <td className="text-right">
+                              <Link href={`/viewinvoice?id=${inv.id}`} className="btn btn-success btn-xs">
+                                Pay Now &raquo;
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
 
-      {/* WHMCS Client Area Responsive Footer */}
-      <footer className="border-t border-slate-200 mt-12 py-6 text-center text-xs text-slate-500 bg-white">
-        <div className="max-w-[1240px] mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div>&copy; {new Date().getFullYear()} SoftCents Systems Ltd. All Rights Reserved.</div>
-          <div className="flex items-center space-x-4 text-[11px] text-slate-600">
-            <Link href="/contact" className="hover:text-[#1A4D80]">Contact Us</Link>
-            <Link href="/knowledgebase" className="hover:text-[#1A4D80]">Knowledgebase</Link>
-            <Link href="/networkissues" className="hover:text-[#1A4D80]">Network Status</Link>
-            <Link href={`/clientarea/affiliates${impQuery}`} className="hover:text-[#1A4D80]">Affiliates</Link>
+              {/* Active Products/Services Panel */}
+              <div className="card card-accent-blue mb-3">
+                <div className="card-header">
+                  <div className="float-right">
+                    <Link href={`/clientarea/services${impQuery}`} className="btn btn-default btn-xs">
+                      View All
+                    </Link>
+                  </div>
+                  <h3 className="card-title m-0">
+                    <i className="fas fa-cube mr-1 text-info"></i> Active Products/Services
+                  </h3>
+                </div>
+                <div className="card-body p-0">
+                  {displayServices.length === 0 ? (
+                    <div className="p-3 text-muted text-center">No active services found.</div>
+                  ) : (
+                    <table className="table table-list mb-0" style={{ border: 0, margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>Product/Service</th>
+                          <th>Pricing</th>
+                          <th>Next Due Date</th>
+                          <th>Status</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {displayServices.slice(0, 5).map((srv: any) => (
+                          <tr key={srv.id}>
+                            <td>
+                              <strong>{srv.package || srv.product_name || 'Service'}</strong>
+                              {srv.domain && <div className="text-muted small"><a href={`http://${srv.domain}`} target="_blank" rel="noreferrer">{srv.domain}</a></div>}
+                            </td>
+                            <td>
+                              ৳{parseFloat(srv.amount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })} BDT
+                              <small className="text-muted ml-1">{srv.billingcycle || 'Monthly'}</small>
+                            </td>
+                            <td>{srv.nextduedate || '-'}</td>
+                            <td>
+                              <span className={`label status status-${(srv.domainstatus || 'Active').toLowerCase()}`}>
+                                {srv.domainstatus || 'Active'}
+                              </span>
+                            </td>
+                            <td className="text-right">
+                              <Link href={`/clientarea/services/${srv.id}${impQuery}`} className="btn btn-default btn-xs">
+                                Manage &raquo;
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+
+              {/* Recent Support Tickets Panel */}
+              <div className="card card-accent-red mb-3">
+                <div className="card-header">
+                  <div className="float-right">
+                    <Link href={`/support/new${impQuery}`} className="btn btn-default btn-xs">
+                      <i className="fas fa-plus mr-1"></i> Open Ticket
+                    </Link>
+                  </div>
+                  <h3 className="card-title m-0">
+                    <i className="fas fa-comments mr-1 text-danger"></i> Recent Support Tickets
+                  </h3>
+                </div>
+                <div className="card-body p-0">
+                  {tickets.length === 0 ? (
+                    <div className="p-3 text-muted text-center">No recent support tickets found.</div>
+                  ) : (
+                    <table className="table table-list mb-0" style={{ border: 0, margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>Department</th>
+                          <th>Subject</th>
+                          <th>Status</th>
+                          <th>Last Updated</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tickets.slice(0, 4).map((t: any) => (
+                          <tr key={t.id || t.tid}>
+                            <td>{t.deptname || t.department || 'Support'}</td>
+                            <td>
+                              <Link href={`/support/${t.id || t.tid}${impQuery}`} className="font-weight-bold">
+                                #{t.tid || t.id} - {t.title || t.subject}
+                              </Link>
+                            </td>
+                            <td>
+                              <span className={`label status status-${(t.status || 'open').toLowerCase().replace(' ', '-')}`}>
+                                {t.status || 'Open'}
+                              </span>
+                            </td>
+                            <td>{t.lastreply || t.date || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+
+              {/* Register a New Domain Panel */}
+              <div className="card card-accent-green mb-3">
+                <div className="card-header">
+                  <h3 className="card-title m-0">
+                    <i className="fas fa-globe mr-1 text-success"></i> Register a New Domain
+                  </h3>
+                </div>
+                <div className="card-body">
+                  <form onSubmit={handleDomainSubmit}>
+                    <div style={{ display: 'flex', gap: '0' }}>
+                      <input
+                        type="text"
+                        value={domainSearch}
+                        onChange={(e) => setDomainSearch(e.target.value)}
+                        placeholder="Enter a domain name to register (e.g. softcents.com)..."
+                        style={{
+                          flex: 1,
+                          padding: '8px 12px',
+                          border: '1px solid #ced4da',
+                          borderRadius: '4px 0 0 4px',
+                          fontSize: '14px',
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        className="btn btn-success"
+                        style={{ borderRadius: '0 4px 4px 0', padding: '8px 20px', fontWeight: 'bold' }}
+                      >
+                        <i className="fas fa-search mr-1"></i> Search
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </footer>
+      </section>
+
+      <WhmcsFooter />
     </div>
   );
 }
 
-export default function ClientAreaHome() {
+export default function ClientAreaPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center text-slate-400 text-xs">Loading Client Portal...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa] text-slate-500">
+          <i className="fas fa-spinner fa-spin fa-2x mr-2"></i> Loading Client Area...
+        </div>
+      }
+    >
       <ClientAreaHomeContent />
     </Suspense>
   );

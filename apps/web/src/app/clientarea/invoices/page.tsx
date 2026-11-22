@@ -2,213 +2,232 @@
 
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
+import { WhmcsFooter } from '@/components/WhmcsFooter';
 import { useActiveClient } from '@/hooks/useActiveClient';
-import { CreditCard, Search, ExternalLink, Printer } from 'lucide-react';
 
 function ClientInvoicesContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { clientId, client, impQuery, invoices, unpaidInvoices, isLoaded } = useActiveClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  const rawInvoices = invoices;
+  const rawInvoices = invoices || [];
+
+  const paidCount = rawInvoices.filter((inv: any) => (inv.status || '').toLowerCase() === 'paid').length;
+  const unpaidCount = rawInvoices.filter((inv: any) => (inv.status || '').toLowerCase() === 'unpaid').length;
+  const cancelledCount = rawInvoices.filter((inv: any) => (inv.status || '').toLowerCase() === 'cancelled').length;
+  const refundedCount = rawInvoices.filter((inv: any) => (inv.status || '').toLowerCase() === 'refunded').length;
 
   const filtered = rawInvoices.filter((inv: any) => {
     const matchesSearch =
-      String(inv.id).includes(searchTerm) ||
+      !searchTerm.trim() ||
+      String(inv.id || '').includes(searchTerm) ||
+      String(inv.invoicenum || '').includes(searchTerm) ||
       (inv.clientName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
-      statusFilter === 'ALL' || (inv.status || '').toUpperCase() === statusFilter;
+      statusFilter === 'ALL' || (inv.status || '').toUpperCase() === statusFilter.toUpperCase();
     return matchesSearch && matchesStatus;
   });
 
   return (
-    <main className="max-w-[1240px] mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
-            <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-[#f39c12]" />
-            <span>My Invoices ({rawInvoices.length})</span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Review billing history, payment receipts, and settle outstanding dues for {client?.name || 'Customer'}.
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Link
-            href={`/clientarea/masspay${impQuery}`}
-            className="w-full sm:w-auto text-center bg-[#1A4D80] hover:bg-[#143d66] text-white px-4 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
-          >
-            Mass Payment
-          </Link>
-          <Link
-            href={`/clientarea/addfunds${impQuery}`}
-            className="w-full sm:w-auto text-center bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-4 py-2 rounded text-xs font-bold shadow-sm transition-colors inline-block"
-          >
-            + Add Funds Deposit
-          </Link>
-        </div>
-      </div>
+    <div className="bg-[#f8f9fa] min-h-screen text-slate-800">
+      <ClientHeader />
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm text-xs">
-        <div className="flex items-center space-x-2 flex-1 w-full sm:max-w-sm">
-          <Search className="w-4 h-4 text-slate-400 shrink-0" />
-          <input
-            type="text"
-            placeholder="Search invoice number..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-[#1A4D80]"
-          />
+      {/* WHMCS Master Breadcrumb */}
+      <nav className="master-breadcrumb" aria-label="breadcrumb">
+        <div className="container">
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Portal Home</Link>
+            </li>
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Client Area</Link>
+            </li>
+            <li className="breadcrumb-item active" aria-current="page">
+              My Invoices
+            </li>
+          </ol>
         </div>
+      </nav>
 
-        <div className="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-start">
-          <span className="text-slate-500 font-medium">Status:</span>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="p-1.5 border border-slate-200 rounded bg-white text-xs font-semibold focus:outline-none flex-1 sm:flex-initial"
-          >
-            <option value="ALL">All ({rawInvoices.length})</option>
-            <option value="PAID">Paid</option>
-            <option value="UNPAID">Unpaid</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Invoices Container */}
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-        {/* Mobile View: Cards (< sm) */}
-        <div className="block sm:hidden divide-y divide-slate-100">
-          {filtered.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 text-xs px-4">
-              <CreditCard className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-              <p className="font-semibold text-slate-700">No invoices found matching your criteria.</p>
-            </div>
-          ) : (
-            filtered.slice(0, 50).map((inv: any) => (
-              <div key={inv.id} className="p-3.5 space-y-2 hover:bg-slate-50 transition-colors">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="font-mono font-bold text-sm text-[#1A4D80]">
-                      Invoice #{inv.id}
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
-                      Date: {inv.date || '-'} &bull; Due: {inv.duedate || '-'}
-                    </div>
+      {/* WHMCS Main Body Section */}
+      <section id="main-body">
+        <div className="container">
+          <div className="row">
+            {/* Left Sidebar (col-lg-4 col-xl-3) */}
+            <div className="col-lg-4 col-xl-3">
+              <div className="sidebar">
+                {/* Status Filter Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-filter mr-1 text-muted"></i> Invoices
+                    </h3>
                   </div>
-                  <span
-                    className={`font-bold px-2 py-0.5 rounded-full text-[10px] shrink-0 ${
-                      (inv.status || '').toLowerCase() === 'paid'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : (inv.status || '').toLowerCase() === 'unpaid'
-                        ? 'bg-rose-100 text-rose-800'
-                        : 'bg-slate-100 text-slate-700'
-                    }`}
-                  >
-                    {inv.status}
-                  </span>
+                  <div className="list-group list-group-flush">
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('ALL')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'ALL' ? 'active' : ''}`}
+                    >
+                      <span>All Invoices</span>
+                      <span className="badge float-right">{rawInvoices.length}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('PAID')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'PAID' ? 'active' : ''}`}
+                    >
+                      <span>Paid</span>
+                      <span className="badge float-right">{paidCount}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('UNPAID')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'UNPAID' ? 'active' : ''}`}
+                    >
+                      <span>Unpaid</span>
+                      <span className="badge float-right">{unpaidCount}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('CANCELLED')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'CANCELLED' ? 'active' : ''}`}
+                    >
+                      <span>Cancelled</span>
+                      <span className="badge float-right">{cancelledCount}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('REFUNDED')}
+                      className={`list-group-item list-group-item-action text-left ${statusFilter === 'REFUNDED' ? 'active' : ''}`}
+                    >
+                      <span>Refunded</span>
+                      <span className="badge float-right">{refundedCount}</span>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-50">
-                  <div className="font-bold font-mono text-slate-900 text-sm">
-                    ৳{parseFloat(inv.total || '0').toFixed(2)} BDT
+                {/* Actions Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-plus mr-1 text-muted"></i> Actions
+                    </h3>
                   </div>
-                  <a
-                    href={`/viewinvoice?id=${inv.id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`inline-flex items-center space-x-1 px-3 py-1 rounded font-semibold text-xs transition-colors text-white ${
-                      (inv.status || '').toLowerCase() === 'unpaid' ? 'bg-[#5cb85c] hover:bg-[#4cae4c]' : 'bg-[#1A4D80] hover:bg-[#143d66]'
-                    }`}
-                  >
-                    <span>{(inv.status || '').toLowerCase() === 'unpaid' ? 'Pay Now' : 'View'}</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+                  <div className="list-group list-group-flush">
+                    <Link href={`/clientarea/masspay${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-credit-card fa-fw mr-2 text-muted"></i> Mass Payment</span>
+                    </Link>
+                    <Link href={`/clientarea/addfunds${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-wallet fa-fw mr-2 text-muted"></i> Add Funds</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            </div>
 
-        {/* Desktop View: Table (>= sm) */}
-        <div className="hidden sm:block overflow-x-auto w-full">
-          <table className="w-full text-left text-xs border-collapse min-w-[600px]">
-            <thead>
-              <tr className="bg-[#eef3f7] border-b border-slate-200 text-slate-700 font-bold">
-                <th className="py-3 px-4">Invoice #</th>
-                <th className="py-3 px-4">Invoice Date</th>
-                <th className="py-3 px-4">Due Date</th>
-                <th className="py-3 px-4 text-right">Total Amount</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500">
-                    <CreditCard className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="font-semibold text-slate-700">No invoices found matching your criteria.</p>
-                  </td>
-                </tr>
-              ) : (
-                filtered.slice(0, 50).map((inv: any) => (
-                  <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#1A4D80]">
-                      #{inv.id}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-600">{inv.date}</td>
-                    <td className="py-3.5 px-4 text-slate-600">{inv.duedate}</td>
-                    <td className="py-3.5 px-4 text-right font-bold text-slate-900 font-mono">
-                      ৳{parseFloat(inv.total || '0').toFixed(2)} BDT
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <span
-                        className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
-                          (inv.status || '').toLowerCase() === 'paid'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : (inv.status || '').toLowerCase() === 'unpaid'
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-slate-100 text-slate-700'
-                        }`}
-                      >
-                        {inv.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right space-x-2">
-                      <a
-                        href={`/viewinvoice?id=${inv.id}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center space-x-1 bg-[#1A4D80] hover:bg-[#143d66] text-white px-3 py-1 rounded font-semibold transition-colors"
-                      >
-                        <span>{(inv.status || '').toLowerCase() === 'unpaid' ? 'Pay Now' : 'View'}</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+            {/* Right Primary Content (col-lg-8 col-xl-9) */}
+            <div className="col-lg-8 col-xl-9 primary-content">
+              <div className="header-lined">
+                <h1>My Invoices</h1>
+              </div>
+
+              {/* Search filter row */}
+              <div className="mb-3 d-flex justify-content-between align-items-center" style={{ gap: '10px' }}>
+                <div className="text-muted" style={{ fontSize: '13px' }}>
+                  Showing {filtered.length} of {rawInvoices.length} entries
+                </div>
+                <div style={{ maxWidth: '280px', width: '100%' }}>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search by invoice number..."
+                    className="form-control"
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      borderRadius: '4px',
+                      border: '1px solid #ced4da',
+                      width: '100%',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* WHMCS table.table-list */}
+              <div className="table-container clearfix">
+                <table className="table table-list">
+                  <thead>
+                    <tr>
+                      <th>Invoice #</th>
+                      <th>Invoice Date</th>
+                      <th>Due Date</th>
+                      <th className="text-right">Total</th>
+                      <th className="text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="text-center text-muted p-4">
+                          No Invoices Found
+                        </td>
+                      </tr>
+                    ) : (
+                      filtered.map((inv: any) => {
+                        const statusLower = (inv.status || 'unpaid').toLowerCase();
+
+                        return (
+                          <tr
+                            key={inv.id}
+                            onClick={() => router.push(`/viewinvoice?id=${inv.id}`)}
+                            className="cursor-pointer"
+                          >
+                            <td>
+                              <strong>#{inv.invoicenum || inv.id}</strong>
+                            </td>
+                            <td>{inv.date || '-'}</td>
+                            <td>{inv.duedate || '-'}</td>
+                            <td className="text-right font-weight-bold">
+                              ৳{parseFloat(inv.total || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })} BDT
+                            </td>
+                            <td className="text-center">
+                              <span className={`label status status-${statusLower}`}>
+                                {inv.status || 'Unpaid'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </main>
+      </section>
+
+      <WhmcsFooter />
+    </div>
   );
 }
 
 export default function ClientInvoicesPage() {
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans">
-      <ClientHeader />
-      <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Invoices...</div>}>
-        <ClientInvoicesContent />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa] text-slate-500">
+          <i className="fas fa-spinner fa-spin fa-2x mr-2"></i> Loading Invoices...
+        </div>
+      }
+    >
+      <ClientInvoicesContent />
+    </Suspense>
   );
 }

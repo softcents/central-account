@@ -4,7 +4,7 @@ import React, { useState, Suspense, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
-import { Mail, Search, Calendar, ChevronRight, Eye, Printer, X, ShieldCheck } from 'lucide-react';
+import { WhmcsFooter } from '@/components/WhmcsFooter';
 import whmcsData from '@/data/whmcs_sync.json';
 
 function formatEmailDate(dateStr: string): string {
@@ -22,6 +22,7 @@ function formatEmailDate(dateStr: string): string {
 function EmailsContent() {
   const searchParams = useSearchParams();
   const impersonate = searchParams.get('impersonate') || searchParams.get('userid');
+  const impQuery = impersonate ? `?impersonate=${encodeURIComponent(impersonate)}` : '';
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmail, setSelectedEmail] = useState<any | null>(null);
 
@@ -32,7 +33,6 @@ function EmailsContent() {
       const matched = list.filter((e: any) => String(e.userid) === String(impersonate));
       if (matched.length > 0) return matched;
     }
-    // If not impersonating or no specific match, show recent emails
     return list;
   }, [impersonate]);
 
@@ -47,163 +47,218 @@ function EmailsContent() {
     );
   }, [clientEmails, searchTerm]);
 
-  const handlePrint = () => {
-    if (typeof window !== 'undefined') {
-      window.print();
-    }
-  };
-
   return (
-    <main className="max-w-[1240px] mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
-      {/* Breadcrumb Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center space-x-2">
-            <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-[#1A4D80]" />
-            <span>Email History ({clientEmails.length})</span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Browse a complete audit trail of all automated notices, invoices, and service emails sent to your account.
-          </p>
-        </div>
+    <div className="bg-[#f8f9fa] min-h-screen text-slate-800">
+      <ClientHeader />
 
-        <div className="flex items-center space-x-2">
-          <Link
-            href="/clientarea"
-            className="px-3.5 py-1.5 border border-slate-300 rounded text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-          >
-            &larr; Back to Client Area
-          </Link>
+      {/* WHMCS Master Breadcrumb */}
+      <nav className="master-breadcrumb" aria-label="breadcrumb">
+        <div className="container">
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Portal Home</Link>
+            </li>
+            <li className="breadcrumb-item">
+              <Link href={`/clientarea${impQuery}`}>Client Area</Link>
+            </li>
+            <li className="breadcrumb-item active" aria-current="page">
+              Email History
+            </li>
+          </ol>
         </div>
-      </div>
+      </nav>
 
-      {/* Search Filter */}
-      <div className="bg-white p-3 rounded-lg border border-slate-200 flex items-center max-w-sm shadow-sm text-xs">
-        <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
-        <input
-          type="text"
-          placeholder="Search by subject or date..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full focus:outline-none"
-        />
-        {searchTerm && (
-          <button onClick={() => setSearchTerm('')} className="text-slate-400 hover:text-slate-600 text-xs">
-            ✕
-          </button>
-        )}
-      </div>
+      {/* WHMCS Main Body Section */}
+      <section id="main-body">
+        <div className="container">
+          <div className="row">
+            {/* Left Sidebar (col-lg-4 col-xl-3) */}
+            <div className="col-lg-4 col-xl-3">
+              <div className="sidebar">
+                {/* My Account Menu Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-user mr-1 text-muted"></i> My Account
+                    </h3>
+                  </div>
+                  <div className="list-group list-group-flush">
+                    <Link href={`/clientarea/profile${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-user fa-fw mr-2 text-muted"></i> My Details</span>
+                    </Link>
+                    <Link href={`/clientarea/contacts${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-users fa-fw mr-2 text-muted"></i> Contacts/Sub-Accounts</span>
+                    </Link>
+                    <Link href={`/clientarea/security${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-lock fa-fw mr-2 text-muted"></i> Security Settings</span>
+                    </Link>
+                    <Link href={`/clientarea/emails${impQuery}`} className="list-group-item list-group-item-action active">
+                      <span><i className="fas fa-envelope fa-fw mr-2"></i> Email History</span>
+                    </Link>
+                  </div>
+                </div>
 
-      {/* Email List Table */}
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-        <div className="overflow-x-auto w-full">
-          <table className="w-full text-left text-xs border-collapse min-w-[650px]">
-            <thead>
-              <tr className="bg-[#eef3f7] border-b border-slate-200 text-slate-700 font-bold">
-                <th className="py-3 px-4">Date Sent</th>
-                <th className="py-3 px-4">Message Subject</th>
-                <th className="py-3 px-4">Recipient</th>
-                <th className="py-3 px-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="py-8 text-center text-slate-500">
-                    No email records found.
-                  </td>
-                </tr>
-              ) : (
-                filtered.slice(0, 100).map((e: any) => (
-                  <tr key={e.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-mono text-slate-600 whitespace-nowrap">
-                      {formatEmailDate(e.date)}
-                    </td>
-                    <td className="py-3.5 px-4 font-bold text-slate-900">
-                      {e.subject}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px] truncate max-w-xs">
-                      {e.recipient || '-'}
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => setSelectedEmail(e)}
-                        className="bg-slate-100 hover:bg-[#1A4D80] hover:text-white text-slate-700 px-3 py-1.5 rounded font-semibold text-xs transition-colors border border-slate-300 inline-flex items-center space-x-1"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>View Message</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                {/* Actions Card */}
+                <div className="card card-sidebar mb-3">
+                  <div className="card-header">
+                    <h3 className="card-title m-0">
+                      <i className="fas fa-arrow-left mr-1 text-muted"></i> Actions
+                    </h3>
+                  </div>
+                  <div className="list-group list-group-flush">
+                    <Link href={`/clientarea${impQuery}`} className="list-group-item list-group-item-action">
+                      <span><i className="fas fa-home fa-fw mr-2 text-muted"></i> Back to Client Area</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Primary Content (col-lg-8 col-xl-9) */}
+            <div className="col-lg-8 col-xl-9 primary-content">
+              <div className="header-lined">
+                <h1>Email History</h1>
+              </div>
+
+              {/* Search filter row */}
+              <div className="mb-3 d-flex justify-content-between align-items-center" style={{ gap: '10px' }}>
+                <div className="text-muted" style={{ fontSize: '13px' }}>
+                  Showing {filtered.length} of {clientEmails.length} entries
+                </div>
+                <div style={{ maxWidth: '280px', width: '100%' }}>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search by subject..."
+                    className="form-control"
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      borderRadius: '4px',
+                      border: '1px solid #ced4da',
+                      width: '100%',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* WHMCS table.table-list */}
+              <div className="table-container clearfix">
+                <table className="table table-list">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '180px' }}>Date Sent</th>
+                      <th>Message Subject</th>
+                      <th style={{ width: '130px' }} className="text-center"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="text-center text-muted p-4">
+                          No Email Records Found
+                        </td>
+                      </tr>
+                    ) : (
+                      filtered.slice(0, 100).map((e: any) => (
+                        <tr
+                          key={e.id}
+                          onClick={() => setSelectedEmail(e)}
+                          className="cursor-pointer"
+                        >
+                          <td style={{ verticalAlign: 'middle' }}>
+                            {formatEmailDate(e.date)}
+                          </td>
+                          <td style={{ verticalAlign: 'middle' }}>
+                            <strong>{e.subject}</strong>
+                            {e.recipient && (
+                              <div className="text-muted small">{e.recipient}</div>
+                            )}
+                          </td>
+                          <td className="text-center" style={{ verticalAlign: 'middle' }}>
+                            <button
+                              type="button"
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                setSelectedEmail(e);
+                              }}
+                              className="btn btn-info btn-xs"
+                            >
+                              <i className="fas fa-eye mr-1"></i> View Message
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* VIEW EMAIL MESSAGE MODAL */}
       {selectedEmail && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
-            {/* Modal Header */}
-            <div className="bg-[#1A4D80] text-white p-4 flex items-center justify-between shrink-0">
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4" />
-                <h3 className="font-bold text-sm truncate max-w-md">
-                  {selectedEmail.subject}
-                </h3>
-              </div>
-              <div className="flex items-center space-x-2">
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 1050,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '15px',
+          }}
+        >
+          <div className="card max-w-2xl w-100" style={{ maxWidth: '750px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h3 className="card-title text-white m-0" style={{ fontSize: '15px' }}>
+                <i className="fas fa-envelope mr-1"></i> {selectedEmail.subject}
+              </h3>
+              <div>
                 <button
-                  onClick={handlePrint}
-                  className="text-white/80 hover:text-white p-1 rounded hover:bg-white/10 text-xs flex items-center space-x-1"
-                  title="Print message"
+                  type="button"
+                  onClick={() => window.print()}
+                  className="btn btn-default btn-xs text-white mr-2"
+                  style={{ background: 'transparent', borderColor: 'rgba(255,255,255,0.4)' }}
                 >
-                  <Printer className="w-4 h-4" />
-                  <span className="hidden sm:inline">Print</span>
+                  <i className="fas fa-print mr-1"></i> Print
                 </button>
                 <button
+                  type="button"
                   onClick={() => setSelectedEmail(null)}
-                  className="text-white/80 hover:text-white text-lg font-bold p-1"
+                  className="close text-white"
+                  style={{ background: 'none', border: 0, fontSize: '20px', cursor: 'pointer' }}
                 >
-                  ✕
+                  &times;
                 </button>
               </div>
             </div>
 
-            {/* Email Meta Bar */}
-            <div className="bg-slate-50 border-b border-slate-200 p-3 text-xs space-y-1 shrink-0 text-slate-600">
-              <div>
-                <strong className="text-slate-800">Date:</strong> {formatEmailDate(selectedEmail.date)}
-              </div>
-              <div>
-                <strong className="text-slate-800">To:</strong> {selectedEmail.recipient || 'Customer'}
-              </div>
-              <div>
-                <strong className="text-slate-800">From:</strong> SoftCents Systems Ltd. &lt;billing@softcents.com&gt;
-              </div>
+            <div className="bg-light p-3 border-bottom small text-muted" style={{ lineHeight: '1.6' }}>
+              <div><strong>Date:</strong> {formatEmailDate(selectedEmail.date)}</div>
+              <div><strong>Recipient:</strong> {selectedEmail.recipient || 'Customer'}</div>
+              <div><strong>Sender:</strong> SoftCents Systems Ltd. &lt;billing@softcents.com&gt;</div>
             </div>
 
-            {/* Email Body Content */}
-            <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-white">
+            <div className="p-4" style={{ overflowY: 'auto', flex: 1, backgroundColor: '#fff', fontSize: '13px', lineHeight: '1.6' }}>
               {selectedEmail.message && selectedEmail.message.includes('<') ? (
-                <div
-                  className="email-body-rendered prose prose-sm max-w-none text-slate-800"
-                  dangerouslySetInnerHTML={{ __html: selectedEmail.message }}
-                />
+                <div dangerouslySetInnerHTML={{ __html: selectedEmail.message }} />
               ) : (
-                <pre className="whitespace-pre-wrap font-sans text-xs text-slate-800 leading-relaxed">
-                  {selectedEmail.message || 'No email body available.'}
+                <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>
+                  {selectedEmail.message || 'No email content available.'}
                 </pre>
               )}
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end shrink-0">
+            <div className="card-footer text-right">
               <button
+                type="button"
                 onClick={() => setSelectedEmail(null)}
-                className="px-4 py-1.5 border border-slate-300 rounded text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                className="btn btn-default btn-sm"
               >
                 Close
               </button>
@@ -211,17 +266,22 @@ function EmailsContent() {
           </div>
         </div>
       )}
-    </main>
+
+      <WhmcsFooter />
+    </div>
   );
 }
 
 export default function ClientEmailsPage() {
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans">
-      <ClientHeader />
-      <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading Email History...</div>}>
-        <EmailsContent />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center text-muted">
+          <i className="fas fa-spinner fa-spin fa-2x mr-2"></i> Loading Email History...
+        </div>
+      }
+    >
+      <EmailsContent />
+    </Suspense>
   );
 }
