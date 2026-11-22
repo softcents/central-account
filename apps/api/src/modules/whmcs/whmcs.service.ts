@@ -9,6 +9,7 @@ import { CpanelServer } from './servers/cpanel.server';
 import { BHPanelServer } from './servers/bhpanel.server';
 import { VirtualizorServer } from './servers/virtualizor.server';
 import { SoftcentsSmsAddon } from './addons/softcents-sms.addon';
+import { SoftcentsVsmsAddon } from './addons/softcents-vsms.addon';
 import { BdhostWaAddon } from './addons/bdhost-wa.addon';
 import { ItalkRechargeAddon } from './addons/italk-recharge.addon';
 import { SupportPinAddon } from './addons/supportpin.addon';
@@ -29,6 +30,7 @@ export class WhmcsService {
     public readonly bhpanelServer: BHPanelServer,
     public readonly virtualizorServer: VirtualizorServer,
     public readonly smsAddon: SoftcentsSmsAddon,
+    public readonly vsmsAddon: SoftcentsVsmsAddon,
     public readonly waAddon: BdhostWaAddon,
     public readonly rechargeAddon: ItalkRechargeAddon,
     public readonly supportPinAddon: SupportPinAddon,

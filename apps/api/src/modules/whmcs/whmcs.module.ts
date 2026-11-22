@@ -7,6 +7,7 @@ import { CpanelServer } from './servers/cpanel.server';
 import { BHPanelServer } from './servers/bhpanel.server';
 import { VirtualizorServer } from './servers/virtualizor.server';
 import { SoftcentsSmsAddon } from './addons/softcents-sms.addon';
+import { SoftcentsVsmsAddon } from './addons/softcents-vsms.addon';
 import { BdhostWaAddon } from './addons/bdhost-wa.addon';
 import { ItalkRechargeAddon } from './addons/italk-recharge.addon';
 import { SupportPinAddon } from './addons/supportpin.addon';
@@ -27,6 +28,7 @@ import { WhmcsController } from './whmcs.controller';
     BHPanelServer,
     VirtualizorServer,
     SoftcentsSmsAddon,
+    SoftcentsVsmsAddon,
     BdhostWaAddon,
     ItalkRechargeAddon,
     SupportPinAddon,
@@ -46,6 +48,7 @@ import { WhmcsController } from './whmcs.controller';
     BHPanelServer,
     VirtualizorServer,
     SoftcentsSmsAddon,
+    SoftcentsVsmsAddon,
     BdhostWaAddon,
     ItalkRechargeAddon,
     SupportPinAddon,

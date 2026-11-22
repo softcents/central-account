@@ -484,6 +484,21 @@
       },
       "version": "2.3.0",
       "access": "1"
+    },
+    {
+      "module": "SOFTCENTS_VSMS",
+      "settings": {
+        "api_url": "https://vsms.softcents.com",
+        "api_token": "14|OCq2yZelYts6BhSf1mmK4RQO6HX4Q98RLiuxxDO6190d0518",
+        "caller_id": "369",
+        "default_due_audio_id": "419",
+        "default_overdue_audio_id": "420",
+        "default_welcome_audio_id": "421",
+        "auto_call_on_due": false,
+        "auto_call_on_overdue": true
+      },
+      "version": "2.0",
+      "access": "1,2,3"
     }
   ],
   "addonSettingsMap": {
@@ -634,6 +649,16 @@
     "DomainsReseller": {
       "version": "2.3.0",
       "access": "1"
+    },
+    "SOFTCENTS_VSMS": {
+      "api_url": "https://vsms.softcents.com",
+      "api_token": "14|OCq2yZelYts6BhSf1mmK4RQO6HX4Q98RLiuxxDO6190d0518",
+      "caller_id": "369",
+      "default_due_audio_id": "419",
+      "default_overdue_audio_id": "420",
+      "default_welcome_audio_id": "421",
+      "auto_call_on_due": false,
+      "auto_call_on_overdue": true
     }
   },
   "gateways": [
@@ -49541,6 +49566,18 @@
       "charge": 1.56,
       "remaining_balance": 3007.1,
       "template": "InvoiceCreated"
+    }
+  ],
+  "voiceLogs": [
+    {
+      "id": "VOICE-857",
+      "call_id": 857,
+      "phone_number": "01329646689",
+      "caller_id": 369,
+      "audio_id": 419,
+      "audio_title": "Softcents Due Bill Reminder Voice (IVR)",
+      "status": "Initiated (Ringing)",
+      "date": "2026-11-22T04:08:36.930Z"
     }
   ]
 }

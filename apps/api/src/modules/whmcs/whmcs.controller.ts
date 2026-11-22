@@ -219,6 +219,56 @@ export class WhmcsController {
     return { success: true, message: 'SMS Automation & Reminder Cycle Executed', ...res };
   }
 
+  // ADDONS: Softcents Voice SMS (vSMS - vsms.softcents.com)
+  @Get('addons/vsms/balance')
+  async getVsmsBalance() {
+    return this.whmcs.vsmsAddon.checkBalance();
+  }
+
+  @Get('addons/vsms/callers')
+  async getVsmsCallers() {
+    return this.whmcs.vsmsAddon.getCallers();
+  }
+
+  @Get('addons/vsms/audios')
+  async getVsmsAudios() {
+    return this.whmcs.vsmsAddon.getAudios();
+  }
+
+  @Post('addons/vsms/upload-audio')
+  async uploadVsmsAudio(@Body() body: { title: string; fileBase64: string; fileName: string; description?: string }) {
+    if (!body.title || !body.fileBase64) {
+      return { success: false, message: 'Title and file data are required.' };
+    }
+    const buffer = Buffer.from(body.fileBase64.replace(/^data:audio\/\w+;base64,/, ''), 'base64');
+    return this.whmcs.vsmsAddon.uploadAudio(body.title, buffer, body.fileName || 'audio.mp3', body.description);
+  }
+
+  @Post('addons/vsms/call')
+  async sendVsmsCall(@Body() body: { phone: string; callerId?: string | number; audioId?: string | number; scheduledAt?: string }) {
+    return this.whmcs.vsmsAddon.sendVoiceCall(body);
+  }
+
+  @Post('addons/vsms/otp')
+  async sendVsmsOtp(@Body() body: { phone: string; code: string | number; callerId?: string | number }) {
+    return this.whmcs.vsmsAddon.sendVoiceOtp(body);
+  }
+
+  @Get('addons/vsms/settings')
+  async getVsmsSettings() {
+    return { success: true, settings: this.whmcs.vsmsAddon.getSettings() };
+  }
+
+  @Post('addons/vsms/settings')
+  async updateVsmsSettings(@Body() body: any) {
+    return this.whmcs.vsmsAddon.updateSettings(body);
+  }
+
+  @Get('addons/vsms/logs')
+  async getVsmsLogs() {
+    return this.whmcs.vsmsAddon.getCallLogs();
+  }
+
   // ADDONS: WhatsApp Pro
   @Post('addons/whatsapp/send')
   async sendWhatsApp(@Body() body: { phone: string; message: string; mediaUrl?: string }) {

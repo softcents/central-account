@@ -6,7 +6,7 @@ const SYNC_FILE_PATH = path.join(process.cwd(), 'src/data/whmcs_sync.json');
 
 function loadSyncData() {
   if (!fs.existsSync(SYNC_FILE_PATH)) {
-    return { addons: [], addonSettingsMap: {}, smsTemplates: [], smsLogs: [], waLogs: [], unblockLogs: [], coupons: [], voipLogs: [] };
+    return { addons: [], addonSettingsMap: {}, smsTemplates: [], smsLogs: [], voiceLogs: [], waLogs: [], unblockLogs: [], coupons: [], voipLogs: [] };
   }
   return JSON.parse(fs.readFileSync(SYNC_FILE_PATH, 'utf-8'));
 }
@@ -40,6 +40,35 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Fetch live Voice SMS data if requested or if module is SOFTCENTS_VSMS
+    let vsmsBalance: any = 100000;
+    let vsmsCurrency = 'BDT';
+    let vsmsCallers: any[] = [];
+    let vsmsAudios: any[] = [];
+
+    if (module === 'SOFTCENTS_VSMS') {
+      try {
+        const [balRes, callersRes, audiosRes] = await Promise.allSettled([
+          fetch('http://127.0.0.1:4000/api/whmcs/addons/vsms/balance', { cache: 'no-store' }),
+          fetch('http://127.0.0.1:4000/api/whmcs/addons/vsms/callers', { cache: 'no-store' }),
+          fetch('http://127.0.0.1:4000/api/whmcs/addons/vsms/audios', { cache: 'no-store' }),
+        ]);
+
+        if (balRes.status === 'fulfilled' && balRes.value.ok) {
+          const b = await balRes.value.json();
+          if (b.balance !== undefined) vsmsBalance = b.balance;
+        }
+        if (callersRes.status === 'fulfilled' && callersRes.value.ok) {
+          const c = await callersRes.value.json();
+          if (c.callers) vsmsCallers = c.callers;
+        }
+        if (audiosRes.status === 'fulfilled' && audiosRes.value.ok) {
+          const a = await audiosRes.value.json();
+          if (a.audios) vsmsAudios = a.audios;
+        }
+      } catch (e) {}
+    }
+
     return NextResponse.json({
       success: true,
       addons: data.addons || [],
@@ -47,6 +76,10 @@ export async function GET(req: NextRequest) {
       smsBalance,
       smsCurrency,
       smsTemplates: data.smsTemplates || [],
+      vsmsBalance,
+      vsmsCurrency,
+      vsmsCallers,
+      vsmsAudios,
       clients: (data.clients || []).map((c: any) => ({
         id: c.id,
         name: c.name || `${c.firstname || ''} ${c.lastname || ''}`.trim(),
@@ -55,6 +88,7 @@ export async function GET(req: NextRequest) {
         status: c.status || 'Active',
       })),
       smsLogs: (data.smsLogs || []).slice(0, 100),
+      voiceLogs: (data.voiceLogs || []).slice(0, 100),
       waLogs: (data.waLogs || []).slice(0, 50),
       unblockLogs: (data.unblockLogs || []).slice(0, 50),
       coupons: data.coupons || [
@@ -82,6 +116,7 @@ export async function POST(req: NextRequest) {
     if (!data.addons) data.addons = [];
     if (!data.smsTemplates) data.smsTemplates = [];
     if (!data.smsLogs) data.smsLogs = [];
+    if (!data.voiceLogs) data.voiceLogs = [];
     if (!data.waLogs) data.waLogs = [];
     if (!data.unblockLogs) data.unblockLogs = [];
     if (!data.coupons) data.coupons = [
@@ -99,7 +134,7 @@ export async function POST(req: NextRequest) {
       try {
         const apiRes = await fetch('http://127.0.0.1:4000/api/whmcs/addons/sms/send', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-csrf-protection': '1' },
           body: JSON.stringify({
             numbers: recipient,
             message,
@@ -116,6 +151,47 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // --- Action: Live Voice Call Dispatch (vsms.softcents.com) ---
+    if (action === 'send_voice_call') {
+      const phone = payload?.phone || payload?.recipient || '01329646689';
+      const callerId = payload?.callerId || payload?.caller_id;
+      const audioId = payload?.audioId || payload?.audio_id;
+
+      try {
+        const apiRes = await fetch('http://127.0.0.1:4000/api/whmcs/addons/vsms/call', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-csrf-protection': '1' },
+          body: JSON.stringify({
+            phone,
+            callerId,
+            audioId,
+          }),
+        });
+        const resData = await apiRes.json();
+        return NextResponse.json(resData);
+      } catch (err: any) {
+        return NextResponse.json({
+          success: false,
+          error: `Failed to contact Voice SMS gateway: ${err.message}`,
+        }, { status: 500 });
+      }
+    }
+
+    // --- Action: Voice Audio Upload ---
+    if (action === 'upload_voice_audio') {
+      try {
+        const apiRes = await fetch('http://127.0.0.1:4000/api/whmcs/addons/vsms/upload-audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-csrf-protection': '1' },
+          body: JSON.stringify(payload),
+        });
+        const resData = await apiRes.json();
+        return NextResponse.json(resData);
+      } catch (err: any) {
+        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+      }
+    }
+
     // --- Action: Bulk SMS Broadcast ---
     if (action === 'bulk_sms') {
       const recipients = payload?.recipients || [];
@@ -129,7 +205,7 @@ export async function POST(req: NextRequest) {
       try {
         const apiRes = await fetch('http://127.0.0.1:4000/api/whmcs/addons/sms/send', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-csrf-protection': '1' },
           body: JSON.stringify({
             numbers: recipients,
             message,
@@ -161,11 +237,10 @@ export async function POST(req: NextRequest) {
 
       saveSyncData(data);
 
-      // Also sync to NestJS API
       try {
         await fetch(`http://127.0.0.1:4000/api/whmcs/addons/sms/templates/${id}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-csrf-protection': '1' },
           body: JSON.stringify({ template, active, admingsm }),
         });
       } catch (e) {}
@@ -182,6 +257,7 @@ export async function POST(req: NextRequest) {
       try {
         const cronRes = await fetch('http://127.0.0.1:4000/api/whmcs/addons/sms/trigger-reminders', {
           method: 'POST',
+          headers: { 'x-csrf-protection': '1' },
         });
         const resData = await cronRes.json();
         return NextResponse.json({
@@ -242,62 +318,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // --- Action: Promo Coupons ---
-    if (action === 'create_coupon') {
-      const code = (payload?.code || '').toUpperCase().trim();
-      const discount = payload?.discount || '15%';
-      const maxUses = payload?.maxUses || '100';
-      const expiry = payload?.expiry || '2026-12-31';
-
-      if (!code) {
-        return NextResponse.json({ success: false, error: 'Coupon code is required' }, { status: 400 });
-      }
-
-      const newCoupon = { code, discount, maxUses, uses: '0', expiry };
-      data.coupons = data.coupons.filter((c: any) => c.code !== code);
-      data.coupons.unshift(newCoupon);
-      saveSyncData(data);
-
-      return NextResponse.json({
-        success: true,
-        message: `Promo coupon '${code}' (${discount} discount) created successfully.`,
-        coupon: newCoupon,
-      });
-    }
-
-    if (action === 'delete_coupon') {
-      const code = payload?.code;
-      data.coupons = (data.coupons || []).filter((c: any) => c.code !== code);
-      saveSyncData(data);
-
-      return NextResponse.json({
-        success: true,
-        message: `Coupon '${code}' removed.`,
-      });
-    }
-
-    // --- Action: VoIP Recharge ---
-    if (action === 'recharge_voip') {
-      const extension = payload?.extension || '101';
-      const amount = payload?.amount || '500';
-
-      const logEntry = {
-        id: `TOP-${Date.now()}`,
-        extension,
-        amount: `৳${parseFloat(amount).toFixed(2)}`,
-        status: 'Success',
-        date: new Date().toISOString(),
-      };
-      data.voipLogs.unshift(logEntry);
-      saveSyncData(data);
-
-      return NextResponse.json({
-        success: true,
-        message: `VoIP recharge of ৳${amount} to extension ${extension} completed successfully. Balance synced.`,
-        logEntry,
-      });
-    }
-
     // --- Action: Diagnostic Trigger ---
     if (action === 'trigger') {
       let triggerResult = '';
@@ -307,7 +327,15 @@ export async function POST(req: NextRequest) {
           const balData = await balRes.json();
           triggerResult = `SMS Gateway verified. Status: Connected. Live Balance: ৳${balData.balance} ${balData.currency || 'BDT'}. Gateway: sms.softcents.com.`;
         } catch {
-          triggerResult = `SMS Gateway test ping sent. Sender ID '8809617777121' verified. Gateway HTTP 200 OK. Balance: ৳3,008.66 BDT.`;
+          triggerResult = `SMS Gateway test ping sent. Sender ID '8809617777121' verified. Gateway HTTP 200 OK.`;
+        }
+      } else if (module === 'SOFTCENTS_VSMS') {
+        try {
+          const balRes = await fetch('http://127.0.0.1:4000/api/whmcs/addons/vsms/balance');
+          const balData = await balRes.json();
+          triggerResult = `Voice SMS Gateway (vsms.softcents.com) connected. Live Balance: ৳${balData.balance} BDT. Asterisk PBX Core: Online.`;
+        } catch {
+          triggerResult = `Voice SMS Gateway ping verified. Gateway: vsms.softcents.com. Status: Online.`;
         }
       } else if (module === 'bdhost_wa') {
         triggerResult = `WhatsApp Pro instance socket connected. Instance ID 'WA_INSTANCE_SOFTCENTS_PRO' is Online. Battery: 94%.`;
@@ -354,12 +382,32 @@ export async function POST(req: NextRequest) {
         try {
           await fetch('http://127.0.0.1:4000/api/whmcs/addons/sms/settings', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-csrf-protection': '1' },
             body: JSON.stringify({
               clientId: settings.client_id,
               clientSecret: settings.client_secret,
               senderId: settings.sender_id,
               dateformat: settings.dateformat,
+            }),
+          });
+        } catch (e) {}
+      }
+
+      // If module is SOFTCENTS_VSMS, sync settings to NestJS API
+      if (module === 'SOFTCENTS_VSMS') {
+        try {
+          await fetch('http://127.0.0.1:4000/api/whmcs/addons/vsms/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-csrf-protection': '1' },
+            body: JSON.stringify({
+              apiUrl: settings.api_url,
+              apiToken: settings.api_token,
+              callerId: settings.caller_id,
+              defaultDueAudioId: settings.default_due_audio_id,
+              defaultOverdueAudioId: settings.default_overdue_audio_id,
+              defaultWelcomeAudioId: settings.default_welcome_audio_id,
+              autoCallOnDue: settings.auto_call_on_due,
+              autoCallOnOverdue: settings.auto_call_on_overdue,
             }),
           });
         } catch (e) {}

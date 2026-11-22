@@ -70,6 +70,18 @@ export default function AdminAddonsHubPage() {
       href: '/admin/addons/SOFTCENTS_SMS',
     },
     {
+      id: 'SOFTCENTS_VSMS',
+      name: 'SOFTCENTS Voice SMS (vSMS)',
+      category: 'Voice & Telephony',
+      version: 'v2.0',
+      status: 'Active',
+      description: 'Official SoftCents Voice SMS gateway (vsms.softcents.com). Dispatch pre-recorded voice calls, IVR campaigns, OTP calls, and automated voice invoice alerts.',
+      icon: PhoneCall,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      href: '/admin/addons/SOFTCENTS_VSMS',
+    },
+    {
       id: 'advanced_client_verification',
       name: 'Advanced Client Verification',
       category: 'Identity & KYC',

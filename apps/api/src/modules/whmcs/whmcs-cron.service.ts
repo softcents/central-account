@@ -192,6 +192,15 @@ export class WhmcsCronService {
             if (sentStage) {
               inv.last_reminder_date = todayStr;
               inv.last_reminder_stage = sentStage;
+
+              // Voice Call Trigger (if enabled in SOFTCENTS_VSMS settings)
+              if (sentStage === 'third' || sentStage === 'second') {
+                try {
+                  await this.whmcs.vsmsAddon.triggerInvoiceOverdueVoiceCall(client, inv, sentStage);
+                } catch (e: any) {
+                  this.logger.warn(`Could not dispatch voice call reminder: ${e.message}`);
+                }
+              }
             }
           }
         }
