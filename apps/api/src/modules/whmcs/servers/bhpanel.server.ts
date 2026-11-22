@@ -57,6 +57,7 @@ export class BHPanelServer {
       const opts: RequestInit = {
         method,
         headers,
+        signal: AbortSignal.timeout(4000),
       };
 
       if (body !== null && ['POST', 'PUT', 'DELETE'].includes(method)) {
@@ -208,27 +209,83 @@ export class BHPanelServer {
    * Generates a One-Click Single Sign-On (SSO) login URL into BHPanel (cPanel UI)
    * Optional 'to' destination: 'files', 'mail', 'databases', 'ssl', 'wordpress', 'backups', 'dns', 'ftp', 'cron'
    */
-  async generateSsoUrl(username: string, domain: string, to?: string, config?: BHPanelConfig): Promise<{ success: boolean; ssoUrl?: string; error?: string }> {
-    const postData: any = {
-      expect_domain: domain,
-    };
-    if (to) {
-      postData.to = to;
+  async generateSsoUrl(username?: string, domain?: string, to?: string, config?: BHPanelConfig): Promise<{ success: boolean; ssoUrl?: string; error?: string }> {
+    let resolvedUser = (username || '').trim().toLowerCase();
+    const cleanDomain = (domain || '').trim().toLowerCase();
+
+    // 1. Try with provided username if we have one
+    if (resolvedUser) {
+      const postData: any = {};
+      if (cleanDomain) postData.expect_domain = cleanDomain;
+      if (to) postData.to = to;
+
+      const res = await this.apiCall('POST', `/v1/accounts/${resolvedUser}/signin`, postData, config);
+      if (res.ok && res.data?.url) {
+        this.logger.log(`Generated BHPanel SSO URL for user ${resolvedUser}: ${res.data.url}`);
+        return {
+          success: true,
+          ssoUrl: res.data.url,
+        };
+      }
     }
 
-    const res = await this.apiCall('POST', `/v1/accounts/${username}/signin`, postData, config);
+    // 2. If username not provided or failed, look up account list by domain or username prefix
+    try {
+      const accountsRes = await this.apiCall('GET', '/v1/accounts', null, config);
+      if (accountsRes.ok && Array.isArray(accountsRes.data)) {
+        const found = accountsRes.data.find((acc: any) => {
+          if (cleanDomain && (acc.domain?.toLowerCase() === cleanDomain || (Array.isArray(acc.sites) && acc.sites.some((s: string) => s.toLowerCase() === cleanDomain)))) {
+            return true;
+          }
+          if (resolvedUser && acc.username?.toLowerCase() === resolvedUser) {
+            return true;
+          }
+          return false;
+        });
 
-    if (res.ok && res.data?.url) {
-      return {
-        success: true,
-        ssoUrl: res.data.url,
-      };
+        if (found) {
+          resolvedUser = found.username;
+          const postData: any = {};
+          if (found.domain) postData.expect_domain = found.domain;
+          if (to) postData.to = to;
+
+          const res = await this.apiCall('POST', `/v1/accounts/${resolvedUser}/signin`, postData, config);
+          if (res.ok && res.data?.url) {
+            this.logger.log(`Resolved and generated BHPanel SSO URL for ${resolvedUser} (${cleanDomain}): ${res.data.url}`);
+            return {
+              success: true,
+              ssoUrl: res.data.url,
+            };
+          }
+        }
+      }
+    } catch (e: any) {
+      this.logger.error(`BHPanel account lookup error: ${e.message}`);
     }
 
     return {
       success: false,
       ssoUrl: `https://${config?.host || this.DEFAULT_HOST}:2083`,
-      error: res.error || 'Failed to generate one-click SSO token',
+      error: 'Failed to generate one-click SSO token',
+    };
+  }
+
+  /**
+   * Generates Root Admin Single Sign-On URL to port 2087
+   */
+  async generateAdminSsoUrl(config?: BHPanelConfig): Promise<{ success: boolean; ssoUrl?: string; error?: string }> {
+    const res = await this.apiCall('POST', '/v1/signin', {}, config);
+    if (res.ok && res.data?.url) {
+      this.logger.log(`Generated BHPanel Admin SSO: ${res.data.url}`);
+      return {
+        success: true,
+        ssoUrl: res.data.url,
+      };
+    }
+    return {
+      success: false,
+      ssoUrl: `https://${config?.host || this.DEFAULT_HOST}:2087`,
+      error: res.error || 'Failed to generate admin SSO',
     };
   }
 

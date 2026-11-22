@@ -250,14 +250,33 @@ export class SoftcentsPbxServer {
   /**
    * Generates a Single Sign-On (SSO) login token for PBX web portal
    */
-  async generateSsoToken(params: { domain: string; adminUser: string; serverParams?: PbxServerParams }): Promise<{ success: boolean; ssoUrl: string }> {
-    const res = await this.apiCall(params.serverParams, 'generate_sso_token', params.domain, {
+  async generateSsoToken(params: { domain: string; adminUser?: string; serverParams?: PbxServerParams }): Promise<{ success: boolean; ssoUrl: string; error?: string }> {
+    let domain = (params.domain || '').trim().toLowerCase();
+    if (domain && !domain.includes('.')) {
+      domain = `${domain}.bdpbx.com`;
+    }
+    if (!domain && params.adminUser) {
+      domain = `${params.adminUser}.bdpbx.com`;
+    }
+
+    const res = await this.apiCall(params.serverParams, 'sso', domain, {
       admin_user: params.adminUser,
     });
-    const ssoUrl = res?.sso_url || `https://${params.domain}/core/user_settings/user_dashboard.php?token=sso_${Date.now()}`;
+
+    if (res?.status === 'success' && res?.sso_url) {
+      this.logger.log(`Generated live PBX SSO token for ${domain}: ${res.sso_url}`);
+      return {
+        success: true,
+        ssoUrl: res.sso_url,
+      };
+    }
+
+    const fallbackUrl = `https://${domain || 'srv111.bdpbx.com'}/login.php`;
+    this.logger.warn(`PBX SSO for ${domain} returned non-success: ${JSON.stringify(res)}, falling back to login url.`);
     return {
-      success: true,
-      ssoUrl,
+      success: false,
+      ssoUrl: fallbackUrl,
+      error: res?.message || 'Failed to generate PBX SSO token',
     };
   }
 

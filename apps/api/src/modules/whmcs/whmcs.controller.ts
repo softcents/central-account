@@ -123,6 +123,11 @@ export class WhmcsController {
   }
 
   // SERVERS: cPanel
+  @Get('servers/cpanel/sso')
+  async getCpanelSso(@Query('username') username: string, @Query('host') host?: string) {
+    return this.whmcs.cpanelServer.generateSsoUrl(username, host ? { host, user: 'sgsoft', apiToken: '' } : undefined);
+  }
+
   @Post('servers/cpanel/change-password')
   async changeCpanelPassword(@Body() body: { username: string; newPass: string }) {
     return this.whmcs.cpanelServer.changePassword(body.username, body.newPass);
@@ -136,6 +141,11 @@ export class WhmcsController {
     @Query('to') to?: string,
   ) {
     return this.whmcs.bhpanelServer.generateSsoUrl(username, domain, to);
+  }
+
+  @Get('servers/bhpanel/admin-sso')
+  async getBhpanelAdminSso() {
+    return this.whmcs.bhpanelServer.generateAdminSsoUrl();
   }
 
   @Get('servers/bhpanel/usage')

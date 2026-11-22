@@ -88,17 +88,58 @@ export async function POST(req: NextRequest) {
         break;
 
       case 'loginto':
-      case 'sso':
-        const host = server.hostname || server.ipaddress || 'srv8.whitednszone.com';
-        if (server.type === 'cpanel') {
-          redirectUrl = `https://${host}:2083/login/?user=${encodeURIComponent(service.username || '')}`;
-        } else if (server.type === 'pbx' || server.type === 'softcentspbx') {
-          redirectUrl = `https://${host}/app/dashboard/`;
+      case 'sso': {
+        const pkg = `${service.package || service.product_name || ''} ${service.group_name || ''}`.toLowerCase();
+        const isPbx = pkg.includes('pbx') || server.type === 'pbx' || server.type === 'softcentspbx' || ['7', '8'].includes(String(service.server));
+        const isBh = pkg.includes('bdix') || pkg.includes('bhpanel') || String(service.server) === '6' || ['softcents.com', 'ronexatech.asia', 'doctorbangla.com'].includes(service.domain);
+
+        if (isPbx) {
+          const domain = service.domain || `${service.userid}.bdpbx.com`;
+          try {
+            const apiRes = await fetch(`http://127.0.0.1:4000/api/whmcs/servers/softcentspbx/sso?domain=${encodeURIComponent(domain)}&adminUser=${encodeURIComponent(service.username || 'admin')}`);
+            const apiData = await apiRes.json();
+            if (apiData?.ssoUrl) {
+              redirectUrl = apiData.ssoUrl;
+            } else {
+              redirectUrl = `https://${domain}/login.php`;
+            }
+          } catch {
+            redirectUrl = `https://${domain}/login.php`;
+          }
+          resultMessage = `Single Sign-On (SSO) session generated for Cloud PBX tenant ${domain}.`;
+        } else if (isBh) {
+          const isReseller = pkg.includes('reseller');
+          const defaultBhUrl = isReseller ? 'https://bdix-bh.softcents.com:2087' : 'https://bdix-bh.softcents.com:2083';
+          try {
+            const apiRes = await fetch(`http://127.0.0.1:4000/api/whmcs/servers/bhpanel/sso?username=${encodeURIComponent(service.username || '')}&domain=${encodeURIComponent(service.domain || '')}`);
+            const apiData = await apiRes.json();
+            if (apiData?.ssoUrl) {
+              redirectUrl = apiData.ssoUrl;
+            } else {
+              redirectUrl = defaultBhUrl;
+            }
+          } catch {
+            redirectUrl = defaultBhUrl;
+          }
+          resultMessage = `Single Sign-On (SSO) session generated for BHPanel hosting account ${service.username || service.domain}.`;
         } else {
-          redirectUrl = `https://${host}:2083`;
+          // cPanel / other hosting
+          const host = server.hostname || server.ipaddress || 'srv8.whitednszone.com';
+          try {
+            const apiRes = await fetch(`http://127.0.0.1:4000/api/whmcs/servers/cpanel/sso?username=${encodeURIComponent(service.username || '')}&host=${encodeURIComponent(host)}`);
+            const apiData = await apiRes.json();
+            if (apiData?.ssoUrl) {
+              redirectUrl = apiData.ssoUrl;
+            } else {
+              redirectUrl = `https://${host}:2083`;
+            }
+          } catch {
+            redirectUrl = `https://${host}:2083`;
+          }
+          resultMessage = `Single Sign-On (SSO) session generated for cPanel account ${service.username || service.domain}.`;
         }
-        resultMessage = `Single Sign-On (SSO) session generated for ${server.type?.toUpperCase()} server ${server.name}.`;
         break;
+      }
 
       default:
         return NextResponse.json({ success: false, error: `Unsupported module command: ${command}` }, { status: 400 });

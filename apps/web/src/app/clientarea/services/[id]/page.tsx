@@ -114,7 +114,14 @@ export default function ServiceDetailsPage() {
     }
   }, [isBhpanel, service?.username]);
 
+  const isReseller = useMemo(() => {
+    if (!service) return false;
+    const s = `${service.group_name || ''} ${service.product_name || ''} ${service.package || ''}`.toLowerCase();
+    return s.includes('reseller');
+  }, [service]);
+
   const handleBhpanelSso = async (to?: string) => {
+    const defaultBhUrl = isReseller ? 'https://bdix-bh.softcents.com:2087' : 'https://bdix-bh.softcents.com:2083';
     try {
       setBhSsoLoading(to || 'cpanel');
       const url = `/api/whmcs/servers/bhpanel/sso?username=${encodeURIComponent(service.username)}&domain=${encodeURIComponent(service.domain || '')}${to ? `&to=${encodeURIComponent(to)}` : ''}`;
@@ -123,17 +130,42 @@ export default function ServiceDetailsPage() {
       if (data.ssoUrl) {
         window.open(data.ssoUrl, '_blank');
       } else {
-        window.open(`https://bdix-bh.softcents.com:2083`, '_blank');
+        window.open(defaultBhUrl, '_blank');
       }
     } catch {
-      window.open(`https://bdix-bh.softcents.com:2083`, '_blank');
+      window.open(defaultBhUrl, '_blank');
     } finally {
       setBhSsoLoading(null);
     }
   };
 
+  const [cpanelSsoLoading, setCpanelSsoLoading] = useState(false);
+
+  const handleCpanelSso = async (serviceName: 'cpanel' | 'webmail' = 'cpanel') => {
+    try {
+      setCpanelSsoLoading(true);
+      const host = service.server_hostname || service.server_ip || 'srv8.whitednszone.com';
+      const res = await fetch(`/api/whmcs/servers/cpanel/sso?username=${encodeURIComponent(service.username || '')}&host=${encodeURIComponent(host)}`);
+      const data = await res.json();
+      if (data?.ssoUrl) {
+        window.open(data.ssoUrl, '_blank');
+      } else {
+        window.open(serviceName === 'webmail' ? webmailUrl : cpanelUrl, '_blank');
+      }
+    } catch {
+      window.open(serviceName === 'webmail' ? webmailUrl : cpanelUrl, '_blank');
+    } finally {
+      setCpanelSsoLoading(false);
+    }
+  };
+
   // PBX State
-  const pbxDomain = service?.domain || `${service?.username || 'sc-pbx'}.bdpbx.com`;
+  const pbxDomain = useMemo(() => {
+    let d = (service?.domain || '').trim().toLowerCase();
+    if (d && d.includes('.')) return d;
+    if (service?.userid) return `${service.userid}.bdpbx.com`;
+    return 'srv111.bdpbx.com';
+  }, [service]);
   const [extensions, setExtensions] = useState<any[]>([
     { extension: '101', name: 'Agent Desk 101', password: service?.password || 'Pass@101#2026', enabled: true },
     { extension: '102', name: 'Agent Desk 102', password: 'Pass@102#2026', enabled: true },
@@ -1174,27 +1206,31 @@ export default function ServiceDetailsPage() {
                   <span>Control Panel Logins</span>
                 </div>
                 <div className="p-4 space-y-2.5 text-xs">
-                  <a
-                    href={cpanelUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full bg-[#ff6c2c] hover:bg-[#e0581b] text-white font-bold py-2.5 px-4 rounded transition-colors flex items-center justify-center space-x-2 shadow-xs"
+                  <button
+                    type="button"
+                    onClick={() => (isBhpanel ? handleBhpanelSso() : handleCpanelSso('cpanel'))}
+                    disabled={isBhpanel ? bhSsoLoading === 'cpanel' : cpanelSsoLoading}
+                    className="w-full bg-[#ff6c2c] hover:bg-[#e0581b] text-white font-bold py-2.5 px-4 rounded transition-colors flex items-center justify-center space-x-2 shadow-xs cursor-pointer"
                   >
-                    <Server className="w-4 h-4" />
+                    {(isBhpanel ? bhSsoLoading === 'cpanel' : cpanelSsoLoading) ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Server className="w-4 h-4" />
+                    )}
                     <span>Log in to cPanel</span>
                     <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-                  </a>
+                  </button>
 
-                  <a
-                    href={webmailUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-4 rounded transition-colors flex items-center justify-center space-x-2 shadow-xs"
+                  <button
+                    type="button"
+                    onClick={() => (isBhpanel ? handleBhpanelSso('mail') : handleCpanelSso('webmail'))}
+                    disabled={isBhpanel ? bhSsoLoading === 'mail' : cpanelSsoLoading}
+                    className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-4 rounded transition-colors flex items-center justify-center space-x-2 shadow-xs cursor-pointer"
                   >
                     <Globe className="w-4 h-4" />
                     <span>Log in to Webmail</span>
                     <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-                  </a>
+                  </button>
 
                   <button
                     type="button"
