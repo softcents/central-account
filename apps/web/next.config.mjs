@@ -13,6 +13,14 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        source: '/api/whmcs/:path*',
+        destination: 'http://127.0.0.1:4000/api/whmcs/:path*',
+      },
+      {
+        source: '/api/auth/:path*',
+        destination: 'http://127.0.0.1:4000/api/auth/:path*',
+      },
+      {
         source: '/clientarea.php',
         destination: '/clientarea',
       },

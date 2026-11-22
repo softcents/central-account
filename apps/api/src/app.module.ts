@@ -22,6 +22,7 @@ import { WebhookModule } from './modules/webhook/webhook.module';
 import { PublicApiModule } from './modules/public-api/public-api.module';
 import { CsrfGuard } from './common/guards/csrf.guard';
 import { InternalModule } from './modules/internal/internal.module';
+import { WhmcsModule } from './modules/whmcs/whmcs.module';
 import { TenantDomainMiddleware } from './common/middleware/tenant-domain.middleware';
 
 @Module({
@@ -55,6 +56,7 @@ import { TenantDomainMiddleware } from './common/middleware/tenant-domain.middle
     PublicApiModule,
     WebhookModule,
     InternalModule,
+    WhmcsModule,
   ],
   providers: [
     {
