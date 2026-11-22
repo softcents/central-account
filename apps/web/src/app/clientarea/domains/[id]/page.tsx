@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
@@ -64,6 +64,7 @@ export default function DomainDetailsPage() {
   const [ns4, setNs4] = useState('');
   const [ns5, setNs5] = useState('');
   const [nsSaved, setNsSaved] = useState(false);
+  const [savingNs, setSavingNs] = useState(false);
 
   // Auto renewal state
   const [autoRenew, setAutoRenew] = useState(domain?.donotrenew !== '1');
@@ -71,6 +72,13 @@ export default function DomainDetailsPage() {
   // Registrar Lock state
   const [isLocked, setIsLocked] = useState(true);
   const [lockSaved, setLockSaved] = useState(false);
+  const [savingLock, setSavingLock] = useState(false);
+
+  // Live state
+  const [liveLoading, setLiveLoading] = useState(false);
+  const [liveInfo, setLiveInfo] = useState<any>(null);
+  const [eppLoading, setEppLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Contact WHOIS info
   const [contactData, setContactData] = useState({
@@ -89,6 +97,35 @@ export default function DomainDetailsPage() {
 
   // EPP Code modal state
   const [eppCode, setEppCode] = useState<string | null>(null);
+
+  // Load real-time nameservers, registrar lock & info from BDWebs
+  useEffect(() => {
+    if (domain?.domain) {
+      setLiveLoading(true);
+      Promise.all([
+        fetch(`/api/whmcs/domains/${encodeURIComponent(domain.domain)}/nameservers`).then((r) => r.json()).catch(() => null),
+        fetch(`/api/whmcs/domains/${encodeURIComponent(domain.domain)}/lock`).then((r) => r.json()).catch(() => null),
+        fetch(`/api/whmcs/domains/${encodeURIComponent(domain.domain)}/info`).then((r) => r.json()).catch(() => null),
+      ])
+        .then(([nsData, lockData, infoData]) => {
+          if (nsData?.ok && nsData?.nameservers) {
+            if (nsData.nameservers.ns1) setNs1(nsData.nameservers.ns1);
+            if (nsData.nameservers.ns2) setNs2(nsData.nameservers.ns2);
+            if (nsData.nameservers.ns3) setNs3(nsData.nameservers.ns3);
+            if (nsData.nameservers.ns4) setNs4(nsData.nameservers.ns4);
+            if (nsData.nameservers.ns5) setNs5(nsData.nameservers.ns5);
+            setNsType('custom');
+          }
+          if (lockData?.ok && typeof lockData.locked === 'boolean') {
+            setIsLocked(lockData.locked);
+          }
+          if (infoData?.ok && infoData?.data) {
+            setLiveInfo(infoData.data);
+          }
+        })
+        .finally(() => setLiveLoading(false));
+    }
+  }, [domain?.domain]);
 
   if (!domain) {
     return (
@@ -111,16 +148,53 @@ export default function DomainDetailsPage() {
     );
   }
 
-  const handleSaveNameservers = (e: React.FormEvent) => {
+  const handleSaveNameservers = async (e: React.FormEvent) => {
     e.preventDefault();
-    setNsSaved(true);
-    setTimeout(() => setNsSaved(false), 3000);
+    try {
+      setSavingNs(true);
+      setActionError(null);
+      const res = await fetch(`/api/whmcs/domains/${encodeURIComponent(domain.domain)}/nameservers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ns1, ns2, ns3, ns4, ns5 }),
+      });
+      const data = await res.json();
+      if (data.success !== false) {
+        setNsSaved(true);
+        setTimeout(() => setNsSaved(false), 4000);
+      } else {
+        setActionError(data.message || 'Failed to update nameservers on registry');
+      }
+    } catch (err: any) {
+      setActionError(err.message || 'Network error');
+    } finally {
+      setSavingNs(false);
+    }
   };
 
-  const handleToggleLock = () => {
-    setIsLocked(!isLocked);
-    setLockSaved(true);
-    setTimeout(() => setLockSaved(false), 3000);
+  const handleToggleLock = async () => {
+    try {
+      setSavingLock(true);
+      setActionError(null);
+      const nextLock = !isLocked;
+      const res = await fetch(`/api/whmcs/domains/${encodeURIComponent(domain.domain)}/lock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lock: nextLock }),
+      });
+      const data = await res.json();
+      if (data.success !== false) {
+        setIsLocked(nextLock);
+        setLockSaved(true);
+        setTimeout(() => setLockSaved(false), 4000);
+      } else {
+        setActionError(data.message || 'Failed to update lock status on registry');
+      }
+    } catch (err: any) {
+      setActionError(err.message || 'Network error');
+    } finally {
+      setSavingLock(false);
+    }
   };
 
   const handleSaveWhois = (e: React.FormEvent) => {
@@ -129,10 +203,22 @@ export default function DomainDetailsPage() {
     setTimeout(() => setWhoisSaved(false), 3000);
   };
 
-  const handleGetEpp = () => {
-    // Generate secure EPP code representation for this domain
-    const mockEpp = `EPP-${domain.domain.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}-${Math.random().toString(36).slice(-6).toUpperCase()}`;
-    setEppCode(mockEpp);
+  const handleGetEpp = async () => {
+    try {
+      setEppLoading(true);
+      setActionError(null);
+      const res = await fetch(`/api/whmcs/domains/${encodeURIComponent(domain.domain)}/epp`);
+      const data = await res.json();
+      if (data?.ok && data?.eppCode) {
+        setEppCode(data.eppCode);
+      } else {
+        setActionError(data?.error || 'Unable to retrieve EPP code from registrar');
+      }
+    } catch (err: any) {
+      setActionError(err.message || 'Network error');
+    } finally {
+      setEppLoading(false);
+    }
   };
 
   const status = domain.status || 'Active';
@@ -265,6 +351,14 @@ export default function DomainDetailsPage() {
 
           {/* RIGHT COLUMN: Tab Contents */}
           <div className="lg:col-span-3 space-y-6">
+            {/* Action error banner */}
+            {actionError && (
+              <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded text-xs font-semibold flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{actionError}</span>
+              </div>
+            )}
+
             {/* TAB 1: OVERVIEW */}
             {activeTab === 'overview' && (
               <div className="space-y-6">
@@ -447,10 +541,11 @@ export default function DomainDetailsPage() {
                   <div className="pt-2">
                     <button
                       type="submit"
-                      className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-6 py-2.5 rounded font-bold transition-colors flex items-center space-x-1.5 shadow-sm"
+                      disabled={savingNs}
+                      className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-6 py-2.5 rounded font-bold transition-colors flex items-center space-x-1.5 shadow-sm cursor-pointer disabled:opacity-70"
                     >
-                      <Save className="w-4 h-4" />
-                      <span>Change Nameservers</span>
+                      {savingNs ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                      <span>{savingNs ? 'Updating on Registry...' : 'Change Nameservers'}</span>
                     </button>
                   </div>
                 </form>
@@ -498,13 +593,15 @@ export default function DomainDetailsPage() {
 
                   <button
                     onClick={handleToggleLock}
-                    className={`px-5 py-2 rounded font-bold transition-colors shadow-sm ${
+                    disabled={savingLock}
+                    className={`px-5 py-2 rounded font-bold transition-colors shadow-sm flex items-center space-x-1.5 cursor-pointer disabled:opacity-70 ${
                       isLocked
                         ? 'bg-rose-600 hover:bg-rose-700 text-white'
                         : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                     }`}
                   >
-                    {isLocked ? 'Disable Registrar Lock' : 'Enable Registrar Lock'}
+                    {savingLock && <RefreshCw className="w-4 h-4 animate-spin" />}
+                    <span>{isLocked ? 'Disable Registrar Lock' : 'Enable Registrar Lock'}</span>
                   </button>
                 </div>
               </div>
@@ -663,9 +760,11 @@ export default function DomainDetailsPage() {
                     </div>
                     <button
                       onClick={handleGetEpp}
-                      className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-5 py-2.5 rounded font-bold transition-colors shrink-0 shadow-sm"
+                      disabled={eppLoading}
+                      className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-5 py-2.5 rounded font-bold transition-colors shrink-0 shadow-sm flex items-center space-x-1.5 cursor-pointer disabled:opacity-70"
                     >
-                      Generate EPP / Auth Code
+                      {eppLoading && <RefreshCw className="w-4 h-4 animate-spin" />}
+                      <span>{eppLoading ? 'Fetching from Registry...' : 'Get EPP / Auth Code'}</span>
                     </button>
                   </div>
                 )}

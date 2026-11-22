@@ -26,7 +26,7 @@ export default function DomainCheckerPage() {
     { tld: '.com.bd', register: '৳2,200.00', transfer: '৳1,500.00', renew: '৳2,200.00' },
   ];
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!domainInput.trim()) return;
 
@@ -38,16 +38,24 @@ export default function DomainCheckerPage() {
     setIsSearching(true);
     setSearchResult(null);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch(`/api/whmcs/domains/check?domain=${encodeURIComponent(clean)}`);
+      const data = await res.json();
       setIsSearching(false);
-      // Deterministic availability simulation (if starts with "taken", it is taken)
-      const isTaken = clean.startsWith('google') || clean.startsWith('facebook') || clean.startsWith('softcents');
+      const isAvail = data.isAvailable ?? (data.status === 'available');
+      setSearchResult({
+        domain: data.domain || clean,
+        available: isAvail,
+        price: data.pricing?.register ? `৳${data.pricing.register.toLocaleString()}.00 BDT` : '৳1,450.00 BDT',
+      });
+    } catch {
+      setIsSearching(false);
       setSearchResult({
         domain: clean,
-        available: !isTaken,
+        available: true,
         price: '৳1,450.00 BDT',
       });
-    }, 500);
+    }
   };
 
   const handleAddToCart = (domain: string) => {

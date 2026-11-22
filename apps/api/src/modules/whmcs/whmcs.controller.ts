@@ -215,10 +215,48 @@ export class WhmcsController {
     return { valid };
   }
 
-  // DOMAINS: Reseller & Whois
+  // DOMAINS: Reseller & Whois (BDWebs Integration)
   @Get('domains/check')
   async checkDomain(@Query('domain') domain: string) {
     return this.whmcs.domainReseller.checkAvailability(domain);
+  }
+
+  @Get('domains/pricing')
+  async getDomainPricing() {
+    return this.whmcs.domainReseller.getTldPricing();
+  }
+
+  @Get('domains/:domain/info')
+  async getDomainInfo(@Param('domain') domain: string) {
+    return this.whmcs.domainReseller.getDomainInformation(domain);
+  }
+
+  @Get('domains/:domain/nameservers')
+  async getDomainNameservers(@Param('domain') domain: string) {
+    return this.whmcs.domainReseller.getNameServers(domain);
+  }
+
+  @Post('domains/:domain/nameservers')
+  async saveDomainNameservers(
+    @Param('domain') domain: string,
+    @Body() body: { ns1: string; ns2: string; ns3?: string; ns4?: string; ns5?: string },
+  ) {
+    return this.whmcs.domainReseller.saveNameServers(domain, body);
+  }
+
+  @Get('domains/:domain/lock')
+  async getDomainLock(@Param('domain') domain: string) {
+    return this.whmcs.domainReseller.getRegistrarLock(domain);
+  }
+
+  @Post('domains/:domain/lock')
+  async saveDomainLock(@Param('domain') domain: string, @Body() body: { lock: boolean }) {
+    return this.whmcs.domainReseller.saveRegistrarLock(domain, body.lock);
+  }
+
+  @Get('domains/:domain/epp')
+  async getDomainEpp(@Param('domain') domain: string) {
+    return this.whmcs.domainReseller.getEppCode(domain);
   }
 
   // CART: Checkout
