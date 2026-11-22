@@ -257,7 +257,7 @@ export default function AddonModuleDetailPage() {
   const [vsmsAudios, setVsmsAudios] = useState<any[]>([]);
   const [voiceLogs, setVoiceLogs] = useState<any[]>([]);
   const [voiceRecipient, setVoiceRecipient] = useState('01329646689');
-  const [selectedVoiceCaller, setSelectedVoiceCaller] = useState('369');
+  const [selectedVoiceCaller, setSelectedVoiceCaller] = useState('376');
   const [selectedVoiceAudio, setSelectedVoiceAudio] = useState('419');
 
   // Audio Upload Form State
@@ -292,6 +292,9 @@ export default function AddonModuleDetailPage() {
         const d = await res.json();
         if (d.addonSettingsMap?.[moduleId]) {
           setSettings((prev) => ({ ...prev, ...d.addonSettingsMap[moduleId] }));
+          if (d.addonSettingsMap[moduleId].caller_id) {
+            setSelectedVoiceCaller(String(d.addonSettingsMap[moduleId].caller_id));
+          }
         }
         if (d.smsBalance !== undefined) setSmsBalance(d.smsBalance);
         if (d.smsCurrency) setSmsCurrency(d.smsCurrency);
@@ -827,7 +830,7 @@ export default function AddonModuleDetailPage() {
                 className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2 text-slate-800 font-mono"
               />
               <span className="text-[11px] text-slate-500">
-                Direct telephony dispatch via Asterisk PBX Core (`vsms.softcents.com`).
+                Direct telephony dispatch via FreeSWITCH Core PBX (`vsms.softcents.com`).
               </span>
             </div>
 
@@ -839,11 +842,11 @@ export default function AddonModuleDetailPage() {
                 className="w-full bg-white border border-slate-300 rounded px-3 py-2 text-slate-800 font-mono"
               >
                 {vsmsCallers.length === 0 ? (
-                  <option value="369">White Info &lt;09639228906&gt; (Default Online)</option>
+                  <option value="376">Softcents Billing &lt;09617777121&gt; (Default Primary)</option>
                 ) : (
                   vsmsCallers.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.caller_name} &lt;{c.caller_number}&gt; {c.enabled ? '(Online)' : '(Disabled)'}
+                      {c.caller_name} &lt;{c.caller_number}&gt; {c.id === 376 ? '(Primary)' : c.enabled ? '(Online)' : '(Disabled)'}
                     </option>
                   ))
                 )}
@@ -925,12 +928,16 @@ export default function AddonModuleDetailPage() {
                 </span>
               </div>
               <div className="flex justify-between items-center py-1 border-b">
-                <span className="text-slate-600">Asterisk Core Server:</span>
-                <span className="font-mono font-bold text-slate-800">103.234.119.204:5038</span>
+                <span className="text-slate-600">FreeSWITCH PBX Core:</span>
+                <span className="font-mono font-bold text-slate-800">voice-pro-freeswitch (ESL 127.0.0.1:8021)</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b">
+                <span className="text-slate-600">Primary Caller ID:</span>
+                <span className="font-mono font-bold text-purple-700">09617777121</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b">
                 <span className="text-slate-600">Active Callers (Online):</span>
-                <span className="font-bold text-slate-800">{vsmsCallers.length || 9} Numbers Registered</span>
+                <span className="font-bold text-slate-800">{vsmsCallers.length || 10} Numbers Registered</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b">
                 <span className="text-slate-600">Audio Library:</span>
@@ -1005,7 +1012,7 @@ export default function AddonModuleDetailPage() {
                   className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-1.5 rounded font-bold shadow-sm flex items-center space-x-1.5 disabled:opacity-50"
                 >
                   {actionLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                  <span>Upload & Auto-Convert for Asterisk</span>
+                  <span>Upload & Auto-Convert for FreeSWITCH</span>
                 </button>
               </div>
             </form>
@@ -1102,6 +1109,32 @@ export default function AddonModuleDetailPage() {
           </div>
 
           <div className="space-y-4">
+            <div className="border border-purple-200 rounded p-3 space-y-3 bg-purple-50/40">
+              <h3 className="font-bold text-slate-800 text-xs flex items-center justify-between">
+                <span>Default Outbound Caller ID (Telephony CLI)</span>
+                <span className="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[10px]">Active CLI</span>
+              </h3>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Select Default Outbound Caller ID</label>
+                <select
+                  value={settings.caller_id || '376'}
+                  onChange={(e) => handleInputChange('caller_id', e.target.value)}
+                  className="w-full max-w-md bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 font-mono"
+                >
+                  {vsmsCallers.length === 0 ? (
+                    <option value="376">Softcents Billing &lt;09617777121&gt; (Default Primary)</option>
+                  ) : (
+                    vsmsCallers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        [{c.id}] {c.caller_name} &lt;{c.caller_number}&gt; {c.id === 376 ? '(Primary)' : ''}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <p className="text-[11px] text-slate-500 mt-1">All automated invoice reminder, overdue notice, and system calls will dial with this Caller ID (Default: 09617777121).</p>
+              </div>
+            </div>
+
             <div className="border border-slate-200 rounded p-3 space-y-3 bg-slate-50/50">
               <h3 className="font-bold text-slate-800 text-xs">1. Invoice Due Date Voice Call</h3>
               <div className="flex items-center space-x-4">
