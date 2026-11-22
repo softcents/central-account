@@ -128,6 +128,39 @@ export class WhmcsController {
     return this.whmcs.cpanelServer.changePassword(body.username, body.newPass);
   }
 
+  // SERVERS: BHPanel (cPanel Alternative BDIX Hosting)
+  @Get('servers/bhpanel/sso')
+  async getBhpanelSso(
+    @Query('username') username: string,
+    @Query('domain') domain: string,
+    @Query('to') to?: string,
+  ) {
+    return this.whmcs.bhpanelServer.generateSsoUrl(username, domain, to);
+  }
+
+  @Get('servers/bhpanel/usage')
+  async getBhpanelUsage(
+    @Query('username') username: string,
+    @Query('domain') domain?: string,
+  ) {
+    return this.whmcs.bhpanelServer.getAccountUsage(username, domain);
+  }
+
+  @Post('servers/bhpanel/change-password')
+  async changeBhpanelPassword(@Body() body: { username: string; domain: string; newPass: string }) {
+    return this.whmcs.bhpanelServer.changePassword(body.username, body.domain, body.newPass);
+  }
+
+  @Get('servers/bhpanel/plans')
+  async getBhpanelPlans() {
+    return this.whmcs.bhpanelServer.getPlans();
+  }
+
+  @Get('servers/bhpanel/ping')
+  async pingBhpanel() {
+    return this.whmcs.bhpanelServer.ping();
+  }
+
   // SERVERS: Virtualizor VPS
   @Post('servers/virtualizor/action')
   async virtualizorAction(@Body() body: { vpsId: string | number; action: 'start' | 'stop' | 'restart' | 'suspend' | 'unsuspend' }) {

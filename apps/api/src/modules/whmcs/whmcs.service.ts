@@ -6,6 +6,7 @@ import { UddoktaPayGateway } from './gateways/uddoktapay.gateway';
 import { ResellerGateway } from './gateways/reseller.gateway';
 import { SoftcentsPbxServer } from './servers/softcentspbx.server';
 import { CpanelServer } from './servers/cpanel.server';
+import { BHPanelServer } from './servers/bhpanel.server';
 import { VirtualizorServer } from './servers/virtualizor.server';
 import { SoftcentsSmsAddon } from './addons/softcents-sms.addon';
 import { BdhostWaAddon } from './addons/bdhost-wa.addon';
@@ -25,6 +26,7 @@ export class WhmcsService {
     public readonly resellerGateway: ResellerGateway,
     public readonly pbxServer: SoftcentsPbxServer,
     public readonly cpanelServer: CpanelServer,
+    public readonly bhpanelServer: BHPanelServer,
     public readonly virtualizorServer: VirtualizorServer,
     public readonly smsAddon: SoftcentsSmsAddon,
     public readonly waAddon: BdhostWaAddon,
@@ -135,10 +137,11 @@ export class WhmcsService {
     }
 
     const client = this.getClient(service.userid);
-    const prodName = service.name || service.productname || '';
+    const prodName = service.product_name || service.package || service.name || service.productname || '';
+    const fullProdDesc = `${service.group_name || ''} ${prodName} ${service.server_name || ''}`.toLowerCase();
 
     // Route to appropriate server module
-    if (prodName.toLowerCase().includes('pbx') || prodName.toLowerCase().includes('voice')) {
+    if (fullProdDesc.includes('pbx') || fullProdDesc.includes('voice')) {
       const pbxRes = await this.pbxServer.createAccount({
         serviceId: service.id,
         domain: service.domain,
@@ -167,6 +170,45 @@ export class WhmcsService {
         success: true,
         message: 'PBX Service successfully provisioned and activated.',
         details: pbxRes,
+      };
+    } else if (
+      fullProdDesc.includes('bdix') ||
+      String(service.server) === '6' ||
+      fullProdDesc.includes('bhpanel') ||
+      ['113', '114', '115', '116', '161'].includes(String(service.packageid))
+    ) {
+      // BHPanel (cPanel Alternative BDIX Hosting)
+      const selectedPlan = (fullProdDesc.includes('reseller') && fullProdDesc.includes('50g'))
+        ? 'reseller_50g'
+        : (fullProdDesc.includes('reseller') || String(service.packageid) === '161')
+        ? 'reseller_25g'
+        : (fullProdDesc.includes('20g') || String(service.packageid) === '116')
+        ? 'customer_20g'
+        : (fullProdDesc.includes('10g') || String(service.packageid) === '115')
+        ? 'customer_10g'
+        : (fullProdDesc.includes('5g') || String(service.packageid) === '114')
+        ? 'customer_5g'
+        : 'customer_2g';
+
+      const bhRes = await this.bhpanelServer.createAccount({
+        username: service.username || `user${service.id}`,
+        domain: service.domain || `user${service.id}.com`,
+        password: service.password || 'BDIXPass@2026!',
+        plan: selectedPlan,
+        contactEmail: client?.email || 'admin@softcents.com',
+      });
+
+      service.domainstatus = 'Active';
+      service.server = '6';
+      service.server_name = 'BDIX Server (cPanel)';
+      service.server_hostname = 'bdix-bh.softcents.com';
+      service.server_type = 'bhpanel';
+      this.saveSyncData();
+
+      return {
+        success: true,
+        message: 'BHPanel BDIX Hosting Service successfully provisioned.',
+        details: bhRes,
       };
     } else if (prodName.toLowerCase().includes('hosting')) {
       const cpRes = await this.cpanelServer.createAccount({

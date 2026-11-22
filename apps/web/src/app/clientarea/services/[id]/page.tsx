@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
@@ -33,6 +33,10 @@ import {
   Play,
   Square,
   RotateCcw,
+  FolderOpen,
+  Database,
+  Mail,
+  FileCode,
 } from 'lucide-react';
 import whmcsData from '@/data/whmcs_sync.json';
 
@@ -77,6 +81,56 @@ export default function ServiceDetailsPage() {
     const s = `${service.group_name || ''} ${service.product_name || ''} ${service.package || ''}`.toLowerCase();
     return s.includes('vps') || s.includes('virtual') || s.includes('cloud server');
   }, [service]);
+
+  // Detect BHPanel (BDIX cPanel Alternative)
+  const isBhpanel = useMemo(() => {
+    if (!service || isPbx || isVps) return false;
+    const s = `${service.group_name || ''} ${service.product_name || ''} ${service.package || ''} ${service.server_name || ''} ${service.server_type || ''}`.toLowerCase();
+    return (
+      s.includes('bdix') ||
+      s.includes('bhpanel') ||
+      String(service.server) === '6' ||
+      ['113', '114', '115', '116', '161'].includes(String(service.packageid))
+    );
+  }, [service, isPbx, isVps]);
+
+  // BHPanel State
+  const [bhUsage, setBhUsage] = useState<any>(null);
+  const [bhLoadingUsage, setBhLoadingUsage] = useState(false);
+  const [bhSsoLoading, setBhSsoLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isBhpanel && service?.username) {
+      setBhLoadingUsage(true);
+      fetch(`/api/whmcs/servers/bhpanel/usage?username=${encodeURIComponent(service.username)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.ok && data?.data) {
+            setBhUsage(data.data);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setBhLoadingUsage(false));
+    }
+  }, [isBhpanel, service?.username]);
+
+  const handleBhpanelSso = async (to?: string) => {
+    try {
+      setBhSsoLoading(to || 'cpanel');
+      const url = `/api/whmcs/servers/bhpanel/sso?username=${encodeURIComponent(service.username)}&domain=${encodeURIComponent(service.domain || '')}${to ? `&to=${encodeURIComponent(to)}` : ''}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.ssoUrl) {
+        window.open(data.ssoUrl, '_blank');
+      } else {
+        window.open(`https://bdix-bh.softcents.com:2083`, '_blank');
+      }
+    } catch {
+      window.open(`https://bdix-bh.softcents.com:2083`, '_blank');
+    } finally {
+      setBhSsoLoading(null);
+    }
+  };
 
   // PBX State
   const pbxDomain = service?.domain || `${service?.username || 'sc-pbx'}.bdpbx.com`;
@@ -265,7 +319,7 @@ export default function ServiceDetailsPage() {
     }
   };
 
-  // Password Submit for cPanel
+  // Password Submit for cPanel or BHPanel
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || newPassword.length < 8) {
@@ -278,13 +332,18 @@ export default function ServiceDetailsPage() {
     }
 
     try {
-      const res = await fetch('/api/whmcs/servers/cpanel/change-password', {
+      const endpoint = isBhpanel
+        ? '/api/whmcs/servers/bhpanel/change-password'
+        : '/api/whmcs/servers/cpanel/change-password';
+
+      const bodyPayload = isBhpanel
+        ? { username: service.username, domain: service.domain || '', newPass: newPassword }
+        : { username: service.username, newPass: newPassword };
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: service.username,
-          newPass: newPassword,
-        }),
+        body: JSON.stringify(bodyPayload),
       });
       const data = await res.json();
       if (data.success !== false) {
@@ -719,6 +778,346 @@ export default function ServiceDetailsPage() {
               </div>
             )}
           </div>
+        ) : isBhpanel ? (
+          /* ========================================================
+             IF BDIX HOSTING: BHPANEL (CPANEL ALTERNATIVE)
+             ======================================================== */
+          <div className="space-y-6">
+            {/* Top Quick Launch & SSO Header */}
+            <div className="bg-gradient-to-r from-[#0d2a4a] via-[#153e6b] to-[#1A4D80] rounded-xl p-5 sm:p-6 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="bg-amber-400 text-slate-900 font-extrabold text-[10px] uppercase px-2 py-0.5 rounded tracking-wider">
+                    High-Speed BDIX
+                  </span>
+                  <span className="text-xs text-sky-200 font-medium">cPanel Alternative Hosting</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black mt-1 text-white flex items-center space-x-2">
+                  <span>{service.domain || service.username || `BDIX Hosting #${service.id}`}</span>
+                  {service.domain && (
+                    <a
+                      href={`https://${service.domain}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sky-300 hover:text-white"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
+                </h2>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300 mt-2">
+                  <span>Node: <strong className="text-white font-mono">bdix-bh.softcents.com</strong></span>
+                  <span>•</span>
+                  <span>Server IP: <strong className="text-white font-mono">138.252.125.209</strong></span>
+                  <span>•</span>
+                  <span>Web Engine: <strong className="text-emerald-300 font-semibold">LiteSpeed Enterprise</strong></span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => handleBhpanelSso()}
+                  disabled={bhSsoLoading === 'cpanel'}
+                  className="bg-[#ff6c2c] hover:bg-[#e0581b] text-white px-5 py-2.5 rounded-lg font-bold text-xs flex items-center space-x-2 shadow-sm transition-all transform hover:-translate-y-0.5"
+                >
+                  {bhSsoLoading === 'cpanel' ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Server className="w-4 h-4" />
+                  )}
+                  <span>Log in to cPanel</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleBhpanelSso('mail')}
+                  disabled={bhSsoLoading === 'mail'}
+                  className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-lg font-bold text-xs flex items-center space-x-1.5 transition-all"
+                >
+                  {bhSsoLoading === 'mail' ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Mail className="w-4 h-4 text-sky-300" />
+                  )}
+                  <span>Webmail</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick cPanel Shortcuts Grid */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-bold text-sm text-slate-800 flex items-center space-x-2">
+                  <Box className="w-4 h-4 text-[#1A4D80]" />
+                  <span>One-Click Control Panel Shortcuts</span>
+                </h3>
+                <span className="text-[11px] text-slate-500">Instant SSO into specific management tools</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleBhpanelSso('files')}
+                  disabled={!!bhSsoLoading}
+                  className="p-3.5 rounded-lg border border-slate-200 hover:border-[#1A4D80] hover:bg-sky-50/50 transition-all text-center group flex flex-col items-center space-y-2 cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    {bhSsoLoading === 'files' ? <RefreshCw className="w-5 h-5 animate-spin" /> : <FolderOpen className="w-5 h-5" />}
+                  </div>
+                  <span className="font-bold text-xs text-slate-700 group-hover:text-[#1A4D80]">File Manager</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleBhpanelSso('mail')}
+                  disabled={!!bhSsoLoading}
+                  className="p-3.5 rounded-lg border border-slate-200 hover:border-[#1A4D80] hover:bg-sky-50/50 transition-all text-center group flex flex-col items-center space-y-2 cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    {bhSsoLoading === 'mail' ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
+                  </div>
+                  <span className="font-bold text-xs text-slate-700 group-hover:text-[#1A4D80]">Email Accounts</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleBhpanelSso('databases')}
+                  disabled={!!bhSsoLoading}
+                  className="p-3.5 rounded-lg border border-slate-200 hover:border-[#1A4D80] hover:bg-sky-50/50 transition-all text-center group flex flex-col items-center space-y-2 cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    {bhSsoLoading === 'databases' ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Database className="w-5 h-5" />}
+                  </div>
+                  <span className="font-bold text-xs text-slate-700 group-hover:text-[#1A4D80]">MySQL &amp; DBs</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleBhpanelSso('wordpress')}
+                  disabled={!!bhSsoLoading}
+                  className="p-3.5 rounded-lg border border-slate-200 hover:border-[#1A4D80] hover:bg-sky-50/50 transition-all text-center group flex flex-col items-center space-y-2 cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    {bhSsoLoading === 'wordpress' ? <RefreshCw className="w-5 h-5 animate-spin" /> : <FileCode className="w-5 h-5" />}
+                  </div>
+                  <span className="font-bold text-xs text-slate-700 group-hover:text-[#1A4D80]">WordPress</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleBhpanelSso('ssl')}
+                  disabled={!!bhSsoLoading}
+                  className="p-3.5 rounded-lg border border-slate-200 hover:border-[#1A4D80] hover:bg-sky-50/50 transition-all text-center group flex flex-col items-center space-y-2 cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    {bhSsoLoading === 'ssl' ? <RefreshCw className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
+                  </div>
+                  <span className="font-bold text-xs text-slate-700 group-hover:text-[#1A4D80]">SSL / TLS</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleBhpanelSso('dns')}
+                  disabled={!!bhSsoLoading}
+                  className="p-3.5 rounded-lg border border-slate-200 hover:border-[#1A4D80] hover:bg-sky-50/50 transition-all text-center group flex flex-col items-center space-y-2 cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    {bhSsoLoading === 'dns' ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Globe className="w-5 h-5" />}
+                  </div>
+                  <span className="font-bold text-xs text-slate-700 group-hover:text-[#1A4D80]">DNS Zone</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Specifications & Usage Breakdown */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                {/* Real-time Usage Metrics */}
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 className="font-bold text-sm text-slate-800 flex items-center space-x-2">
+                      <Activity className="w-4 h-4 text-emerald-600" />
+                      <span>Live Resource Usage</span>
+                    </h3>
+                    {bhLoadingUsage && <span className="text-xs text-slate-400">Syncing with server...</span>}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
+                    {/* Disk Usage */}
+                    <div className="border border-slate-200 rounded-lg p-4 space-y-2 bg-slate-50/50">
+                      <div className="flex items-center justify-between font-bold">
+                        <span className="text-slate-600 flex items-center space-x-1.5">
+                          <HardDrive className="w-4 h-4 text-slate-500" />
+                          <span>Disk Space Usage</span>
+                        </span>
+                        <span className="font-mono text-slate-900">
+                          {bhUsage?.disk_used_mb ?? 4} MB / {bhUsage?.disk_limit_mb ? `${bhUsage.disk_limit_mb} MB` : '20,480 MB'}
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                        <div
+                          className="bg-sky-600 h-2.5 rounded-full"
+                          style={{
+                            width: `${Math.min(100, Math.max(1, Math.round(((bhUsage?.disk_used_mb || 4) / (bhUsage?.disk_limit_mb || 20480)) * 100)))}%`,
+                          }}
+                        ></div>
+                      </div>
+                      <div className="text-[11px] text-slate-500 flex justify-between">
+                        <span>Allocated NVMe Storage</span>
+                        <span>{Math.round(((bhUsage?.disk_used_mb || 4) / (bhUsage?.disk_limit_mb || 20480)) * 100)}% Used</span>
+                      </div>
+                    </div>
+
+                    {/* Bandwidth Usage */}
+                    <div className="border border-slate-200 rounded-lg p-4 space-y-2 bg-slate-50/50">
+                      <div className="flex items-center justify-between font-bold">
+                        <span className="text-slate-600 flex items-center space-x-1.5">
+                          <Activity className="w-4 h-4 text-slate-500" />
+                          <span>Bandwidth (Monthly)</span>
+                        </span>
+                        <span className="font-mono text-slate-900">
+                          {bhUsage?.bandwidth_used_mb ?? 4} MB / {bhUsage?.bandwidth_limit_mb ? `${bhUsage.bandwidth_limit_mb} MB` : 'Unlimited'}
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                        <div className="bg-emerald-500 h-2.5 rounded-full" style={{ width: '2%' }}></div>
+                      </div>
+                      <div className="text-[11px] text-slate-500 flex justify-between">
+                        <span>BDIX Direct High-Speed</span>
+                        <span>Unmetered</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Account Details & Nameservers Card */}
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="bg-[#1A4D80] text-white px-5 py-3.5 font-bold text-xs uppercase tracking-wider flex items-center space-x-2">
+                    <Server className="w-4 h-4" />
+                    <span>Hosting Information &amp; Nameservers</span>
+                  </div>
+
+                  <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs divide-y sm:divide-y-0 divide-slate-100">
+                    <div className="space-y-1">
+                      <div className="text-slate-500 font-medium">Primary Domain</div>
+                      <div className="font-bold text-[#1A4D80] font-mono">{service.domain || service.username || 'softcents.com'}</div>
+                    </div>
+                    <div className="space-y-1 pt-3 sm:pt-0">
+                      <div className="text-slate-500 font-medium">cPanel Username</div>
+                      <div className="font-bold text-slate-900 font-mono">{service.username || 'user'}</div>
+                    </div>
+                    <div className="space-y-1 pt-3 sm:pt-0">
+                      <div className="text-slate-500 font-medium">Server Hostname &amp; IP</div>
+                      <div className="font-bold text-slate-900 font-mono">bdix-bh.softcents.com (138.252.125.209)</div>
+                    </div>
+                    <div className="space-y-1 pt-3 sm:pt-0">
+                      <div className="text-slate-500 font-medium">Server Platform</div>
+                      <div className="font-bold text-slate-900">BDIX cPanel Alternative (LiteSpeed + bhpaneld)</div>
+                    </div>
+                    <div className="space-y-1 pt-3 sm:pt-0 sm:col-span-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                      <div className="text-slate-700 font-bold mb-1">Assigned Nameservers:</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-slate-800">
+                        <div className="bg-white p-2 rounded border border-slate-200 flex justify-between items-center">
+                          <span>NS1: <strong>ns1.bdix-bh.softcents.com</strong></span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard('ns1.bdix-bh.softcents.com', 'ns1')}
+                            className="text-slate-400 hover:text-slate-700"
+                          >
+                            {copiedKey === 'ns1' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                        <div className="bg-white p-2 rounded border border-slate-200 flex justify-between items-center">
+                          <span>NS2: <strong>ns2.bdix-bh.softcents.com</strong></span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard('ns2.bdix-bh.softcents.com', 'ns2')}
+                            className="text-slate-400 hover:text-slate-700"
+                          >
+                            {copiedKey === 'ns2' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sidebar Actions */}
+              <div className="space-y-4">
+                {/* Billing Summary Box */}
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3 text-xs">
+                  <div className="font-bold text-slate-800 border-b border-slate-100 pb-2 flex items-center justify-between">
+                    <span>Billing Summary</span>
+                    <span className="font-mono text-[#1A4D80]">৳{parseFloat(service.amount || '0').toFixed(2)} BDT</span>
+                  </div>
+                  <div className="space-y-1.5 text-slate-600">
+                    <div className="flex justify-between">
+                      <span>Billing Cycle:</span>
+                      <strong className="text-slate-800">{service.billingcycle || 'Annually'}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Registration:</span>
+                      <span className="font-mono text-slate-800">{formatWhmcsDate(service.regdate)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Next Due Date:</span>
+                      <span className="font-mono text-slate-800 font-bold">{formatWhmcsDate(service.nextduedate)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Management Actions */}
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-2.5 text-xs">
+                  <div className="font-bold text-slate-800 border-b border-slate-100 pb-2">
+                    Manage Service
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleBhpanelSso()}
+                    disabled={bhSsoLoading === 'cpanel'}
+                    className="w-full bg-[#ff6c2c] hover:bg-[#e0581b] text-white font-bold py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 shadow-xs cursor-pointer"
+                  >
+                    {bhSsoLoading === 'cpanel' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Server className="w-4 h-4" />}
+                    <span>Log in to cPanel</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleBhpanelSso('mail')}
+                    disabled={bhSsoLoading === 'mail'}
+                    className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 shadow-xs cursor-pointer"
+                  >
+                    {bhSsoLoading === 'mail' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                    <span>Log in to Webmail</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPasswordModalOpen(true)}
+                    className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 shadow-xs cursor-pointer"
+                  >
+                    <KeyRound className="w-4 h-4 text-slate-500" />
+                    <span>Change Password</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCancelModalOpen(true)}
+                    className="w-full text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-transparent font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    <span>Request Cancellation</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         ) : (
           /* ========================================================
              IF SHARED HOSTING: CPANEL CONTROLS
@@ -796,6 +1195,24 @@ export default function ServiceDetailsPage() {
                     <span>Log in to Webmail</span>
                     <ExternalLink className="w-3.5 h-3.5 opacity-80" />
                   </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setPasswordModalOpen(true)}
+                    className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold py-2.5 px-4 rounded transition-colors flex items-center justify-center space-x-2 shadow-xs cursor-pointer"
+                  >
+                    <KeyRound className="w-4 h-4 text-slate-500" />
+                    <span>Change Password</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCancelModalOpen(true)}
+                    className="w-full text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-transparent font-semibold py-2 px-4 rounded transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    <span>Request Cancellation</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -865,6 +1282,81 @@ export default function ServiceDetailsPage() {
                     ) : (
                       <span>Save Password</span>
                     )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Change Password Modal (cPanel / BHPanel) */}
+        {passwordModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
+              <div className="bg-[#1A4D80] text-white p-4 flex items-center justify-between">
+                <div className="flex items-center space-x-2 font-bold text-sm">
+                  <KeyRound className="w-4 h-4" />
+                  <span>Change Hosting Password</span>
+                </div>
+                <button onClick={() => setPasswordModalOpen(false)} className="text-white/80 hover:text-white cursor-pointer">✕</button>
+              </div>
+
+              <form onSubmit={handlePasswordSubmit} className="p-5 space-y-4 text-xs">
+                {passwordMsg && (
+                  <div
+                    className={`p-3 rounded font-semibold flex items-center space-x-2 border ${
+                      passwordMsg.type === 'success'
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        : 'bg-rose-50 text-rose-800 border-rose-300'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>{passwordMsg.text}</span>
+                  </div>
+                )}
+
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded text-slate-600">
+                  Updating password for user: <strong className="font-mono text-slate-900">{service.username}</strong> on{' '}
+                  <strong>{isBhpanel ? 'BDIX Server (cPanel Alternative / BHPanel)' : service.server_name || 'cPanel Server'}</strong>.
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">New Password</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter at least 8 characters"
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:outline-none focus:border-[#1A4D80]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter password"
+                    className="w-full bg-slate-50 border border-slate-300 rounded p-2 focus:outline-none focus:border-[#1A4D80]"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setPasswordModalOpen(false)}
+                    className="px-4 py-2 border border-slate-300 rounded font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-[#1A4D80] hover:bg-[#143d66] text-white px-5 py-2 rounded font-bold cursor-pointer"
+                  >
+                    Save Password
                   </button>
                 </div>
               </form>

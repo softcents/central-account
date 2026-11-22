@@ -4,6 +4,7 @@ import { UddoktaPayGateway } from './gateways/uddoktapay.gateway';
 import { ResellerGateway } from './gateways/reseller.gateway';
 import { SoftcentsPbxServer } from './servers/softcentspbx.server';
 import { CpanelServer } from './servers/cpanel.server';
+import { BHPanelServer } from './servers/bhpanel.server';
 import { VirtualizorServer } from './servers/virtualizor.server';
 import { SoftcentsSmsAddon } from './addons/softcents-sms.addon';
 import { BdhostWaAddon } from './addons/bdhost-wa.addon';
@@ -23,6 +24,7 @@ import { WhmcsController } from './whmcs.controller';
     ResellerGateway,
     SoftcentsPbxServer,
     CpanelServer,
+    BHPanelServer,
     VirtualizorServer,
     SoftcentsSmsAddon,
     BdhostWaAddon,
@@ -41,6 +43,7 @@ import { WhmcsController } from './whmcs.controller';
     ResellerGateway,
     SoftcentsPbxServer,
     CpanelServer,
+    BHPanelServer,
     VirtualizorServer,
     SoftcentsSmsAddon,
     BdhostWaAddon,
