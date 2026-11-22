@@ -12,6 +12,9 @@ export function Navbar() {
 
   // The Admin Portal and WHMCS client portal have their own dedicated navigation headers
   if (
+    pathname === '/' ||
+    pathname?.startsWith('/login') ||
+    pathname?.startsWith('/register') ||
     pathname?.startsWith('/admin') ||
     pathname?.startsWith('/clientarea') ||
     pathname?.startsWith('/support') ||

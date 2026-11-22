@@ -8,6 +8,9 @@ export function Footer() {
 
   // Hide consumer footer inside admin portal and WHMCS portal
   if (
+    pathname === '/' ||
+    pathname?.startsWith('/login') ||
+    pathname?.startsWith('/register') ||
     pathname?.startsWith('/admin') ||
     pathname?.startsWith('/clientarea') ||
     pathname?.startsWith('/support') ||
