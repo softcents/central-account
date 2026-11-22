@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import '@/styles/standard_cart.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { ImpersonateBanner } from '@/components/ImpersonateBanner';
 import { Navbar } from '@/components/Navbar';
@@ -18,6 +19,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          crossOrigin="anonymous"
+          referrerPolicy="no-referrer"
+        />
+      </head>
       <body className="bg-slate-50 text-slate-900 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
         <AuthProvider>
           <ImpersonateBanner />
