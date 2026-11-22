@@ -98,6 +98,9 @@ export class AuthService {
         data: {
           user_id: newUser.id,
           country_code: dto.countryCode.toUpperCase(),
+          first_name: dto.firstName || null,
+          last_name: dto.lastName || null,
+          phone_number: dto.phoneNumber || null,
         },
       });
 

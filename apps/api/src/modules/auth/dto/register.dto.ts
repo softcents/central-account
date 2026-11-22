@@ -6,6 +6,7 @@ import {
   MinLength,
   Matches,
   Equals,
+  IsOptional,
 } from 'class-validator';
 
 export class RegisterDto {
@@ -32,4 +33,47 @@ export class RegisterDto {
   @IsBoolean({ message: 'Terms and Privacy acceptance must be a boolean' })
   @Equals(true, { message: 'You must accept the terms and privacy policy' })
   termsAccepted: boolean;
+
+  @IsString()
+  @IsOptional()
+  firstName?: string;
+
+  @IsString()
+  @IsOptional()
+  lastName?: string;
+
+  @IsString()
+  @IsOptional()
+  phoneNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  companyName?: string;
+
+  @IsString()
+  @IsOptional()
+  address1?: string;
+
+  @IsString()
+  @IsOptional()
+  address2?: string;
+
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @IsString()
+  @IsOptional()
+  state?: string;
+
+  @IsString()
+  @IsOptional()
+  postcode?: string;
+
+  @IsOptional()
+  customfields?: any;
+
+  @IsBoolean()
+  @IsOptional()
+  marketingOptIn?: boolean;
 }
