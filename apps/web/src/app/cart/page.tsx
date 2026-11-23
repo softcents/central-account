@@ -332,6 +332,13 @@ function CartInner() {
   const [postcode, setPostcode] = useState('1207');
   const [country, setCountry] = useState('BD');
 
+  // Custom Fields (Additional Information - Matching WHMCS screenshot user_screen_7.png)
+  const [identityDocType, setIdentityDocType] = useState('Smart NID');
+  const [nidNumber, setNidNumber] = useState('1234567890');
+  const [whatsappNumber, setWhatsappNumber] = useState('01711000111');
+  const [permanentAddress, setPermanentAddress] = useState('Gulshan-2, Dhaka');
+  const [joinMailingList, setJoinMailingList] = useState<'yes' | 'no'>('yes');
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
@@ -427,6 +434,10 @@ function CartInner() {
       if (client.state) setStateVal(client.state);
       if (client.postcode) setPostcode(client.postcode);
       if (client.country) setCountry(client.country);
+      if (client.customfields?.['Identity Document Type']) setIdentityDocType(client.customfields['Identity Document Type']);
+      if (client.customfields?.['NID Namber']) setNidNumber(client.customfields['NID Namber']);
+      if (client.customfields?.['Your Whatsapp No']) setWhatsappNumber(client.customfields['Your Whatsapp No']);
+      if (client.customfields?.['Permanent Full Address']) setPermanentAddress(client.customfields['Permanent Full Address']);
     }
   }, [client]);
 
@@ -1167,6 +1178,87 @@ function CartInner() {
                                 </div>
                               </div>
 
+                              {/* Additional Information (Matching WHMCS screenshot user_screen_7.png) */}
+                              <div className="sub-heading">
+                                <span className="primary-bg-color">Additional Information</span>
+                              </div>
+                              <p className="text-muted small mb-3">(required fields are marked with *)</p>
+
+                              <div className="row">
+                                <div className="col-sm-6">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputIdentityType" className="field-icon">
+                                      <i className="fas fa-id-card"></i>
+                                    </label>
+                                    <select
+                                      id="inputIdentityType"
+                                      className="field form-control"
+                                      value={identityDocType}
+                                      onChange={(e) => setIdentityDocType(e.target.value)}
+                                      required
+                                    >
+                                      <option value="Smart NID">Smart NID</option>
+                                      <option value="Old Nid">Old Nid</option>
+                                      <option value="Passport">Passport</option>
+                                      <option value="Driving Licence">Driving Licence</option>
+                                      <option value="Birth Certificate">Birth Certificate</option>
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div className="col-sm-6">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputNidNumber" className="field-icon">
+                                      <i className="fas fa-hashtag"></i>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      id="inputNidNumber"
+                                      className="field form-control"
+                                      placeholder="NID Namber *"
+                                      value={nidNumber}
+                                      onChange={(e) => setNidNumber(e.target.value)}
+                                      required
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="col-sm-6">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputWhatsappNumber" className="field-icon">
+                                      <i className="fab fa-whatsapp"></i>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      id="inputWhatsappNumber"
+                                      className="field form-control"
+                                      placeholder="Your Whatsapp No *"
+                                      value={whatsappNumber}
+                                      onChange={(e) => setWhatsappNumber(e.target.value)}
+                                      required
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="col-sm-6">
+                                  <div className="form-group prepend-icon">
+                                    <label htmlFor="inputPermanentAddress" className="field-icon">
+                                      <i className="fas fa-home"></i>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      id="inputPermanentAddress"
+                                      className="field form-control"
+                                      placeholder="Permanent Full Address *"
+                                      value={permanentAddress}
+                                      onChange={(e) => setPermanentAddress(e.target.value)}
+                                      required
+                                    />
+                                    <small className="form-text text-muted mt-1">Example: House 06, 26, Road 10/4</small>
+                                  </div>
+                                </div>
+                              </div>
+
                               {/* Account Security (for guest signups) */}
                               {!isLoggedIn && (
                                 <div id="containerNewUserSecurity">
@@ -1312,43 +1404,32 @@ function CartInner() {
                             </div>
                           )}
 
-                          {/* Payment Gateways Selector */}
+                          {/* Payment Gateways Selector (Matching user_screen_8.png) */}
                           <div id="paymentGatewaysContainer" className="form-group mb-4">
                             <p className="small text-muted text-center mb-3">
-                              Please choose your preferred payment method.
+                              Please choose your preferred method of payment.
                             </p>
 
                             <div className="text-center">
-                              <label className="radio-inline">
+                              <label className="radio-inline mr-3">
                                 <input
                                   type="radio"
                                   name="paymentmethod"
                                   value="piprapay"
                                   checked={selectedGateway === 'piprapay'}
                                   onChange={() => setSelectedGateway('piprapay')}
-                                  className="payment-methods"
+                                  className="payment-methods mr-1"
                                 />
-                                <strong>PipraPay</strong> (bKash, Nagad, Rocket, Cards)
+                                <strong>SoftCents System Billing</strong>
                               </label>
-                              <label className="radio-inline">
-                                <input
-                                  type="radio"
-                                  name="paymentmethod"
-                                  value="uddoktapay"
-                                  checked={selectedGateway === 'uddoktapay'}
-                                  onChange={() => setSelectedGateway('uddoktapay')}
-                                  className="payment-methods"
-                                />
-                                <strong>UddoktaPay</strong>
-                              </label>
-                              <label className="radio-inline">
+                              <label className="radio-inline mr-3">
                                 <input
                                   type="radio"
                                   name="paymentmethod"
                                   value="reseller"
                                   checked={selectedGateway === 'reseller'}
                                   onChange={() => setSelectedGateway('reseller')}
-                                  className="payment-methods"
+                                  className="payment-methods mr-1"
                                 />
                                 <strong>Account Credit Balance</strong>
                               </label>
@@ -1359,14 +1440,14 @@ function CartInner() {
                                   value="bank"
                                   checked={selectedGateway === 'bank'}
                                   onChange={() => setSelectedGateway('bank')}
-                                  className="payment-methods"
+                                  className="payment-methods mr-1"
                                 />
                                 <strong>Bank Transfer</strong>
                               </label>
                             </div>
                           </div>
 
-                          {/* Additional Notes */}
+                          {/* Additional Notes (Matching user_screen_8.png) */}
                           <div className="sub-heading">
                             <span className="primary-bg-color">Additional Notes</span>
                           </div>
@@ -1378,11 +1459,40 @@ function CartInner() {
                                   name="notes"
                                   className="field form-control"
                                   rows={4}
-                                  placeholder="Please enter any special notes or instructions for your order..."
+                                  placeholder="You can enter any additional notes or information you want included with your order here..."
                                   value={orderNotes}
                                   onChange={(e) => setOrderNotes(e.target.value)}
                                 ></textarea>
                               </div>
+                            </div>
+                          </div>
+
+                          {/* Join our mailing list (Matching user_screen_8.png) */}
+                          <div className="sub-heading">
+                            <span className="primary-bg-color">Join our mailing list</span>
+                          </div>
+
+                          <div className="p-3 mb-4 bg-light border rounded">
+                            <p className="small text-muted mb-2">
+                              We would like to send you occasional news, information and special offers by email. Choose below to join our mailing list. You can unsubscribe at any time.
+                            </p>
+                            <div className="btn-group" role="group">
+                              <button
+                                type="button"
+                                onClick={() => setJoinMailingList('yes')}
+                                className={`btn btn-sm ${joinMailingList === 'yes' ? 'btn-primary font-weight-bold text-white' : 'btn-default'}`}
+                                style={{ padding: '5px 20px' }}
+                              >
+                                Yes
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setJoinMailingList('no')}
+                                className={`btn btn-sm ${joinMailingList === 'no' ? 'btn-primary font-weight-bold text-white' : 'btn-default'}`}
+                                style={{ padding: '5px 20px' }}
+                              >
+                                No
+                              </button>
                             </div>
                           </div>
 

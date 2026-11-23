@@ -2973,6 +2973,223 @@ table.table-list tbody tr:nth-child(even) {
   width: 100%;
 }
 
+/* ========================================================
+   WHMCS TWENTY-ONE PRODUCT DETAILS, HOOKS & SIDEBAR PANELS
+   ======================================================== */
+.wallet-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 18px;
+  color: #2c3e50;
+  border: 1px solid #e6e9ef;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  margin-bottom: 16px;
+  transition: all .25s ease-in-out;
+}
+.wallet-card:hover {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+  transform: translateY(-2px);
+}
+.wallet-label {
+  font-size: 13px;
+  opacity: .75;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #495057;
+}
+.wallet-balance-amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 14px;
+}
+.add-funds-btn {
+  width: 100%;
+  padding: 9px 12px;
+  background: #28a745;
+  color: #fff !important;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  display: block;
+  text-align: center;
+  text-decoration: none !important;
+  transition: background-color .2s ease;
+}
+.add-funds-btn:hover {
+  background: #1e7e34;
+  color: #fff !important;
+}
+
+.transfer-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background-color: #d1ecf1;
+  border-left: 4px solid #17a2b8;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,.05);
+  margin: 16px 0;
+}
+.transfer-container span {
+  font-weight: 600;
+  color: #0c5460;
+  font-size: 14px;
+}
+.transfer-btn {
+  background-color: #17a2b8 !important;
+  border-color: #17a2b8 !important;
+  color: #fff !important;
+  font-weight: 600;
+  transition: all .3s ease;
+}
+.transfer-btn:hover {
+  background-color: #138496 !important;
+  border-color: #117a8b !important;
+}
+
+.suspend-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,.05);
+  margin: 16px 0;
+}
+.suspend-container span {
+  font-weight: 600;
+  color: #856404;
+  font-size: 14px;
+}
+.suspend-btn {
+  background-color: #ffc107 !important;
+  border-color: #ffc107 !important;
+  color: #212529 !important;
+  font-weight: 600;
+  transition: all .3s ease;
+}
+.suspend-btn:hover {
+  background-color: #e0a800 !important;
+  border-color: #e0a800 !important;
+}
+
+.client-activity-card {
+  border: 1px solid #e9ecef;
+  background: #ffffff;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+.client-activity-header {
+  background: #e53935;
+  color: #ffffff;
+  padding: 12px 15px;
+  font-weight: 600;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.client-activity-body {
+  padding: 15px;
+  line-height: 1.6;
+  font-size: 13.5px;
+  color: #212529;
+}
+.client-activity-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f8f9fa;
+}
+.client-activity-row:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.client-activity-label {
+  color: #343a40;
+  font-weight: 600;
+}
+.client-activity-val {
+  text-align: right;
+  font-weight: 500;
+}
+
+.product-details .product-status {
+  padding: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+}
+.product-details .product-icon {
+  margin: 0;
+  background-color: #efefef;
+  border-radius: 9px 9px 0 0;
+  padding: 24px 15px;
+  line-height: 1.2;
+  text-align: center;
+}
+.product-details .product-icon h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  color: #212529;
+}
+.product-details .product-icon h4 {
+  font-size: 14px;
+  font-weight: 400;
+  color: #6c757d;
+  margin: 0;
+}
+.product-details .product-status-text {
+  padding: 6px;
+  color: #fff;
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+.product-status-active .product-status-text {
+  background-color: #46A546;
+}
+.product-status-suspended .product-status-text {
+  background-color: #0768B8;
+}
+.product-status-pending .product-status-text {
+  background-color: #F89406;
+}
+.product-status-cancelled .product-status-text,
+.product-status-terminated .product-status-text {
+  background-color: #666666;
+}
+
+.product-details .whmcs-billing-info h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+.product-details .whmcs-billing-info p {
+  font-size: 15px;
+  margin-bottom: 12px;
+  color: #212529;
+}
+
+
 /* Section Main Body Container */
 #main-body {
   padding: 25px 0 40px 0;
@@ -3346,4 +3563,221 @@ div.product-details-tab-container {
   display: block;
   width: 100%;
 }
+
+/* ========================================================
+   WHMCS TWENTY-ONE PRODUCT DETAILS, HOOKS & SIDEBAR PANELS
+   ======================================================== */
+.wallet-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 18px;
+  color: #2c3e50;
+  border: 1px solid #e6e9ef;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  margin-bottom: 16px;
+  transition: all .25s ease-in-out;
+}
+.wallet-card:hover {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+  transform: translateY(-2px);
+}
+.wallet-label {
+  font-size: 13px;
+  opacity: .75;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #495057;
+}
+.wallet-balance-amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 14px;
+}
+.add-funds-btn {
+  width: 100%;
+  padding: 9px 12px;
+  background: #28a745;
+  color: #fff !important;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  display: block;
+  text-align: center;
+  text-decoration: none !important;
+  transition: background-color .2s ease;
+}
+.add-funds-btn:hover {
+  background: #1e7e34;
+  color: #fff !important;
+}
+
+.transfer-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background-color: #d1ecf1;
+  border-left: 4px solid #17a2b8;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,.05);
+  margin: 16px 0;
+}
+.transfer-container span {
+  font-weight: 600;
+  color: #0c5460;
+  font-size: 14px;
+}
+.transfer-btn {
+  background-color: #17a2b8 !important;
+  border-color: #17a2b8 !important;
+  color: #fff !important;
+  font-weight: 600;
+  transition: all .3s ease;
+}
+.transfer-btn:hover {
+  background-color: #138496 !important;
+  border-color: #117a8b !important;
+}
+
+.suspend-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,.05);
+  margin: 16px 0;
+}
+.suspend-container span {
+  font-weight: 600;
+  color: #856404;
+  font-size: 14px;
+}
+.suspend-btn {
+  background-color: #ffc107 !important;
+  border-color: #ffc107 !important;
+  color: #212529 !important;
+  font-weight: 600;
+  transition: all .3s ease;
+}
+.suspend-btn:hover {
+  background-color: #e0a800 !important;
+  border-color: #e0a800 !important;
+}
+
+.client-activity-card {
+  border: 1px solid #e9ecef;
+  background: #ffffff;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+.client-activity-header {
+  background: #e53935;
+  color: #ffffff;
+  padding: 12px 15px;
+  font-weight: 600;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.client-activity-body {
+  padding: 15px;
+  line-height: 1.6;
+  font-size: 13.5px;
+  color: #212529;
+}
+.client-activity-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f8f9fa;
+}
+.client-activity-row:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.client-activity-label {
+  color: #343a40;
+  font-weight: 600;
+}
+.client-activity-val {
+  text-align: right;
+  font-weight: 500;
+}
+
+.product-details .product-status {
+  padding: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+}
+.product-details .product-icon {
+  margin: 0;
+  background-color: #efefef;
+  border-radius: 9px 9px 0 0;
+  padding: 24px 15px;
+  line-height: 1.2;
+  text-align: center;
+}
+.product-details .product-icon h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  color: #212529;
+}
+.product-details .product-icon h4 {
+  font-size: 14px;
+  font-weight: 400;
+  color: #6c757d;
+  margin: 0;
+}
+.product-details .product-status-text {
+  padding: 6px;
+  color: #fff;
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+.product-status-active .product-status-text {
+  background-color: #46A546;
+}
+.product-status-suspended .product-status-text {
+  background-color: #0768B8;
+}
+.product-status-pending .product-status-text {
+  background-color: #F89406;
+}
+.product-status-cancelled .product-status-text,
+.product-status-terminated .product-status-text {
+  background-color: #666666;
+}
+
+.product-details .whmcs-billing-info h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+.product-details .whmcs-billing-info p {
+  font-size: 15px;
+  margin-bottom: 12px;
+  color: #212529;
+}
+
 

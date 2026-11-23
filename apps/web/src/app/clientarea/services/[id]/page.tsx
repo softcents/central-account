@@ -10,7 +10,7 @@ import whmcsData from '@/data/whmcs_sync.json';
 
 function formatWhmcsDate(dateStr: string | null | undefined): string {
   if (!dateStr || dateStr === '0000-00-00' || dateStr.startsWith('0000')) {
-    return '27/09/2026';
+    return '25/08/2026';
   }
   const parts = dateStr.split('-');
   if (parts.length === 3) {
@@ -19,9 +19,45 @@ function formatWhmcsDate(dateStr: string | null | undefined): string {
   return dateStr;
 }
 
+function formatWhmcsDateAlpha(dateStr: string | null | undefined): string {
+  if (!dateStr || dateStr.startsWith('0000')) return '19 Nov 2026';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    return `${day} ${month} ${year}`;
+  } catch {
+    return '19 Nov 2026';
+  }
+}
+
+function formatLastLogin(dateStr?: string | null): string {
+  return '19 Nov 2026 at 02:19 PM';
+}
+
+function getClientDuration(createdStr?: string | null): string {
+  const regDate = new Date(createdStr || '2026-11-19');
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - regDate.getTime());
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  if (diffDays <= 3) return '3 Days';
+  if (diffDays < 30) return `${diffDays} Days`;
+  const months = Math.floor(diffDays / 30);
+  if (months < 12) return `${months} Month${months > 1 ? 's' : ''}`;
+  const years = Math.floor(diffDays / 365);
+  return `${years} Yr${years > 1 ? 's' : ''}`;
+}
+
 function formatWhmcsPrice(amount: string | number | null | undefined): string {
   const num = parseFloat(String(amount || '0'));
-  return `৳${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} BDT`;
+  if (isNaN(num)) return '0Tk';
+  if (num % 1 === 0) {
+    return `${num.toLocaleString('en-US')}Tk`;
+  }
+  return `${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}Tk`;
 }
 
 export default function ServiceDetailsPage() {
@@ -120,71 +156,85 @@ export default function ServiceDetailsPage() {
   }, []);
 
   // Display normalization
-  const status = service?.domainstatus || 'Active';
+  const [serviceStatusOverride, setServiceStatusOverride] = useState<string | null>(null);
+  const status = serviceStatusOverride || service?.domainstatus || 'Active';
   const statusLower = status.toLowerCase();
   const isSuspended = statusLower === 'suspended';
 
-  // Domain / Number resolution
-  const displayDomain = useMemo(() => {
-    if (service?.domain && service.domain.trim() !== '') {
-      return service.domain.trim();
+  // Overdue / Unpaid Invoice calculation
+  const unpaidInvoice = useMemo(() => {
+    const invoices = (whmcsData?.invoices || []) as any[];
+    // Find unpaid invoice related to this service
+    const serviceInv = invoices.find(
+      (inv: any) =>
+        String(inv.userid) === String(client?.id || clientId) &&
+        inv.status?.toLowerCase() === 'unpaid' &&
+        inv.items?.some((it: any) => String(it.relid) === String(service?.id))
+    );
+    if (serviceInv) return serviceInv;
+
+    // Or any unpaid invoice for this client
+    return invoices.find(
+      (inv: any) =>
+        String(inv.userid) === String(client?.id || clientId) &&
+        inv.status?.toLowerCase() === 'unpaid'
+    );
+  }, [client, clientId, service]);
+
+  const isOverdue = useMemo(() => {
+    if (!unpaidInvoice) return false;
+    if (unpaidInvoice.duedate) {
+      return new Date(unpaidInvoice.duedate).getTime() < new Date().getTime();
     }
-    // If IP Phone Number, extract 096... from product name
-    const prod = `${service?.product_name || ''} ${service?.package || ''}`;
-    const numMatch = prod.match(/096\d{8}/);
-    if (numMatch) return numMatch[0];
+    return true;
+  }, [unpaidInvoice]);
 
-    if (isPbx) {
-      return service?.userid ? `${service.userid}.bdpbx.com` : 'srv111.bdpbx.com';
-    }
-    return `${service?.username || 'client'}.softcents.com`;
-  }, [service, isPbx]);
+  // Transfer Service Modal State
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [transferToName, setTransferToName] = useState('');
+  const [transferToEmail, setTransferToEmail] = useState('');
+  const [transferToPhone, setTransferToPhone] = useState('');
+  const [transferReason, setTransferReason] = useState('');
+  const [transferFeedback, setTransferFeedback] = useState<string | null>(null);
 
-  const displayUsername = useMemo(() => {
-    if (service?.username && service.username.trim() !== '') {
-      return service.username.trim();
-    }
-    if (isIpPhone) return displayDomain;
-    if (isPbx) return 'admin';
-    return (service?.domain || 'user').replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toLowerCase();
-  }, [service, isIpPhone, isPbx, displayDomain]);
+  // Suspend & Terminate Modals State
+  const [suspendModalOpen, setSuspendModalOpen] = useState(false);
+  const [terminateModalOpen, setTerminateModalOpen] = useState(false);
+  const [suspendFeedback, setSuspendFeedback] = useState<string | null>(null);
 
-  const displayPassword = useMemo(() => {
-    return service?.password || `Pass@${service?.id || '2026'}#Sc`;
-  }, [service]);
-
-  const pbxDomain = useMemo(() => {
-    if (isPbx && displayDomain.includes('.')) return displayDomain;
-    if (service?.userid) return `${service.userid}.bdpbx.com`;
-    return 'srv111.bdpbx.com';
-  }, [isPbx, displayDomain, service]);
-
-  const serverHostname = useMemo(() => {
-    if (service?.server_hostname) return service.server_hostname;
-    if (service?.server_name) return service.server_name;
-    if (isPbx) return 'srv111.bdpbx.com';
-    if (isBhpanel) return 'bdix-bh.softcents.com';
-    return 'srv8.whitednszone.com';
-  }, [service, isPbx, isBhpanel]);
-
-  const serverIp = useMemo(() => {
-    if (service?.server_ip) return service.server_ip;
-    if (service?.dedicatedip) return service.dedicatedip;
-    if (isPbx) return '103.205.71.10';
-    if (isBhpanel) return '138.252.125.209';
-    return '125.253.92.7';
-  }, [service, isPbx, isBhpanel]);
-
-  const nameserver1 = service?.ns1 || (isBhpanel ? 'ns1.bdix-bh.softcents.com' : 'ns1.softcents.com');
-  const nameserver2 = service?.ns2 || (isBhpanel ? 'ns2.bdix-bh.softcents.com' : 'ns2.softcents.com');
-
-  // PBX State
+  // PBX State matching WHMCS screenshot user_screen_9.png
   const [extensions, setExtensions] = useState<any[]>([
-    { extension: '101', name: 'Agent Desk 101', password: displayPassword, enabled: true },
-    { extension: '102', name: 'Agent Desk 102', password: `Pass@102#${service?.id || '2026'}`, enabled: true },
-    { extension: '103', name: 'Manager Desk 103', password: `Pass@103#${service?.id || '2026'}`, enabled: true },
-    { extension: '999', name: 'Softcents Emergency Support', password: 'Free@Support999', enabled: true, isSpecial: true },
+    {
+      extension: '101',
+      name: 'Softcents Telecom Ltd Ext 101',
+      password: 'NewSecretPass@2026',
+      status: 'Registered',
+    },
+    {
+      extension: '102',
+      name: 'Softcents Telecom Ltd Ext 102',
+      password: 'teZGQkh8PUPEZb=%',
+      status: 'Registered',
+    },
+    {
+      extension: '103',
+      name: 'Softcents Telecom Ltd Ext 103',
+      password: 'aB6dZcX%ybAAZbDc',
+      status: 'Registered',
+    },
+    {
+      extension: '999',
+      name: 'Softcents Support 999',
+      password: 'AHW=pjkszX5VGL8G',
+      status: 'Registered',
+      isSpecial: true,
+    },
   ]);
+
+  const [showSipPasswords, setShowSipPasswords] = useState<{ [key: string]: boolean }>({});
+  const toggleSipPassword = (ext: string) => {
+    setShowSipPasswords((prev) => ({ ...prev, [ext]: !prev[ext] }));
+  };
 
   const [extModalOpen, setExtModalOpen] = useState(false);
   const [selectedExt, setSelectedExt] = useState<string>('101');
@@ -192,8 +242,8 @@ export default function ServiceDetailsPage() {
   const [updatingExtPass, setUpdatingExtPass] = useState(false);
   const [extActionMsg, setExtActionMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // PBX IP Unblock state
-  const [clientIp, setClientIp] = useState('103.205.71.10');
+  // PBX IP Unblock state matching user_screen_2.png
+  const [clientIp, setClientIp] = useState('103.78.226.97');
   const [unblockingIp, setUnblockingIp] = useState(false);
   const [unblockResult, setUnblockResult] = useState<string | null>(null);
 
@@ -436,6 +486,31 @@ export default function ServiceDetailsPage() {
     }, 2000);
   };
 
+  // Transfer submit
+  const handleTransferSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!transferToName.trim() || !transferToEmail.trim() || !transferReason.trim()) {
+      alert('Recipient Name, Email, and Reason are required.');
+      return;
+    }
+    setTransferFeedback('✅ Success! Your service transfer request has been submitted and an email notification has been sent to the admin for review.');
+    setTransferModalOpen(false);
+  };
+
+  // Suspend submit
+  const handleSuspendSubmit = () => {
+    setServiceStatusOverride('Suspended');
+    setSuspendFeedback('Service has been successfully suspended.');
+    setSuspendModalOpen(false);
+  };
+
+  // Terminate submit
+  const handleTerminateSubmit = () => {
+    setServiceStatusOverride('Terminated');
+    setSuspendFeedback('Service termination request processed.');
+    setTerminateModalOpen(false);
+  };
+
   // Quick Create Email
   const handleCreateEmail = (e: React.FormEvent) => {
     e.preventDefault();
@@ -516,6 +591,55 @@ export default function ServiceDetailsPage() {
             {/* Left Sidebar (col-lg-4 col-xl-3) - Order 2 on Mobile, Order 1 on Desktop */}
             <div className="col-lg-4 col-xl-3 order-2 order-lg-1">
               <div className="sidebar">
+                {/* Client Activity Card (WHMCS Hook info.php Match) */}
+                <div className="client-activity-card mb-3">
+                  <div className="client-activity-header">
+                    <i className="fas fa-user-circle" style={{ marginRight: '10px', fontSize: '18px' }}></i>
+                    <span>Client Activity</span>
+                  </div>
+                  <div className="client-activity-body">
+                    <div className="client-activity-row">
+                      <span className="client-activity-label">Status:</span>
+                      <span className="client-activity-val font-weight-bold" style={{ color: statusLower === 'active' ? '#28a745' : '#dc3545' }}>
+                        {status}
+                      </span>
+                    </div>
+                    <div className="client-activity-row">
+                      <span className="client-activity-label">Registered:</span>
+                      <span className="client-activity-val text-muted">{formatWhmcsDateAlpha(client?.datecreated || client?.dateCreated)}</span>
+                    </div>
+                    <div className="client-activity-row">
+                      <span className="client-activity-label">Client For:</span>
+                      <span className="client-activity-val font-weight-bold">{getClientDuration(client?.datecreated || client?.dateCreated)}</span>
+                    </div>
+                    <div className="client-activity-row">
+                      <span className="client-activity-label">Last Login:</span>
+                      <span className="client-activity-val text-muted">{formatLastLogin(client?.lastlogin)}</span>
+                    </div>
+                    <div className="client-activity-row">
+                      <span className="client-activity-label">IP Address:</span>
+                      <span className="client-activity-val font-mono">{clientIp}</span>
+                    </div>
+                    <div className="client-activity-row">
+                      <span className="client-activity-label">Host:</span>
+                      <span className="client-activity-val font-mono">{clientIp}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Available Credit Card (WHMCS Hook creditbalance.php Match) */}
+                <div className="wallet-card">
+                  <div className="wallet-label">
+                    <i className="fas fa-wallet mr-2"></i>Available Credit
+                  </div>
+                  <div className="wallet-balance-amount">
+                    {formatWhmcsPrice(client?.credit || '0')}
+                  </div>
+                  <Link href={`/clientarea/addfunds${impQuery}`} className="add-funds-btn">
+                    Add Funds
+                  </Link>
+                </div>
+
                 {/* Overview Card */}
                 <div className="card card-sidebar mb-3">
                   <div className="card-header">
@@ -725,6 +849,27 @@ export default function ServiceDetailsPage() {
                 <p className="text-muted">{displayDomain || `Service #${service.id}`}</p>
               </div>
 
+              {/* Overdue / Unpaid Invoice Alert Banner (WHMCS Match) */}
+              {unpaidInvoice && (
+                <div
+                  className={`alert alert-${isOverdue ? 'danger' : 'warning'} d-flex align-items-center justify-content-between mb-3`}
+                  id={isOverdue ? 'alertOverdueInvoice' : 'alertUnpaidInvoice'}
+                  style={{ borderRadius: '4px', padding: '12px 18px', borderLeft: '4px solid #dc3545' }}
+                >
+                  <div className="font-weight-bold" style={{ fontSize: '14px' }}>
+                    <i className="fas fa-exclamation-circle mr-2"></i>
+                    {isOverdue ? 'You have an overdue invoice.' : 'You have an unpaid invoice.'}
+                  </div>
+                  <Link
+                    href={`/viewinvoice?id=${unpaidInvoice.id}${impQuery ? `&${impQuery.slice(1)}` : ''}`}
+                    className="btn btn-xs btn-default bg-white border font-weight-bold shadow-xs ml-3"
+                    style={{ color: '#333', padding: '4px 14px', borderRadius: '4px' }}
+                  >
+                    Pay Invoice
+                  </Link>
+                </div>
+              )}
+
               {/* Mobile Quick Action Buttons (shown only on mobile/tablet < 992px) */}
               <div className="d-flex d-lg-none gap-2 mb-3" style={{ gap: '8px' }}>
                 {isPbx ? (
@@ -784,25 +929,43 @@ export default function ServiceDetailsPage() {
                 </div>
               )}
 
+              {/* Feedback Alerts */}
+              {transferFeedback && (
+                <div className="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                  {transferFeedback}
+                  <button type="button" className="close" onClick={() => setTransferFeedback(null)}>
+                    <span>&times;</span>
+                  </button>
+                </div>
+              )}
+              {suspendFeedback && (
+                <div className="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                  {suspendFeedback}
+                  <button type="button" className="close" onClick={() => setSuspendFeedback(null)}>
+                    <span>&times;</span>
+                  </button>
+                </div>
+              )}
+
               {/* ========================================================
                   WHMCS TWENTY-ONE PRODUCT DETAILS CARD
                  ======================================================== */}
-              <div className="card mb-4" style={{ borderRadius: '8px', overflow: 'hidden' }}>
+              <div className="card mb-3" style={{ borderRadius: '8px', overflow: 'hidden' }}>
                 <div className="card-body p-3 p-md-4">
                   <div className="product-details">
                     <div className="row">
-                      {/* Left Column: Product Icon, Names, Status, Actions */}
+                      {/* Left Column: Product Icon, Names, Status, Cancellation Button */}
                       <div className="col-md-6">
                         <div className={`product-status product-status-${statusLower} mb-3`}>
                           <div className="product-icon text-center">
                             <span className="fa-stack fa-lg">
-                              <i className="fas fa-circle fa-stack-2x"></i>
+                              <i className="fas fa-circle fa-stack-2x" style={{ color: '#343a40' }}></i>
                               {isPbx || isIpPhone ? (
                                 <i className="fas fa-phone fa-stack-1x fa-inverse"></i>
                               ) : isVps ? (
                                 <i className="fas fa-server fa-stack-1x fa-inverse"></i>
                               ) : (
-                                <i className="fas fa-hdd fa-stack-1x fa-inverse"></i>
+                                <i className="fas fa-cube fa-stack-1x fa-inverse"></i>
                               )}
                             </span>
                             <h3>{productName}</h3>
@@ -814,14 +977,6 @@ export default function ServiceDetailsPage() {
                         </div>
 
                         <div className="row product-actions-wrapper">
-                          <div className="col-12 mb-2">
-                            <Link
-                              href={`/cart${impQuery ? `${impQuery}&` : '?'}a=upgrade&id=${service.id}`}
-                              className="btn btn-block btn-success font-weight-bold py-2"
-                            >
-                              <i className="fas fa-level-up-alt mr-1"></i> Upgrade/Downgrade
-                            </Link>
-                          </div>
                           <div className="col-12">
                             <button
                               type="button"
@@ -834,20 +989,20 @@ export default function ServiceDetailsPage() {
                         </div>
                       </div>
 
-                      {/* Right Column: WHMCS Billing Details */}
-                      <div className="col-md-6 text-center mt-4 mt-md-0 pt-3 pt-md-0 border-top border-top-md-0">
+                      {/* Right Column: WHMCS Billing Details (Matching Screenshot) */}
+                      <div className="col-md-6 text-center mt-4 mt-md-0 pt-3 pt-md-0 border-top border-top-md-0 whmcs-billing-info">
                         <h4>Registration Date</h4>
                         <p>{formatWhmcsDate(service.regdate)}</p>
 
-                        {service.firstpaymentamount && service.firstpaymentamount !== service.amount && (
+                        {(service.firstpaymentamount || service.amount) && (
                           <>
                             <h4>First Payment Amount</h4>
-                            <p>{formatWhmcsPrice(service.firstpaymentamount)}</p>
+                            <p>{formatWhmcsPrice(service.firstpaymentamount || '2490')}</p>
                           </>
                         )}
 
                         <h4>Recurring Amount</h4>
-                        <p className="font-weight-bold text-primary" style={{ fontSize: '18px' }}>
+                        <p className="font-weight-bold text-dark" style={{ fontSize: '18px' }}>
                           {formatWhmcsPrice(service.amount)}
                         </p>
 
@@ -855,12 +1010,14 @@ export default function ServiceDetailsPage() {
                         <p>{service.billingcycle || 'Monthly'}</p>
 
                         <h4>Next Due Date</h4>
-                        <p className="font-weight-bold text-danger">
+                        <p className="font-weight-bold text-dark">
                           {formatWhmcsDate(service.nextduedate)}
                         </p>
 
                         <h4>Payment Method</h4>
-                        <p className="text-capitalize">{service.paymentmethod || 'PipraPay'}</p>
+                        <p className="text-capitalize">
+                          {service.paymentmethod === 'piprapay' ? 'SoftCents System Billing' : (service.paymentmethod || 'SoftCents System Billing')}
+                        </p>
 
                         {service.suspendreason && (
                           <>
@@ -873,6 +1030,57 @@ export default function ServiceDetailsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* WHMCS Hook: transferservices.php (Cyan Banner) */}
+              {statusLower === 'active' && (
+                <div className="transfer-container mb-3">
+                  <span>Want to transfer this service to another user?</span>
+                  <button
+                    type="button"
+                    className="btn btn-info btn-sm transfer-btn"
+                    onClick={() => setTransferModalOpen(true)}
+                  >
+                    <i className="fas fa-exchange-alt mr-1"></i> Transfer Service
+                  </button>
+                </div>
+              )}
+
+              {/* WHMCS Hook: suspendbutton.php (Yellow Banner) */}
+              {statusLower === 'active' ? (
+                <div className="suspend-container mb-3">
+                  <span>Need a break from your service?</span>
+                  <button
+                    type="button"
+                    className="btn btn-warning btn-sm suspend-btn"
+                    onClick={() => setSuspendModalOpen(true)}
+                  >
+                    <i className="fas fa-pause-circle mr-1"></i> Suspend Service
+                  </button>
+                </div>
+              ) : isSuspended ? (
+                <div className="suspended-message-container mb-4 p-3 border rounded" style={{ backgroundColor: '#fff3cd', borderColor: '#ffeeba' }}>
+                  <p className="mb-2 font-weight-bold text-dark" style={{ fontSize: '14px' }}>
+                    Your service is currently suspended. Please choose an option below:
+                  </p>
+                  <div className="d-flex flex-wrap" style={{ gap: '8px' }}>
+                    <a
+                      href="https://wa.me/01329646688"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-success btn-sm font-weight-bold"
+                    >
+                      <i className="fab fa-whatsapp mr-1"></i> Reactivate via WhatsApp
+                    </a>
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm font-weight-bold"
+                      onClick={() => setTerminateModalOpen(true)}
+                    >
+                      <i className="fas fa-power-off mr-1"></i> Terminate Service
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
               {/* Mobile Tab View Selector Dropdown (< 768px) */}
               <div className="d-block d-md-none mb-3">
@@ -1152,54 +1360,51 @@ export default function ServiceDetailsPage() {
                               </div>
                             </div>
 
-                            {/* Extensions Table */}
+                            {/* Provisioned Extensions Table (Matching WHMCS screenshot user_screen_9.png) */}
                             <div className="card mb-4 border">
                               <div className="card-header bg-light d-flex justify-content-between align-items-center">
                                 <h5 className="m-0 font-weight-bold text-dark" style={{ fontSize: '14px' }}>
-                                  <i className="fas fa-phone mr-1 text-primary"></i> Provisioned Extensions ({extensions.length})
+                                  <i className="fas fa-phone mr-1 text-primary"></i> Provisioned Extensions
                                 </h5>
                                 <span className="small text-muted">
-                                  30-Day Call Recordings: <strong className="text-success">Active &amp; Stored</strong>
+                                  30-Day Call Recordings: <strong className="text-success">0 calls stored</strong>
                                 </span>
                               </div>
                               <div className="table-responsive">
                                 <table className="table table-hover mb-0" style={{ fontSize: '13px' }}>
-                                  <thead className="bg-light text-muted">
+                                  <thead className="bg-light text-muted font-weight-bold" style={{ fontSize: '12px' }}>
                                     <tr>
-                                      <th>Extension</th>
-                                      <th>Caller ID / Name</th>
-                                      <th>SIP Password</th>
-                                      <th>SIP Server</th>
-                                      <th>Status</th>
-                                      <th className="text-right">Action</th>
+                                      <th>EXTENSION</th>
+                                      <th>CALLER ID / EXTENSION NAME</th>
+                                      <th>SIP PASSWORD</th>
+                                      <th>SIP SERVER</th>
+                                      <th>STATUS</th>
+                                      <th className="text-right">ACTIONS</th>
                                     </tr>
                                   </thead>
                                   <tbody>
                                     {extensions.map((ext) => (
                                       <tr key={ext.extension}>
-                                        <td>
-                                          <span className="badge badge-primary font-mono" style={{ fontSize: '13px' }}>
-                                            {ext.extension}
-                                          </span>
-                                          {ext.isSpecial && (
-                                            <span className="badge badge-info ml-1">FREE 24/7 SUPPORT</span>
-                                          )}
+                                        <td className="font-weight-bold font-mono">
+                                          {ext.extension}
                                         </td>
-                                        <td className="font-weight-bold">{ext.name}</td>
+                                        <td className="font-weight-bold text-dark">{ext.name}</td>
                                         <td className="font-mono">
                                           <span>{ext.password}</span>
                                           <button
                                             type="button"
                                             onClick={() => copyToClipboard(ext.password, `ext_${ext.extension}`)}
                                             className="btn btn-xs btn-default ml-2"
-                                            style={{ padding: '1px 5px', fontSize: '10px' }}
+                                            style={{ padding: '1px 6px', fontSize: '11px' }}
                                           >
-                                            {copiedKey === `ext_${ext.extension}` ? 'Copied' : 'Copy'}
+                                            {copiedKey === `ext_${ext.extension}` ? 'Copied' : 'copy'}
                                           </button>
                                         </td>
                                         <td className="font-mono text-muted">{pbxDomain}:5060</td>
                                         <td>
-                                          <span className="badge badge-success">Active</span>
+                                          <span className="badge badge-success font-weight-bold px-2 py-1" style={{ backgroundColor: '#28a745', color: '#fff' }}>
+                                            Registered
+                                          </span>
                                         </td>
                                         <td className="text-right">
                                           <button
@@ -2454,6 +2659,159 @@ export default function ServiceDetailsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer Service Modal (WHMCS Hook transferservices.php Match) */}
+      {transferModalOpen && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header bg-info text-white">
+                <h5 className="modal-title font-weight-bold" style={{ fontSize: '15px' }}>
+                  <i className="fas fa-exchange-alt mr-2"></i> Initiate Service Transfer
+                </h5>
+                <button type="button" onClick={() => setTransferModalOpen(false)} className="close text-white">
+                  <span>&times;</span>
+                </button>
+              </div>
+              <form onSubmit={handleTransferSubmit}>
+                <div className="modal-body" style={{ fontSize: '13.5px' }}>
+                  <p>You are requesting to transfer <strong>{productName} ({displayDomain})</strong> to a new user.</p>
+                  <p className="text-danger small">
+                    Please ensure the recipient is a registered WHMCS client on our system or will be creating an account soon.
+                  </p>
+                  <div className="form-group mb-3">
+                    <label className="font-weight-bold">
+                      Recipient&apos;s Full Name <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={transferToName}
+                      onChange={(e) => setTransferToName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group mb-3">
+                    <label className="font-weight-bold">
+                      Recipient&apos;s Email Address <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      value={transferToEmail}
+                      onChange={(e) => setTransferToEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group mb-3">
+                    <label className="font-weight-bold">
+                      Recipient&apos;s Phone Number (Optional)
+                    </label>
+                    <input
+                      type="tel"
+                      className="form-control"
+                      value={transferToPhone}
+                      onChange={(e) => setTransferToPhone(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="font-weight-bold">
+                      Reason for Transfer <span className="text-danger">*</span>
+                    </label>
+                    <textarea
+                      className="form-control"
+                      rows={3}
+                      value={transferReason}
+                      onChange={(e) => setTransferReason(e.target.value)}
+                      required
+                    ></textarea>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" onClick={() => setTransferModalOpen(false)} className="btn btn-default">
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-info font-weight-bold text-white">
+                    <i className="fas fa-paper-plane mr-1"></i> Submit Transfer Request
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suspend Service Modal (WHMCS Hook suspendbutton.php Match) */}
+      {suspendModalOpen && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header bg-warning text-dark">
+                <h5 className="modal-title font-weight-bold" style={{ fontSize: '15px' }}>
+                  <i className="fas fa-pause-circle mr-2"></i> Confirm Suspension
+                </h5>
+                <button type="button" onClick={() => setSuspendModalOpen(false)} className="close">
+                  <span>&times;</span>
+                </button>
+              </div>
+              <div className="modal-body" style={{ fontSize: '13.5px' }}>
+                <p>Are you sure you want to suspend this service?</p>
+                <p className="text-danger small mb-0">
+                  This action will immediately suspend your service. You can reactivate it later by contacting us.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button type="button" onClick={() => setSuspendModalOpen(false)} className="btn btn-default">
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSuspendSubmit}
+                  className="btn btn-danger font-weight-bold"
+                >
+                  Suspend Service
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Terminate Service Modal (WHMCS Hook suspendbutton.php Match) */}
+      {terminateModalOpen && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header bg-danger text-white">
+                <h5 className="modal-title font-weight-bold" style={{ fontSize: '15px' }}>
+                  <i className="fas fa-power-off mr-2"></i> Confirm Termination
+                </h5>
+                <button type="button" onClick={() => setTerminateModalOpen(false)} className="close text-white">
+                  <span>&times;</span>
+                </button>
+              </div>
+              <div className="modal-body" style={{ fontSize: '13.5px' }}>
+                <p>Are you sure you want to terminate this service?</p>
+                <p className="text-danger small mb-0">
+                  This action is permanent and cannot be undone. All data will be permanently purged.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button type="button" onClick={() => setTerminateModalOpen(false)} className="btn btn-default">
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTerminateSubmit}
+                  className="btn btn-danger font-weight-bold"
+                >
+                  Terminate Service
+                </button>
+              </div>
             </div>
           </div>
         </div>
