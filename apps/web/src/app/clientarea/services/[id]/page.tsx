@@ -513,8 +513,8 @@ export default function ServiceDetailsPage() {
       <section id="main-body">
         <div className="container">
           <div className="row">
-            {/* Left Sidebar (col-lg-4 col-xl-3) */}
-            <div className="col-lg-4 col-xl-3">
+            {/* Left Sidebar (col-lg-4 col-xl-3) - Order 2 on Mobile, Order 1 on Desktop */}
+            <div className="col-lg-4 col-xl-3 order-2 order-lg-1">
               <div className="sidebar">
                 {/* Overview Card */}
                 <div className="card card-sidebar mb-3">
@@ -717,12 +717,47 @@ export default function ServiceDetailsPage() {
               </div>
             </div>
 
-            {/* Right Primary Content (col-lg-8 col-xl-9) */}
-            <div className="col-lg-8 col-xl-9 primary-content">
+            {/* Right Primary Content (col-lg-8 col-xl-9) - Order 1 on Mobile, Order 2 on Desktop */}
+            <div className="col-lg-8 col-xl-9 primary-content order-1 order-lg-2">
               {/* Header Lined */}
               <div className="header-lined mb-3">
                 <h1 className="mb-1">Managing {productName}</h1>
                 <p className="text-muted">{displayDomain || `Service #${service.id}`}</p>
+              </div>
+
+              {/* Mobile Quick Action Buttons (shown only on mobile/tablet < 992px) */}
+              <div className="d-flex d-lg-none gap-2 mb-3" style={{ gap: '8px' }}>
+                {isPbx ? (
+                  <button
+                    type="button"
+                    onClick={handlePbxSso}
+                    disabled={ssoLoading}
+                    className="btn btn-primary flex-fill font-weight-bold py-2 shadow-xs"
+                    style={{ fontSize: '13px' }}
+                  >
+                    <i className="fas fa-sign-in-alt mr-1"></i> {ssoLoading ? 'Connecting...' : 'Login to PBX Console'}
+                  </button>
+                ) : !isIpPhone && !isVps ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleCpanelSso('cpanel')}
+                      disabled={cpanelSsoLoading}
+                      className="btn btn-primary flex-fill font-weight-bold py-2 shadow-xs"
+                      style={{ fontSize: '13px' }}
+                    >
+                      <i className="fas fa-sign-in-alt mr-1"></i> {cpanelSsoLoading ? 'Connecting...' : 'Login to cPanel'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCpanelSso('webmail')}
+                      className="btn btn-outline-primary flex-fill font-weight-bold py-2 shadow-xs bg-white"
+                      style={{ fontSize: '13px' }}
+                    >
+                      <i className="fas fa-envelope mr-1"></i> Webmail
+                    </button>
+                  </>
+                ) : null}
               </div>
 
               {/* Suspension Alert */}
@@ -753,7 +788,7 @@ export default function ServiceDetailsPage() {
                   WHMCS TWENTY-ONE PRODUCT DETAILS CARD
                  ======================================================== */}
               <div className="card mb-4" style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                <div className="card-body p-4">
+                <div className="card-body p-3 p-md-4">
                   <div className="product-details">
                     <div className="row">
                       {/* Left Column: Product Icon, Names, Status, Actions */}
@@ -779,7 +814,7 @@ export default function ServiceDetailsPage() {
                         </div>
 
                         <div className="row product-actions-wrapper">
-                          <div className="col-12">
+                          <div className="col-12 mb-2">
                             <Link
                               href={`/cart${impQuery ? `${impQuery}&` : '?'}a=upgrade&id=${service.id}`}
                               className="btn btn-block btn-success font-weight-bold py-2"
@@ -800,7 +835,7 @@ export default function ServiceDetailsPage() {
                       </div>
 
                       {/* Right Column: WHMCS Billing Details */}
-                      <div className="col-md-6 text-center">
+                      <div className="col-md-6 text-center mt-4 mt-md-0 pt-3 pt-md-0 border-top border-top-md-0">
                         <h4>Registration Date</h4>
                         <p>{formatWhmcsDate(service.regdate)}</p>
 
@@ -836,6 +871,34 @@ export default function ServiceDetailsPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Mobile Tab View Selector Dropdown (< 768px) */}
+              <div className="d-block d-md-none mb-3">
+                <label className="small font-weight-bold text-muted mb-1 d-block">
+                  <i className="fas fa-layer-group mr-1 text-primary"></i> Active Section:
+                </label>
+                <div className="input-group">
+                  <div className="input-group-prepend">
+                    <span className="input-group-text bg-light text-primary">
+                      <i className="fas fa-th-list"></i>
+                    </span>
+                  </div>
+                  <select
+                    value={activeTab}
+                    onChange={(e) => setActiveTab(e.target.value as any)}
+                    className="form-control font-weight-bold border-primary text-primary"
+                    style={{ height: '42px', fontSize: '13.5px', borderRadius: '0 6px 6px 0' }}
+                  >
+                    <option value="domain">🌐 {isPbx ? 'Information & PBX Portal' : isIpPhone ? 'Number Information' : 'Information & Domain'}</option>
+                    <option value="configoptions">📦 Configurable Options</option>
+                    <option value="additionalinfo">📋 Additional Information</option>
+                    <option value="resourceusage">📊 Resource Usage</option>
+                    <option value="downloads">⬇️ Downloads (4)</option>
+                    <option value="addons">🧩 Addons (4)</option>
+                    <option value="changepw">🔑 Change Password</option>
+                  </select>
                 </div>
               </div>
 
@@ -924,80 +987,80 @@ export default function ServiceDetailsPage() {
                   <div className="tab-pane fade show active">
                     {/* Domain & Server Specifications Section */}
                     <div className="border rounded p-3 mb-4 bg-light" style={{ fontSize: '14px' }}>
-                      <div className="row py-2 border-bottom">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                      <div className="row py-2 border-bottom align-items-center">
+                        <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                           {isIpPhone ? 'Assigned Phone Number:' : isPbx ? 'PBX Tenant Domain:' : 'Domain / Hostname:'}
                         </div>
-                        <div className="col-sm-7 text-left font-weight-bold text-primary font-mono">
+                        <div className="col-12 col-sm-7 text-left font-weight-bold text-primary font-mono text-break">
                           {displayDomain}
                         </div>
                       </div>
 
-                      <div className="row py-2 border-bottom">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                      <div className="row py-2 border-bottom align-items-center">
+                        <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                           Server Username:
                         </div>
-                        <div className="col-sm-7 text-left font-mono d-flex align-items-center">
-                          <span>{displayUsername}</span>
+                        <div className="col-12 col-sm-7 text-left font-mono d-flex align-items-center flex-wrap" style={{ gap: '6px' }}>
+                          <span className="text-break">{displayUsername}</span>
                           <button
                             type="button"
                             onClick={() => copyToClipboard(displayUsername, 'user')}
-                            className="btn btn-xs btn-default ml-2"
-                            style={{ padding: '1px 6px', fontSize: '11px' }}
+                            className="btn btn-xs btn-default"
+                            style={{ padding: '2px 8px', fontSize: '11px' }}
                           >
                             {copiedKey === 'user' ? 'Copied!' : 'Copy'}
                           </button>
                         </div>
                       </div>
 
-                      <div className="row py-2 border-bottom">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                      <div className="row py-2 border-bottom align-items-center">
+                        <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                           Server Name / Hostname:
                         </div>
-                        <div className="col-sm-7 text-left font-mono">
+                        <div className="col-12 col-sm-7 text-left font-mono text-break">
                           {serverHostname}
                         </div>
                       </div>
 
-                      <div className="row py-2 border-bottom">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                      <div className="row py-2 border-bottom align-items-center">
+                        <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                           Dedicated / Primary IP:
                         </div>
-                        <div className="col-sm-7 text-left font-mono">
+                        <div className="col-12 col-sm-7 text-left font-mono text-break">
                           {serverIp}
                         </div>
                       </div>
 
                       {!isPbx && !isIpPhone && (
-                        <div className="row py-2 border-bottom">
-                          <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                        <div className="row py-2 border-bottom align-items-center">
+                          <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                             Nameservers:
                           </div>
-                          <div className="col-sm-7 text-left font-mono text-muted" style={{ fontSize: '13px' }}>
+                          <div className="col-12 col-sm-7 text-left font-mono text-muted text-break" style={{ fontSize: '13px' }}>
                             {nameserver1} ({serverIp})<br />
                             {nameserver2} ({serverIp})
                           </div>
                         </div>
                       )}
 
-                      <div className="row py-2">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                      <div className="row py-2 align-items-center">
+                        <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                           SSL Certificate Status:
                         </div>
-                        <div className="col-sm-7 text-left text-success font-weight-bold">
+                        <div className="col-12 col-sm-7 text-left text-success font-weight-bold text-break">
                           <i className="fas fa-lock mr-1"></i> Active (Let's Encrypt Authority - Validated)
                         </div>
                       </div>
                     </div>
 
                     {/* Website / Control Buttons */}
-                    <div className="text-center mb-4">
+                    <div className="text-center mb-4 d-flex flex-wrap justify-content-center" style={{ gap: '8px' }}>
                       {service.domain && (
                         <a
                           href={`http://${displayDomain}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="btn btn-default mr-2"
+                          className="btn btn-default"
                         >
                           <i className="fas fa-external-link-alt mr-1"></i> Visit Website
                         </a>
@@ -1254,86 +1317,94 @@ export default function ServiceDetailsPage() {
                             </h5>
                             <span className="small text-muted">Single Sign-On (SSO)</span>
                           </div>
-                          <div className="card-body text-center">
+                          <div className="card-body text-center p-3 p-md-4">
                             <div className="row">
-                              <div className="col-md-3 col-sm-4 col-6 mb-3">
+                              <div className="col-6 col-sm-4 col-md-3 mb-3">
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('files') : handleCpanelSso('files'))}
-                                  className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  style={{ minHeight: '94px' }}
                                 >
-                                  <i className="fas fa-folder-open text-primary mb-2" style={{ fontSize: '26px' }}></i>
-                                  <div className="font-weight-bold small">File Manager</div>
+                                  <i className="fas fa-folder-open text-primary mb-2" style={{ fontSize: '24px' }}></i>
+                                  <div className="font-weight-bold small text-truncate w-100">File Manager</div>
                                 </button>
                               </div>
-                              <div className="col-md-3 col-sm-4 col-6 mb-3">
+                              <div className="col-6 col-sm-4 col-md-3 mb-3">
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('mail') : handleCpanelSso('mail'))}
-                                  className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  style={{ minHeight: '94px' }}
                                 >
-                                  <i className="fas fa-envelope text-success mb-2" style={{ fontSize: '26px' }}></i>
-                                  <div className="font-weight-bold small">Email Accounts</div>
+                                  <i className="fas fa-envelope text-success mb-2" style={{ fontSize: '24px' }}></i>
+                                  <div className="font-weight-bold small text-truncate w-100">Email Accounts</div>
                                 </button>
                               </div>
-                              <div className="col-md-3 col-sm-4 col-6 mb-3">
+                              <div className="col-6 col-sm-4 col-md-3 mb-3">
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('databases') : handleCpanelSso('databases'))}
-                                  className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  style={{ minHeight: '94px' }}
                                 >
-                                  <i className="fas fa-database text-warning mb-2" style={{ fontSize: '26px' }}></i>
-                                  <div className="font-weight-bold small">MySQL Databases</div>
+                                  <i className="fas fa-database text-warning mb-2" style={{ fontSize: '24px' }}></i>
+                                  <div className="font-weight-bold small text-truncate w-100">MySQL Databases</div>
                                 </button>
                               </div>
-                              <div className="col-md-3 col-sm-4 col-6 mb-3">
+                              <div className="col-6 col-sm-4 col-md-3 mb-3">
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('wordpress') : handleCpanelSso('wordpress'))}
-                                  className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  style={{ minHeight: '94px' }}
                                 >
-                                  <i className="fab fa-wordpress text-info mb-2" style={{ fontSize: '26px' }}></i>
-                                  <div className="font-weight-bold small">WordPress</div>
+                                  <i className="fab fa-wordpress text-info mb-2" style={{ fontSize: '24px' }}></i>
+                                  <div className="font-weight-bold small text-truncate w-100">WordPress</div>
                                 </button>
                               </div>
-                              <div className="col-md-3 col-sm-4 col-6 mb-3">
+                              <div className="col-6 col-sm-4 col-md-3 mb-3">
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('ssl') : handleCpanelSso('ssl'))}
-                                  className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  style={{ minHeight: '94px' }}
                                 >
-                                  <i className="fas fa-shield-alt text-teal mb-2" style={{ fontSize: '26px', color: '#0d9488' }}></i>
-                                  <div className="font-weight-bold small">SSL / TLS</div>
+                                  <i className="fas fa-shield-alt text-teal mb-2" style={{ fontSize: '24px', color: '#0d9488' }}></i>
+                                  <div className="font-weight-bold small text-truncate w-100">SSL / TLS</div>
                                 </button>
                               </div>
-                              <div className="col-md-3 col-sm-4 col-6 mb-3">
+                              <div className="col-6 col-sm-4 col-md-3 mb-3">
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('dns') : handleCpanelSso('dns'))}
-                                  className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  style={{ minHeight: '94px' }}
                                 >
-                                  <i className="fas fa-globe text-danger mb-2" style={{ fontSize: '26px' }}></i>
-                                  <div className="font-weight-bold small">DNS Zone</div>
+                                  <i className="fas fa-globe text-danger mb-2" style={{ fontSize: '24px' }}></i>
+                                  <div className="font-weight-bold small text-truncate w-100">DNS Zone</div>
                                 </button>
                               </div>
-                              <div className="col-md-3 col-sm-4 col-6 mb-3">
+                              <div className="col-6 col-sm-4 col-md-3 mb-3">
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('cpanel') : handleCpanelSso('backups'))}
-                                  className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  style={{ minHeight: '94px' }}
                                 >
-                                  <i className="fas fa-history text-muted mb-2" style={{ fontSize: '26px' }}></i>
-                                  <div className="font-weight-bold small">Backups</div>
+                                  <i className="fas fa-history text-muted mb-2" style={{ fontSize: '24px' }}></i>
+                                  <div className="font-weight-bold small text-truncate w-100">Backups</div>
                                 </button>
                               </div>
-                              <div className="col-md-3 col-sm-4 col-6 mb-3">
+                              <div className="col-6 col-sm-4 col-md-3 mb-3">
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('cpanel') : handleCpanelSso('awstats'))}
-                                  className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  style={{ minHeight: '94px' }}
                                 >
-                                  <i className="fas fa-chart-line text-info mb-2" style={{ fontSize: '26px' }}></i>
-                                  <div className="font-weight-bold small">Awstats</div>
+                                  <i className="fas fa-chart-line text-info mb-2" style={{ fontSize: '24px' }}></i>
+                                  <div className="font-weight-bold small text-truncate w-100">Awstats</div>
                                 </button>
                               </div>
                             </div>
@@ -1347,14 +1418,14 @@ export default function ServiceDetailsPage() {
                               <i className="fas fa-envelope-open-text mr-1 text-primary"></i> Quick Create Email Account
                             </h5>
                           </div>
-                          <div className="card-body">
+                          <div className="card-body p-3 p-md-4">
                             {emailCreatedMsg && (
                               <div className="alert alert-success py-2 px-3 mb-3">
                                 <i className="fas fa-check-circle mr-1"></i> {emailCreatedMsg}
                               </div>
                             )}
                             <form onSubmit={handleCreateEmail} className="row">
-                              <div className="col-md-5 mb-2 mb-md-0">
+                              <div className="col-12 col-md-5 mb-2 mb-md-0">
                                 <div className="input-group">
                                   <input
                                     type="text"
@@ -1365,11 +1436,17 @@ export default function ServiceDetailsPage() {
                                     required
                                   />
                                   <div className="input-group-append">
-                                    <span className="input-group-text small font-mono">@{displayDomain}</span>
+                                    <span
+                                      className="input-group-text small font-mono text-truncate"
+                                      style={{ maxWidth: '140px' }}
+                                      title={`@${displayDomain}`}
+                                    >
+                                      @{displayDomain}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
-                              <div className="col-md-4 mb-2 mb-md-0">
+                              <div className="col-12 col-md-4 mb-2 mb-md-0">
                                 <input
                                   type="password"
                                   value={emailPass}
@@ -1379,11 +1456,11 @@ export default function ServiceDetailsPage() {
                                   required
                                 />
                               </div>
-                              <div className="col-md-3">
+                              <div className="col-12 col-md-3">
                                 <button
                                   type="submit"
                                   disabled={creatingEmail}
-                                  className="btn btn-primary btn-block font-weight-bold"
+                                  className="btn btn-primary btn-block font-weight-bold py-2"
                                 >
                                   {creatingEmail ? 'Creating...' : 'Create Email'}
                                 </button>
@@ -1608,43 +1685,43 @@ export default function ServiceDetailsPage() {
                       ) : (
                         /* Web Hosting Config Options */
                         <>
-                          <div className="row py-2 border-bottom">
-                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                          <div className="row py-2 border-bottom align-items-center">
+                            <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                               Web Server Engine:
                             </div>
-                            <div className="col-sm-7 text-left text-success font-weight-bold">
+                            <div className="col-12 col-sm-7 text-left text-success font-weight-bold text-break">
                               LiteSpeed Enterprise + LSCache
                             </div>
                           </div>
-                          <div className="row py-2 border-bottom">
-                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                          <div className="row py-2 border-bottom align-items-center">
+                            <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                               BDIX Direct Peering:
                             </div>
-                            <div className="col-sm-7 text-left font-weight-bold">
+                            <div className="col-12 col-sm-7 text-left font-weight-bold text-break">
                               10 Gbps Direct Low-Latency BDIX Uplink
                             </div>
                           </div>
-                          <div className="row py-2 border-bottom">
-                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                          <div className="row py-2 border-bottom align-items-center">
+                            <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                               PHP Versions Supported:
                             </div>
-                            <div className="col-sm-7 text-left font-mono text-muted">
+                            <div className="col-12 col-sm-7 text-left font-mono text-muted text-break">
                               Multi-PHP (PHP 7.4, 8.0, 8.1, 8.2, 8.3)
                             </div>
                           </div>
-                          <div className="row py-2 border-bottom">
-                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                          <div className="row py-2 border-bottom align-items-center">
+                            <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                               Database Server:
                             </div>
-                            <div className="col-sm-7 text-left">
+                            <div className="col-12 col-sm-7 text-left text-break">
                               MySQL 8.0 / MariaDB 10.6 + phpMyAdmin
                             </div>
                           </div>
-                          <div className="row py-2">
-                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                          <div className="row py-2 align-items-center">
+                            <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                               Automated Backups:
                             </div>
-                            <div className="col-sm-7 text-left text-primary font-weight-bold">
+                            <div className="col-12 col-sm-7 text-left text-primary font-weight-bold text-break">
                               Daily Automated Cloud Snapshot (7-Day Retention)
                             </div>
                           </div>
@@ -1663,47 +1740,47 @@ export default function ServiceDetailsPage() {
                       <i className="fas fa-id-card mr-2 text-primary"></i> Additional Client &amp; Service Information
                     </h4>
                     <div className="border rounded bg-light p-3" style={{ fontSize: '14px' }}>
-                      <div className="row py-2 border-bottom">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                      <div className="row py-2 border-bottom align-items-center">
+                        <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                           Registered Client Name:
                         </div>
-                        <div className="col-sm-7 text-left font-weight-bold">
+                        <div className="col-12 col-sm-7 text-left font-weight-bold text-break">
                           {client?.name || 'Softcents Valued Client'}
                         </div>
                       </div>
 
-                      <div className="row py-2 border-bottom">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                      <div className="row py-2 border-bottom align-items-center">
+                        <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                           Verified National ID (NID):
                         </div>
-                        <div className="col-sm-7 text-left font-mono text-dark">
+                        <div className="col-12 col-sm-7 text-left font-mono text-dark text-break">
                           {client?.customfields?.['NID Namber'] || 'Verified Smart NID'}
                         </div>
                       </div>
 
-                      <div className="row py-2 border-bottom">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                      <div className="row py-2 border-bottom align-items-center">
+                        <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                           WhatsApp Notification Number:
                         </div>
-                        <div className="col-sm-7 text-left font-mono">
+                        <div className="col-12 col-sm-7 text-left font-mono text-break">
                           {client?.customfields?.['Your Whatsapp No'] || client?.phonenumber || '01700000000'}
                         </div>
                       </div>
 
-                      <div className="row py-2 border-bottom">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                      <div className="row py-2 border-bottom align-items-center">
+                        <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                           BTRC Regulatory Compliance:
                         </div>
-                        <div className="col-sm-7 text-left text-success font-weight-bold">
+                        <div className="col-12 col-sm-7 text-left text-success font-weight-bold text-break">
                           <i className="fas fa-check-circle mr-1"></i> BTRC Compliant &amp; KYC Approved
                         </div>
                       </div>
 
-                      <div className="row py-2">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                      <div className="row py-2 align-items-center">
+                        <div className="col-12 col-sm-5 text-left text-sm-right font-weight-bold text-muted mb-1 mb-sm-0">
                           Permanent Registered Address:
                         </div>
-                        <div className="col-sm-7 text-left">
+                        <div className="col-12 col-sm-7 text-left text-break">
                           {client?.customfields?.['Permanent Full Address'] || client?.address1 || 'Dhaka, Bangladesh'}
                         </div>
                       </div>
@@ -1720,8 +1797,8 @@ export default function ServiceDetailsPage() {
                       <i className="fas fa-inbox mr-2 text-primary"></i> Real-Time Resource Usage
                     </h4>
                     <div className="row justify-content-center">
-                      <div className="col-sm-5 col-10 mb-4">
-                        <div className="p-4 border rounded shadow-xs bg-light">
+                      <div className="col-12 col-sm-6 mb-3">
+                        <div className="p-3 p-sm-4 border rounded shadow-xs bg-light">
                           <h5 className="font-weight-bold mb-3">Disk Space Usage</h5>
                           <div className="progress mb-2" style={{ height: '20px' }}>
                             <div
@@ -1741,8 +1818,8 @@ export default function ServiceDetailsPage() {
                         </div>
                       </div>
 
-                      <div className="col-sm-5 col-10 mb-4">
-                        <div className="p-4 border rounded shadow-xs bg-light">
+                      <div className="col-12 col-sm-6 mb-3">
+                        <div className="p-3 p-sm-4 border rounded shadow-xs bg-light">
                           <h5 className="font-weight-bold mb-3">Bandwidth Usage</h5>
                           <div className="progress mb-2" style={{ height: '20px' }}>
                             <div
@@ -1963,7 +2040,7 @@ export default function ServiceDetailsPage() {
                         <>
                           <div className="col-md-6 mb-3">
                             <div className="card border">
-                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                              <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                                 <strong>Extra 5 Extensions Pack</strong>
                                 <span className="badge badge-success">৳500.00 BDT/mo</span>
                               </div>
@@ -1980,7 +2057,7 @@ export default function ServiceDetailsPage() {
 
                           <div className="col-md-6 mb-3">
                             <div className="card border">
-                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                              <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                                 <strong>1-Year Call Recording Cloud Archive</strong>
                                 <span className="badge badge-success">৳1,000.00 BDT/mo</span>
                               </div>
@@ -1997,7 +2074,7 @@ export default function ServiceDetailsPage() {
 
                           <div className="col-md-6 mb-3">
                             <div className="card border">
-                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                              <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                                 <strong>Dedicated DID Trunk Channel</strong>
                                 <span className="badge badge-success">৳300.00 BDT/mo</span>
                               </div>
@@ -2014,7 +2091,7 @@ export default function ServiceDetailsPage() {
 
                           <div className="col-md-6 mb-3">
                             <div className="card border">
-                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                              <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                                 <strong>Custom Multi-Level IVR Recording</strong>
                                 <span className="badge badge-success">৳1,500.00 BDT</span>
                               </div>
@@ -2033,7 +2110,7 @@ export default function ServiceDetailsPage() {
                         <>
                           <div className="col-md-6 mb-3">
                             <div className="card border">
-                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                              <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                                 <strong>Additional 2 Concurrent Channels</strong>
                                 <span className="badge badge-success">৳300.00 BDT/mo</span>
                               </div>
@@ -2050,7 +2127,7 @@ export default function ServiceDetailsPage() {
 
                           <div className="col-md-6 mb-3">
                             <div className="card border">
-                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                              <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                                 <strong>Inbound Call Recording (30-Day Storage)</strong>
                                 <span className="badge badge-success">৳200.00 BDT/mo</span>
                               </div>
@@ -2067,7 +2144,7 @@ export default function ServiceDetailsPage() {
 
                           <div className="col-md-6 mb-3">
                             <div className="card border">
-                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                              <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                                 <strong>Virtual IVR Auto-Attendant Gateway</strong>
                                 <span className="badge badge-success">৳500.00 BDT/mo</span>
                               </div>
@@ -2084,7 +2161,7 @@ export default function ServiceDetailsPage() {
 
                           <div className="col-md-6 mb-3">
                             <div className="card border">
-                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                              <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                                 <strong>Bulk SMS Promotional API Gateway</strong>
                                 <span className="badge badge-success">৳500.00 BDT/mo</span>
                               </div>
@@ -2104,7 +2181,7 @@ export default function ServiceDetailsPage() {
                         <>
                           <div className="col-md-6 mb-3">
                             <div className="card border">
-                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                              <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                                 <strong>Dedicated IPv4 Address</strong>
                                 <span className="badge badge-success">৳300.00 BDT/mo</span>
                               </div>
@@ -2121,7 +2198,7 @@ export default function ServiceDetailsPage() {
 
                           <div className="col-md-6 mb-3">
                             <div className="card border">
-                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                              <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                                 <strong>PositiveSSL Wildcard Certificate</strong>
                                 <span className="badge badge-success">৳1,500.00 BDT/yr</span>
                               </div>
@@ -2138,7 +2215,7 @@ export default function ServiceDetailsPage() {
 
                           <div className="col-md-6 mb-3">
                             <div className="card border">
-                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                              <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                                 <strong>cPanel Daily Cloud Backup (50GB)</strong>
                                 <span className="badge badge-success">৳450.00 BDT/mo</span>
                               </div>
@@ -2155,7 +2232,7 @@ export default function ServiceDetailsPage() {
 
                           <div className="col-md-6 mb-3">
                             <div className="card border">
-                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                              <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                                 <strong>SpamExperts Inbound Email Filter</strong>
                                 <span className="badge badge-success">৳250.00 BDT/mo</span>
                               </div>
@@ -2202,7 +2279,7 @@ export default function ServiceDetailsPage() {
                         <label className="col-sm-4 col-form-label font-weight-bold" style={{ fontSize: '13px' }}>
                           New Password:
                         </label>
-                        <div className="col-sm-5">
+                        <div className="col-12 col-sm-5">
                           <input
                             type="password"
                             value={newPassword}
@@ -2212,7 +2289,7 @@ export default function ServiceDetailsPage() {
                             required
                           />
                         </div>
-                        <div className="col-sm-3">
+                        <div className="col-12 col-sm-3 mt-2 mt-sm-0">
                           <button
                             type="button"
                             onClick={() => generateRandomPassword('main')}

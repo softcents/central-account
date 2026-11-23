@@ -2733,6 +2733,7 @@ table.table-list tbody tr:nth-child(even) {
   padding: 0;
   margin: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   list-style: none;
 }
@@ -3185,7 +3186,9 @@ div.product-details h4 + div {
 .responsive-tabs-sm .nav-item {
   margin-bottom: -1px;
 }
-.responsive-tabs-sm .nav-link {
+.responsive-tabs-sm .nav-link,
+.responsive-tabs-sm .nav-item button,
+.responsive-tabs-sm .nav-item a {
   color: #495057;
   border: 1px solid transparent;
   border-top-left-radius: 0.25rem;
@@ -3198,13 +3201,18 @@ div.product-details h4 + div {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  text-decoration: none;
 }
-.responsive-tabs-sm .nav-link:hover {
+.responsive-tabs-sm .nav-link:hover,
+.responsive-tabs-sm .nav-item button:hover,
+.responsive-tabs-sm .nav-item a:hover {
   border-color: #e9ecef #e9ecef #dee2e6;
   background-color: #f8f9fa;
   color: #336699;
 }
-.responsive-tabs-sm .nav-link.active {
+.responsive-tabs-sm .nav-link.active,
+.responsive-tabs-sm .nav-item button.active,
+.responsive-tabs-sm .nav-item a.active {
   color: #336699;
   background-color: #fff;
   border-color: #dee2e6 #dee2e6 #fff;
@@ -3221,6 +3229,39 @@ div.product-details-tab-container {
   background-color: #fff;
   border-bottom-left-radius: 4px;
   border-bottom-right-radius: 4px;
+}
+
+@media (max-width: 767.98px) {
+  .responsive-tabs-sm {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding-bottom: 2px !important;
+    border-bottom: 2px solid #dee2e6 !important;
+    gap: 4px !important;
+    margin-top: 1rem !important;
+    width: 100% !important;
+  }
+  .responsive-tabs-sm::-webkit-scrollbar {
+    display: none !important;
+  }
+  .responsive-tabs-sm .nav-item {
+    flex: 0 0 auto !important;
+    margin-bottom: 0 !important;
+  }
+  .responsive-tabs-sm .nav-link,
+  .responsive-tabs-sm .nav-item button,
+  .responsive-tabs-sm .nav-item a {
+    white-space: nowrap !important;
+    padding: 0.5rem 0.85rem !important;
+    font-size: 13px !important;
+    border-radius: 4px 4px 0 0 !important;
+  }
+  div.product-details-tab-container {
+    padding: 16px 12px !important;
+  }
 }
 
 /* Sidebar styling matching Twenty-One */
