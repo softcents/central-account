@@ -9,7 +9,7 @@ export function WhmcsFooter() {
       <div className="max-w-[1240px] mx-auto px-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Navigation Links */}
-          <ul className="flex items-center space-x-6">
+          <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             <li>
               <Link href="/contact" className="hover:text-[#1A4D80] hover:underline">
                 Contact Us

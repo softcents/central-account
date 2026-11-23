@@ -639,11 +639,11 @@ export default function ServiceDetailsPage() {
       </nav>
 
       {/* WHMCS Main Body Section */}
-      <section id="main-body">
+      <section id="main-body" className="py-3 py-md-4">
         <div className="container">
           <div className="row">
             {/* Left Sidebar (col-lg-4 col-xl-3) - Order 2 on Mobile, Order 1 on Desktop */}
-            <div className="col-lg-4 col-xl-3 order-2 order-lg-1">
+            <div className="col-12 col-lg-4 col-xl-3 order-2 order-lg-1">
               <div className="sidebar">
                 {/* Client Activity Card (WHMCS Hook info.php Match) */}
                 <div className="client-activity-card mb-3">
@@ -896,7 +896,7 @@ export default function ServiceDetailsPage() {
             </div>
 
             {/* Right Primary Content (col-lg-8 col-xl-9) - Order 1 on Mobile, Order 2 on Desktop */}
-            <div className="col-lg-8 col-xl-9 primary-content order-1 order-lg-2">
+            <div className="col-12 col-lg-8 col-xl-9 primary-content order-1 order-lg-2">
               {/* Header Lined */}
               <div className="header-lined mb-3">
                 <h1 className="mb-1">Managing {productName}</h1>
@@ -906,7 +906,7 @@ export default function ServiceDetailsPage() {
               {/* Overdue / Unpaid Invoice Alert Banner (WHMCS Match) */}
               {unpaidInvoice && (
                 <div
-                  className={`alert alert-${isOverdue ? 'danger' : 'warning'} d-flex align-items-center justify-content-between mb-3`}
+                  className={`alert alert-${isOverdue ? 'danger' : 'warning'} d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2 mb-3`}
                   id={isOverdue ? 'alertOverdueInvoice' : 'alertUnpaidInvoice'}
                   style={{ borderRadius: '4px', padding: '12px 18px', borderLeft: '4px solid #dc3545' }}
                 >
@@ -916,7 +916,7 @@ export default function ServiceDetailsPage() {
                   </div>
                   <Link
                     href={`/viewinvoice?id=${unpaidInvoice.id}${impQuery ? `&${impQuery.slice(1)}` : ''}`}
-                    className="btn btn-xs btn-default bg-white border font-weight-bold shadow-xs ml-3"
+                    className="btn btn-xs btn-default bg-white border font-weight-bold shadow-xs ml-0 ml-sm-3 mt-2 mt-sm-0"
                     style={{ color: '#333', padding: '4px 14px', borderRadius: '4px' }}
                   >
                     Pay Invoice
@@ -1009,9 +1009,9 @@ export default function ServiceDetailsPage() {
                   <div className="product-details">
                     <div className="row">
                       {/* Left Column: Product Icon, Names, Status, Cancellation Button */}
-                      <div className="col-md-6">
+                      <div className="col-12 col-md-6 mb-3 mb-md-0">
                         <div className={`product-status product-status-${statusLower} mb-3`}>
-                          <div className="product-icon text-center">
+                          <div className="product-icon text-center p-3 p-sm-4">
                             <span className="fa-stack fa-lg">
                               <i className="fas fa-circle fa-stack-2x" style={{ color: '#343a40' }}></i>
                               {isPbx || isIpPhone ? (
@@ -1022,8 +1022,8 @@ export default function ServiceDetailsPage() {
                                 <i className="fas fa-cube fa-stack-1x fa-inverse"></i>
                               )}
                             </span>
-                            <h3>{productName}</h3>
-                            <h4>{groupName}</h4>
+                            <h3 className="text-break mt-3 mb-1" style={{ fontSize: '18px', fontWeight: 600 }}>{productName}</h3>
+                            <h4 className="text-muted" style={{ fontSize: '14px' }}>{groupName}</h4>
                           </div>
                           <div className="product-status-text">
                             {status}
@@ -1035,7 +1035,7 @@ export default function ServiceDetailsPage() {
                             <button
                               type="button"
                               onClick={() => setCancelModalOpen(true)}
-                              className="btn btn-block btn-danger font-weight-bold py-2"
+                              className="btn btn-block btn-danger font-weight-bold py-2 shadow-xs"
                             >
                               <i className="fas fa-ban mr-1"></i> Request Cancellation
                             </button>
@@ -1044,7 +1044,7 @@ export default function ServiceDetailsPage() {
                       </div>
 
                       {/* Right Column: WHMCS Billing Details (Matching Screenshot) */}
-                      <div className="col-md-6 text-center mt-4 mt-md-0 pt-3 pt-md-0 border-top border-top-md-0 whmcs-billing-info">
+                      <div className="col-12 col-md-6 text-center whmcs-billing-info">
                         <h4>Registration Date</h4>
                         <p>{formatWhmcsDate(service.regdate)}</p>
 
@@ -1570,19 +1570,19 @@ export default function ServiceDetailsPage() {
                       <div className="module-client-area">
                         {/* Control Panel Shortcuts Grid */}
                         <div className="card mb-4 border">
-                          <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                          <div className="card-header bg-light d-flex flex-wrap justify-content-between align-items-center" style={{ gap: '6px' }}>
                             <h5 className="m-0 font-weight-bold text-dark" style={{ fontSize: '14px' }}>
                               <i className="fas fa-th mr-1 text-primary"></i> One-Click Control Panel Shortcuts
                             </h5>
                             <span className="small text-muted">Single Sign-On (SSO)</span>
                           </div>
-                          <div className="card-body text-center p-3 p-md-4">
+                          <div className="card-body text-center p-2 p-sm-3 p-md-4">
                             <div className="row">
                               <div className="col-6 col-sm-4 col-md-3 mb-3">
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('files') : handleCpanelSso('files'))}
-                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center cpanel-shortcut-btn"
                                   style={{ minHeight: '94px' }}
                                 >
                                   <i className="fas fa-folder-open text-primary mb-2" style={{ fontSize: '24px' }}></i>
@@ -1593,7 +1593,7 @@ export default function ServiceDetailsPage() {
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('mail') : handleCpanelSso('mail'))}
-                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center cpanel-shortcut-btn"
                                   style={{ minHeight: '94px' }}
                                 >
                                   <i className="fas fa-envelope text-success mb-2" style={{ fontSize: '24px' }}></i>
@@ -1604,7 +1604,7 @@ export default function ServiceDetailsPage() {
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('databases') : handleCpanelSso('databases'))}
-                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center cpanel-shortcut-btn"
                                   style={{ minHeight: '94px' }}
                                 >
                                   <i className="fas fa-database text-warning mb-2" style={{ fontSize: '24px' }}></i>
@@ -1615,7 +1615,7 @@ export default function ServiceDetailsPage() {
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('wordpress') : handleCpanelSso('wordpress'))}
-                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center cpanel-shortcut-btn"
                                   style={{ minHeight: '94px' }}
                                 >
                                   <i className="fab fa-wordpress text-info mb-2" style={{ fontSize: '24px' }}></i>
@@ -1626,7 +1626,7 @@ export default function ServiceDetailsPage() {
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('ssl') : handleCpanelSso('ssl'))}
-                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center cpanel-shortcut-btn"
                                   style={{ minHeight: '94px' }}
                                 >
                                   <i className="fas fa-shield-alt text-teal mb-2" style={{ fontSize: '24px', color: '#0d9488' }}></i>
@@ -1637,7 +1637,7 @@ export default function ServiceDetailsPage() {
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('dns') : handleCpanelSso('dns'))}
-                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center cpanel-shortcut-btn"
                                   style={{ minHeight: '94px' }}
                                 >
                                   <i className="fas fa-globe text-danger mb-2" style={{ fontSize: '24px' }}></i>
@@ -1648,7 +1648,7 @@ export default function ServiceDetailsPage() {
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('cpanel') : handleCpanelSso('backups'))}
-                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center cpanel-shortcut-btn"
                                   style={{ minHeight: '94px' }}
                                 >
                                   <i className="fas fa-history text-muted mb-2" style={{ fontSize: '24px' }}></i>
@@ -1659,7 +1659,7 @@ export default function ServiceDetailsPage() {
                                 <button
                                   type="button"
                                   onClick={() => (isBhpanel ? handleBhpanelSso('cpanel') : handleCpanelSso('awstats'))}
-                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center"
+                                  className="btn btn-outline-light text-dark w-100 p-2 p-sm-3 border rounded shadow-xs h-100 d-flex flex-column align-items-center justify-content-center cpanel-shortcut-btn"
                                   style={{ minHeight: '94px' }}
                                 >
                                   <i className="fas fa-chart-line text-info mb-2" style={{ fontSize: '24px' }}></i>
@@ -1683,7 +1683,7 @@ export default function ServiceDetailsPage() {
                                 <i className="fas fa-check-circle mr-1"></i> {emailCreatedMsg}
                               </div>
                             )}
-                            <form onSubmit={handleCreateEmail} className="row">
+                            <form onSubmit={handleCreateEmail} className="row quick-create-email-form">
                               <div className="col-12 col-md-5 mb-2 mb-md-0">
                                 <div className="input-group">
                                   <input
@@ -1719,7 +1719,7 @@ export default function ServiceDetailsPage() {
                                 <button
                                   type="submit"
                                   disabled={creatingEmail}
-                                  className="btn btn-primary btn-block font-weight-bold py-2"
+                                  className="btn btn-primary btn-block font-weight-bold py-2 shadow-xs"
                                 >
                                   {creatingEmail ? 'Creating...' : 'Create Email'}
                                 </button>
@@ -2535,7 +2535,7 @@ export default function ServiceDetailsPage() {
 
                     <form onSubmit={handlePasswordSubmit} style={{ maxWidth: '600px' }}>
                       <div className="form-group row mb-3">
-                        <label className="col-sm-4 col-form-label font-weight-bold" style={{ fontSize: '13px' }}>
+                        <label className="col-12 col-sm-4 col-form-label font-weight-bold" style={{ fontSize: '13px' }}>
                           New Password:
                         </label>
                         <div className="col-12 col-sm-5">
@@ -2561,10 +2561,10 @@ export default function ServiceDetailsPage() {
                       </div>
 
                       <div className="form-group row mb-4">
-                        <label className="col-sm-4 col-form-label font-weight-bold" style={{ fontSize: '13px' }}>
+                        <label className="col-12 col-sm-4 col-form-label font-weight-bold" style={{ fontSize: '13px' }}>
                           Confirm Password:
                         </label>
-                        <div className="col-sm-5">
+                        <div className="col-12 col-sm-5">
                           <input
                             type="password"
                             value={confirmPassword}
@@ -2577,8 +2577,8 @@ export default function ServiceDetailsPage() {
                       </div>
 
                       <div className="form-group row">
-                        <div className="offset-sm-4 col-sm-8">
-                          <button type="submit" className="btn btn-primary font-weight-bold px-4 mr-2">
+                        <div className="col-12 offset-sm-4 col-sm-8 d-flex flex-wrap" style={{ gap: '8px' }}>
+                          <button type="submit" className="btn btn-primary font-weight-bold px-4 flex-fill flex-sm-grow-0 shadow-xs">
                             Save Changes
                           </button>
                           <button
@@ -2588,7 +2588,7 @@ export default function ServiceDetailsPage() {
                               setConfirmPassword('');
                               setActiveTab('domain');
                             }}
-                            className="btn btn-default"
+                            className="btn btn-default flex-fill flex-sm-grow-0"
                           >
                             Cancel
                           </button>
