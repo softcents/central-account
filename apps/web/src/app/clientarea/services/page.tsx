@@ -7,6 +7,26 @@ import { ClientHeader } from '@/components/ClientHeader';
 import { WhmcsFooter } from '@/components/WhmcsFooter';
 import { useActiveClient } from '@/hooks/useActiveClient';
 
+function formatWhmcsPrice(amount: string | number | null | undefined): string {
+  const num = parseFloat(String(amount || '0'));
+  if (isNaN(num)) return '0Tk';
+  if (num % 1 === 0) {
+    return `${num.toLocaleString('en-US')}Tk`;
+  }
+  return `${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}Tk`;
+}
+
+function formatWhmcsDate(dateStr: string | null | undefined): string {
+  if (!dateStr || dateStr === '0000-00-00' || dateStr.startsWith('0000')) {
+    return '-';
+  }
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
+}
+
 function ClientServicesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -233,12 +253,12 @@ function ClientServicesContent() {
                               )}
                             </td>
                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
-                              ৳{parseFloat(service.amount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              <strong className="text-dark">{formatWhmcsPrice(service.amount)}</strong>
                               <br />
                               <small className="text-muted">{service.billingcycle || 'Monthly'}</small>
                             </td>
                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
-                              {service.nextduedate || '-'}
+                              {formatWhmcsDate(service.nextduedate)}
                             </td>
                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
                               <span className={`label status status-${statusLower}`}>

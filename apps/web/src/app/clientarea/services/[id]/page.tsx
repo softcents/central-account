@@ -161,6 +161,60 @@ export default function ServiceDetailsPage() {
   const statusLower = status.toLowerCase();
   const isSuspended = statusLower === 'suspended';
 
+  // Domain / Number resolution
+  const displayDomain = useMemo(() => {
+    if (service?.domain && service.domain.trim() !== '') {
+      return service.domain.trim();
+    }
+    // If IP Phone Number, extract 096... from product name
+    const prod = `${service?.product_name || ''} ${service?.package || ''}`;
+    const numMatch = prod.match(/096\d{8}/);
+    if (numMatch) return numMatch[0];
+
+    if (isPbx) {
+      return service?.userid ? `${service.userid}.bdpbx.com` : '177.bdpbx.com';
+    }
+    return `${service?.username || 'client'}.softcents.com`;
+  }, [service, isPbx]);
+
+  const displayUsername = useMemo(() => {
+    if (service?.username && service.username.trim() !== '') {
+      return service.username.trim();
+    }
+    if (isIpPhone) return displayDomain;
+    if (isPbx) return 'sctelecom';
+    return (service?.domain || 'user').replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toLowerCase();
+  }, [service, isIpPhone, isPbx, displayDomain]);
+
+  const displayPassword = useMemo(() => {
+    return service?.password || `Pass@${service?.id || '2026'}#Sc`;
+  }, [service]);
+
+  const pbxDomain = useMemo(() => {
+    if (isPbx && displayDomain.includes('.')) return displayDomain;
+    if (service?.userid) return `${service.userid}.bdpbx.com`;
+    return '177.bdpbx.com';
+  }, [isPbx, displayDomain, service]);
+
+  const serverHostname = useMemo(() => {
+    if (service?.server_hostname) return service.server_hostname;
+    if (service?.server_name) return service.server_name;
+    if (isPbx) return 'srv111.bdpbx.com';
+    if (isBhpanel) return 'bdix-bh.softcents.com';
+    return 'srv8.whitednszone.com';
+  }, [service, isPbx, isBhpanel]);
+
+  const serverIp = useMemo(() => {
+    if (service?.server_ip) return service.server_ip;
+    if (service?.dedicatedip) return service.dedicatedip;
+    if (isPbx) return '103.205.71.10';
+    if (isBhpanel) return '138.252.125.209';
+    return '125.253.92.7';
+  }, [service, isPbx, isBhpanel]);
+
+  const nameserver1 = service?.ns1 || (isBhpanel ? 'ns1.bdix-bh.softcents.com' : 'ns1.softcents.com');
+  const nameserver2 = service?.ns2 || (isBhpanel ? 'ns2.bdix-bh.softcents.com' : 'ns2.softcents.com');
+
   // Overdue / Unpaid Invoice calculation
   const unpaidInvoice = useMemo(() => {
     const invoices = (whmcsData?.invoices || []) as any[];
