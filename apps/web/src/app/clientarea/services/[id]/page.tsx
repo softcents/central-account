@@ -90,13 +90,9 @@ export default function ServiceDetailsPage() {
 
   const isBhpanel = useMemo(() => {
     if (!service || isPbx || isVps) return false;
+    if (service.server_type === 'cpanel' || String(service.server) === '6') return false;
     const s = `${service.group_name || ''} ${service.product_name || ''} ${service.package || ''} ${service.server_name || ''} ${service.server_type || ''}`.toLowerCase();
-    return (
-      s.includes('bdix') ||
-      s.includes('bhpanel') ||
-      String(service.server) === '6' ||
-      ['113', '114', '115', '116', '161'].includes(String(service.packageid))
-    );
+    return s.includes('bhpanel');
   }, [service, isPbx, isVps]);
 
   const isReseller = useMemo(() => {
@@ -273,22 +269,40 @@ export default function ServiceDetailsPage() {
   };
 
   // cPanel SSO
-  const handleCpanelSso = async (app: 'cpanel' | 'webmail' = 'cpanel') => {
+  const handleCpanelSso = async (
+    target: 'cpanel' | 'webmail' | 'files' | 'mail' | 'databases' | 'wordpress' | 'ssl' | 'dns' | 'backups' | 'awstats' = 'cpanel'
+  ) => {
     try {
       setCpanelSsoLoading(true);
-      const host = serverHostname || 'srv8.whitednszone.com';
-      const res = await fetch(
-        `/api/whmcs/servers/cpanel/sso?username=${encodeURIComponent(displayUsername)}&host=${encodeURIComponent(host)}`
-      );
+      const host = serverHostname || 'edge.rscolo.com';
+      const serviceParam = target === 'webmail' ? 'webmaild' : 'cpaneld';
+      let appParam = '';
+      if (target === 'files') appParam = 'FileManager_Home';
+      else if (target === 'mail') appParam = 'Email_Accounts';
+      else if (target === 'databases') appParam = 'Database_MySQL';
+      else if (target === 'wordpress') appParam = 'WordPress_Manager';
+      else if (target === 'ssl') appParam = 'SSL_Manage';
+      else if (target === 'dns') appParam = 'ZoneEditor';
+      else if (target === 'backups') appParam = 'Backup_Home';
+      else if (target === 'awstats') appParam = 'Stats_AWStats';
+
+      const queryParams = new URLSearchParams({
+        username: displayUsername,
+        host,
+        service: serviceParam,
+        ...(appParam ? { app: appParam } : {}),
+      });
+
+      const res = await fetch(`/api/whmcs/servers/cpanel/sso?${queryParams.toString()}`);
       const data = await res.json();
       if (data?.ssoUrl) {
         window.open(data.ssoUrl, '_blank');
       } else {
-        const dest = app === 'webmail' ? `https://${host}:2096` : `https://${host}:2083`;
+        const dest = target === 'webmail' ? `https://${host}:2096` : `https://${host}:2083`;
         window.open(dest, '_blank');
       }
     } catch {
-      const dest = app === 'webmail' ? `https://${serverHostname}:2096` : `https://${serverHostname}:2083`;
+      const dest = target === 'webmail' ? `https://${serverHostname || 'edge.rscolo.com'}:2096` : `https://${serverHostname || 'edge.rscolo.com'}:2083`;
       window.open(dest, '_blank');
     } finally {
       setCpanelSsoLoading(false);
@@ -577,19 +591,7 @@ export default function ServiceDetailsPage() {
                           {ssoLoading ? 'Connecting...' : 'Login to PBX Console'}
                         </span>
                       </button>
-                    ) : isBhpanel ? (
-                      <button
-                        type="button"
-                        onClick={() => handleBhpanelSso('cpanel')}
-                        disabled={bhSsoLoading === 'cpanel'}
-                        className="list-group-item list-group-item-action text-left"
-                      >
-                        <span>
-                          <i className="fas fa-sign-in-alt fa-fw mr-2 text-success"></i>
-                          {bhSsoLoading === 'cpanel' ? 'Connecting...' : 'Login to bhPanel'}
-                        </span>
-                      </button>
-                    ) : (
+                    ) : !isIpPhone && !isVps ? (
                       <button
                         type="button"
                         onClick={() => handleCpanelSso('cpanel')}
@@ -601,12 +603,12 @@ export default function ServiceDetailsPage() {
                           {cpanelSsoLoading ? 'Connecting...' : 'Login to cPanel'}
                         </span>
                       </button>
-                    )}
+                    ) : null}
 
                     {!isPbx && !isIpPhone && !isVps && (
                       <button
                         type="button"
-                        onClick={() => (isBhpanel ? handleBhpanelSso('mail') : handleCpanelSso('webmail'))}
+                        onClick={() => handleCpanelSso('webmail')}
                         className="list-group-item list-group-item-action text-left"
                       >
                         <span><i className="fas fa-envelope fa-fw mr-2 text-primary"></i> Login to Webmail</span>
@@ -649,35 +651,35 @@ export default function ServiceDetailsPage() {
                     <div className="list-group list-group-flush" style={{ fontSize: '13px' }}>
                       <button
                         type="button"
-                        onClick={() => (isBhpanel ? handleBhpanelSso('mail') : handleCpanelSso('cpanel'))}
+                        onClick={() => (isBhpanel ? handleBhpanelSso('mail') : handleCpanelSso('mail'))}
                         className="list-group-item list-group-item-action text-left"
                       >
                         <span><i className="fas fa-envelope mr-2 text-muted"></i> Email Accounts</span>
                       </button>
                       <button
                         type="button"
-                        onClick={() => (isBhpanel ? handleBhpanelSso('files') : handleCpanelSso('cpanel'))}
+                        onClick={() => (isBhpanel ? handleBhpanelSso('files') : handleCpanelSso('files'))}
                         className="list-group-item list-group-item-action text-left"
                       >
                         <span><i className="fas fa-folder mr-2 text-muted"></i> File Manager</span>
                       </button>
                       <button
                         type="button"
-                        onClick={() => (isBhpanel ? handleBhpanelSso('databases') : handleCpanelSso('cpanel'))}
+                        onClick={() => (isBhpanel ? handleBhpanelSso('databases') : handleCpanelSso('databases'))}
                         className="list-group-item list-group-item-action text-left"
                       >
                         <span><i className="fas fa-database mr-2 text-muted"></i> MySQL Databases</span>
                       </button>
                       <button
                         type="button"
-                        onClick={() => (isBhpanel ? handleBhpanelSso('wordpress') : handleCpanelSso('cpanel'))}
+                        onClick={() => (isBhpanel ? handleBhpanelSso('wordpress') : handleCpanelSso('wordpress'))}
                         className="list-group-item list-group-item-action text-left"
                       >
                         <span><i className="fab fa-wordpress mr-2 text-muted"></i> WordPress</span>
                       </button>
                       <button
                         type="button"
-                        onClick={() => (isBhpanel ? handleBhpanelSso('ssl') : handleCpanelSso('cpanel'))}
+                        onClick={() => (isBhpanel ? handleBhpanelSso('ssl') : handleCpanelSso('ssl'))}
                         className="list-group-item list-group-item-action text-left"
                       >
                         <span><i className="fas fa-shield-alt mr-2 text-muted"></i> SSL / TLS</span>
@@ -1257,7 +1259,7 @@ export default function ServiceDetailsPage() {
                               <div className="col-md-3 col-sm-4 col-6 mb-3">
                                 <button
                                   type="button"
-                                  onClick={() => (isBhpanel ? handleBhpanelSso('files') : handleCpanelSso('cpanel'))}
+                                  onClick={() => (isBhpanel ? handleBhpanelSso('files') : handleCpanelSso('files'))}
                                   className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
                                 >
                                   <i className="fas fa-folder-open text-primary mb-2" style={{ fontSize: '26px' }}></i>
@@ -1267,7 +1269,7 @@ export default function ServiceDetailsPage() {
                               <div className="col-md-3 col-sm-4 col-6 mb-3">
                                 <button
                                   type="button"
-                                  onClick={() => (isBhpanel ? handleBhpanelSso('mail') : handleCpanelSso('webmail'))}
+                                  onClick={() => (isBhpanel ? handleBhpanelSso('mail') : handleCpanelSso('mail'))}
                                   className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
                                 >
                                   <i className="fas fa-envelope text-success mb-2" style={{ fontSize: '26px' }}></i>
@@ -1277,7 +1279,7 @@ export default function ServiceDetailsPage() {
                               <div className="col-md-3 col-sm-4 col-6 mb-3">
                                 <button
                                   type="button"
-                                  onClick={() => (isBhpanel ? handleBhpanelSso('databases') : handleCpanelSso('cpanel'))}
+                                  onClick={() => (isBhpanel ? handleBhpanelSso('databases') : handleCpanelSso('databases'))}
                                   className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
                                 >
                                   <i className="fas fa-database text-warning mb-2" style={{ fontSize: '26px' }}></i>
@@ -1287,7 +1289,7 @@ export default function ServiceDetailsPage() {
                               <div className="col-md-3 col-sm-4 col-6 mb-3">
                                 <button
                                   type="button"
-                                  onClick={() => (isBhpanel ? handleBhpanelSso('wordpress') : handleCpanelSso('cpanel'))}
+                                  onClick={() => (isBhpanel ? handleBhpanelSso('wordpress') : handleCpanelSso('wordpress'))}
                                   className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
                                 >
                                   <i className="fab fa-wordpress text-info mb-2" style={{ fontSize: '26px' }}></i>
@@ -1297,7 +1299,7 @@ export default function ServiceDetailsPage() {
                               <div className="col-md-3 col-sm-4 col-6 mb-3">
                                 <button
                                   type="button"
-                                  onClick={() => (isBhpanel ? handleBhpanelSso('ssl') : handleCpanelSso('cpanel'))}
+                                  onClick={() => (isBhpanel ? handleBhpanelSso('ssl') : handleCpanelSso('ssl'))}
                                   className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
                                 >
                                   <i className="fas fa-shield-alt text-teal mb-2" style={{ fontSize: '26px', color: '#0d9488' }}></i>
@@ -1307,7 +1309,7 @@ export default function ServiceDetailsPage() {
                               <div className="col-md-3 col-sm-4 col-6 mb-3">
                                 <button
                                   type="button"
-                                  onClick={() => (isBhpanel ? handleBhpanelSso('dns') : handleCpanelSso('cpanel'))}
+                                  onClick={() => (isBhpanel ? handleBhpanelSso('dns') : handleCpanelSso('dns'))}
                                   className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
                                 >
                                   <i className="fas fa-globe text-danger mb-2" style={{ fontSize: '26px' }}></i>
@@ -1317,7 +1319,7 @@ export default function ServiceDetailsPage() {
                               <div className="col-md-3 col-sm-4 col-6 mb-3">
                                 <button
                                   type="button"
-                                  onClick={() => (isBhpanel ? handleBhpanelSso('cpanel') : handleCpanelSso('cpanel'))}
+                                  onClick={() => (isBhpanel ? handleBhpanelSso('cpanel') : handleCpanelSso('backups'))}
                                   className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
                                 >
                                   <i className="fas fa-history text-muted mb-2" style={{ fontSize: '26px' }}></i>
@@ -1327,7 +1329,7 @@ export default function ServiceDetailsPage() {
                               <div className="col-md-3 col-sm-4 col-6 mb-3">
                                 <button
                                   type="button"
-                                  onClick={() => (isBhpanel ? handleBhpanelSso('cpanel') : handleCpanelSso('cpanel'))}
+                                  onClick={() => (isBhpanel ? handleBhpanelSso('cpanel') : handleCpanelSso('awstats'))}
                                   className="btn btn-outline-light text-dark w-100 p-3 border rounded shadow-xs"
                                 >
                                   <i className="fas fa-chart-line text-info mb-2" style={{ fontSize: '26px' }}></i>
@@ -1482,50 +1484,172 @@ export default function ServiceDetailsPage() {
                       <i className="fas fa-cubes mr-2 text-primary"></i> Configurable Package Options
                     </h4>
                     <div className="border rounded bg-light p-3" style={{ fontSize: '14px' }}>
-                      <div className="row py-2 border-bottom">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
-                          Concurrent Channels / Calls:
-                        </div>
-                        <div className="col-sm-7 text-left font-weight-bold">
-                          {isPbx ? '10 Concurrent Channels' : isIpPhone ? '2 Concurrent Calls (Inbound & Outbound)' : 'Unlimited (Unmetered HTTP)'}
-                        </div>
-                      </div>
-
-                      <div className="row py-2 border-bottom">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
-                          Included Extensions:
-                        </div>
-                        <div className="col-sm-7 text-left">
-                          {isPbx ? '3 Extensions Included (101, 102, 103 + Support 999)' : 'N/A'}
-                        </div>
-                      </div>
-
-                      <div className="row py-2 border-bottom">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
-                          Call Recording Retention:
-                        </div>
-                        <div className="col-sm-7 text-left text-success font-weight-bold">
-                          30-Day Permanent Cloud Retention
-                        </div>
-                      </div>
-
-                      <div className="row py-2 border-bottom">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
-                          Dedicated IP Address:
-                        </div>
-                        <div className="col-sm-7 text-left font-mono">
-                          {serverIp} (Assigned &amp; Active)
-                        </div>
-                      </div>
-
-                      <div className="row py-2">
-                        <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
-                          BDIX Direct High-Speed Peering:
-                        </div>
-                        <div className="col-sm-7 text-left text-success font-weight-bold">
-                          10 Gbps Low-Latency Direct Connection
-                        </div>
-                      </div>
+                      {isPbx ? (
+                        <>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Concurrent Channels / Calls:
+                            </div>
+                            <div className="col-sm-7 text-left font-weight-bold">
+                              10 Concurrent Channels
+                            </div>
+                          </div>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Included Extensions:
+                            </div>
+                            <div className="col-sm-7 text-left">
+                              3 Extensions Included (101, 102, 103 + Support 999)
+                            </div>
+                          </div>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Call Recording Retention:
+                            </div>
+                            <div className="col-sm-7 text-left text-success font-weight-bold">
+                              30-Day Permanent Cloud Retention
+                            </div>
+                          </div>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Dedicated PBX Node:
+                            </div>
+                            <div className="col-sm-7 text-left font-mono">
+                              srv111.bdpbx.com (103.205.71.10)
+                            </div>
+                          </div>
+                          <div className="row py-2">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Audio Codecs:
+                            </div>
+                            <div className="col-sm-7 text-left font-mono text-muted">
+                              G.711u, G.711a, Opus, G.729
+                            </div>
+                          </div>
+                        </>
+                      ) : isIpPhone ? (
+                        <>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Assigned DID Phone Number:
+                            </div>
+                            <div className="col-sm-7 text-left font-weight-bold text-primary font-mono">
+                              {displayDomain}
+                            </div>
+                          </div>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Concurrent Channels:
+                            </div>
+                            <div className="col-sm-7 text-left font-weight-bold">
+                              2 Concurrent Channels (Inbound &amp; Outbound)
+                            </div>
+                          </div>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Caller ID (CNAM):
+                            </div>
+                            <div className="col-sm-7 text-left">
+                              {client?.name || 'Softcents Valued Client'}
+                            </div>
+                          </div>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              SIP Trunk Proxy:
+                            </div>
+                            <div className="col-sm-7 text-left font-mono">
+                              sip.softcents.com:5060
+                            </div>
+                          </div>
+                          <div className="row py-2">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Telecom Provider:
+                            </div>
+                            <div className="col-sm-7 text-left text-success font-weight-bold">
+                              BTCL / SoftCents Licensed IP TSP (09644 Prefix)
+                            </div>
+                          </div>
+                        </>
+                      ) : isVps ? (
+                        <>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              CPU Cores:
+                            </div>
+                            <div className="col-sm-7 text-left font-weight-bold">
+                              2 vCPU Cores
+                            </div>
+                          </div>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Guaranteed Memory:
+                            </div>
+                            <div className="col-sm-7 text-left">
+                              4 GB DDR4 ECC RAM
+                            </div>
+                          </div>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              NVMe Storage:
+                            </div>
+                            <div className="col-sm-7 text-left">
+                              50 GB Enterprise NVMe SSD
+                            </div>
+                          </div>
+                          <div className="row py-2">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Operating System:
+                            </div>
+                            <div className="col-sm-7 text-left font-weight-bold text-primary">
+                              Ubuntu 22.04 LTS 64-bit
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        /* Web Hosting Config Options */
+                        <>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Web Server Engine:
+                            </div>
+                            <div className="col-sm-7 text-left text-success font-weight-bold">
+                              LiteSpeed Enterprise + LSCache
+                            </div>
+                          </div>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              BDIX Direct Peering:
+                            </div>
+                            <div className="col-sm-7 text-left font-weight-bold">
+                              10 Gbps Direct Low-Latency BDIX Uplink
+                            </div>
+                          </div>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              PHP Versions Supported:
+                            </div>
+                            <div className="col-sm-7 text-left font-mono text-muted">
+                              Multi-PHP (PHP 7.4, 8.0, 8.1, 8.2, 8.3)
+                            </div>
+                          </div>
+                          <div className="row py-2 border-bottom">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Database Server:
+                            </div>
+                            <div className="col-sm-7 text-left">
+                              MySQL 8.0 / MariaDB 10.6 + phpMyAdmin
+                            </div>
+                          </div>
+                          <div className="row py-2">
+                            <div className="col-sm-5 text-sm-right font-weight-bold text-muted">
+                              Automated Backups:
+                            </div>
+                            <div className="col-sm-7 text-left text-primary font-weight-bold">
+                              Daily Automated Cloud Snapshot (7-Day Retention)
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1653,87 +1777,175 @@ export default function ServiceDetailsPage() {
                       <i className="fas fa-download mr-2 text-primary"></i> Available Software &amp; Manual Downloads
                     </h4>
                     <div className="row">
-                      <div className="col-md-6 mb-3">
-                        <div className="card h-100 border">
-                          <div className="card-body">
-                            <h5 className="card-title font-weight-bold text-primary">
-                              <i className="fas fa-desktop mr-1"></i> MicroSIP Softphone for Windows
-                            </h5>
-                            <p className="card-text small text-muted">
-                              Official, lightweight SIP softphone client for Windows 10 &amp; 11 with auto-configuration support.
-                            </p>
-                            <a
-                              href="https://www.microsip.org/download"
-                              target="_blank"
-                              rel="noreferrer"
-                              className="btn btn-sm btn-default"
-                            >
-                              <i className="fas fa-download mr-1"></i> Download v3.21.3 (.exe)
-                            </a>
+                      {isPbx || isIpPhone ? (
+                        <>
+                          <div className="col-md-6 mb-3">
+                            <div className="card h-100 border">
+                              <div className="card-body">
+                                <h5 className="card-title font-weight-bold text-primary">
+                                  <i className="fas fa-desktop mr-1"></i> MicroSIP Softphone for Windows
+                                </h5>
+                                <p className="card-text small text-muted">
+                                  Official, lightweight SIP softphone client for Windows 10 &amp; 11 with auto-configuration support.
+                                </p>
+                                <a
+                                  href="https://www.microsip.org/download"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="btn btn-sm btn-default"
+                                >
+                                  <i className="fas fa-download mr-1"></i> Download v3.21.3 (.exe)
+                                </a>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
 
-                      <div className="col-md-6 mb-3">
-                        <div className="card h-100 border">
-                          <div className="card-body">
-                            <h5 className="card-title font-weight-bold text-success">
-                              <i className="fas fa-mobile-alt mr-1"></i> Grandstream Wave Mobile App
-                            </h5>
-                            <p className="card-text small text-muted">
-                              High-definition voice calling application for Android and iOS devices on 4G/5G and WiFi.
-                            </p>
-                            <a
-                              href="https://play.google.com/store/apps/details?id=com.grandstream.wave"
-                              target="_blank"
-                              rel="noreferrer"
-                              className="btn btn-sm btn-default"
-                            >
-                              <i className="fas fa-external-link-alt mr-1"></i> Download on Google Play
-                            </a>
+                          <div className="col-md-6 mb-3">
+                            <div className="card h-100 border">
+                              <div className="card-body">
+                                <h5 className="card-title font-weight-bold text-success">
+                                  <i className="fas fa-mobile-alt mr-1"></i> Grandstream Wave Mobile App
+                                </h5>
+                                <p className="card-text small text-muted">
+                                  High-definition voice calling application for Android and iOS devices on 4G/5G and WiFi.
+                                </p>
+                                <a
+                                  href="https://play.google.com/store/apps/details?id=com.grandstream.wave"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="btn btn-sm btn-default"
+                                >
+                                  <i className="fas fa-external-link-alt mr-1"></i> Download on Google Play
+                                </a>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
 
-                      <div className="col-md-6 mb-3">
-                        <div className="card h-100 border">
-                          <div className="card-body">
-                            <h5 className="card-title font-weight-bold text-dark">
-                              <i className="fas fa-file-pdf mr-1 text-danger"></i> Softcents Cloud PBX Quick Guide
-                            </h5>
-                            <p className="card-text small text-muted">
-                              Comprehensive guide covering IVR configuration, call forwarding, extension setups, and recording backups.
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => alert('Documentation download started.')}
-                              className="btn btn-sm btn-default"
-                            >
-                              <i className="fas fa-file-download mr-1"></i> Download Guide (.pdf)
-                            </button>
+                          <div className="col-md-6 mb-3">
+                            <div className="card h-100 border">
+                              <div className="card-body">
+                                <h5 className="card-title font-weight-bold text-dark">
+                                  <i className="fas fa-file-pdf mr-1 text-danger"></i> Softcents Cloud PBX Quick Guide
+                                </h5>
+                                <p className="card-text small text-muted">
+                                  Comprehensive guide covering IVR configuration, call forwarding, extension setups, and recording backups.
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => alert('Documentation download started.')}
+                                  className="btn btn-sm btn-default"
+                                >
+                                  <i className="fas fa-file-download mr-1"></i> Download Guide (.pdf)
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
 
-                      <div className="col-md-6 mb-3">
-                        <div className="card h-100 border">
-                          <div className="card-body">
-                            <h5 className="card-title font-weight-bold text-dark">
-                              <i className="fas fa-file-code mr-1 text-info"></i> Thunderbird / Outlook Mail Config
-                            </h5>
-                            <p className="card-text small text-muted">
-                              Pre-configured XML profile for Mozilla Thunderbird and Microsoft Outlook corporate email clients.
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => alert('Mail profile downloaded.')}
-                              className="btn btn-sm btn-default"
-                            >
-                              <i className="fas fa-file-download mr-1"></i> Download Config (.xml)
-                            </button>
+                          <div className="col-md-6 mb-3">
+                            <div className="card h-100 border">
+                              <div className="card-body">
+                                <h5 className="card-title font-weight-bold text-dark">
+                                  <i className="fas fa-file-code mr-1 text-info"></i> IP Phone Provisioning Profile
+                                </h5>
+                                <p className="card-text small text-muted">
+                                  Grandstream / Yealink XML provisioning template file for auto-provisioning physical IP desk phones.
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => alert('SIP config file downloaded.')}
+                                  className="btn btn-sm btn-default"
+                                >
+                                  <i className="fas fa-file-download mr-1"></i> Download Profile (.xml)
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                        </>
+                      ) : (
+                        /* Web Hosting Downloads */
+                        <>
+                          <div className="col-md-6 mb-3">
+                            <div className="card h-100 border">
+                              <div className="card-body">
+                                <h5 className="card-title font-weight-bold text-primary">
+                                  <i className="fas fa-cloud-upload-alt mr-1"></i> FileZilla FTP Client
+                                </h5>
+                                <p className="card-text small text-muted">
+                                  Recommended high-speed secure FTP/SFTP client for publishing and managing your website files.
+                                </p>
+                                <a
+                                  href="https://filezilla-project.org/download.php"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="btn btn-sm btn-default"
+                                >
+                                  <i className="fas fa-download mr-1"></i> Download FileZilla (.exe)
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="col-md-6 mb-3">
+                            <div className="card h-100 border">
+                              <div className="card-body">
+                                <h5 className="card-title font-weight-bold text-success">
+                                  <i className="fas fa-envelope-open mr-1"></i> Thunderbird / Outlook Mail Config
+                                </h5>
+                                <p className="card-text small text-muted">
+                                  Pre-configured XML profile for Mozilla Thunderbird and Microsoft Outlook corporate email clients.
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => alert('Mail profile downloaded.')}
+                                  className="btn btn-sm btn-default"
+                                >
+                                  <i className="fas fa-file-download mr-1"></i> Download Config (.xml)
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="col-md-6 mb-3">
+                            <div className="card h-100 border">
+                              <div className="card-body">
+                                <h5 className="card-title font-weight-bold text-dark">
+                                  <i className="fas fa-file-pdf mr-1 text-danger"></i> Softcents cPanel &amp; Webmail Manual
+                                </h5>
+                                <p className="card-text small text-muted">
+                                  Step-by-step user manual covering database creation, subdomains, SSL setup, and webmail usage.
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => alert('Manual download started.')}
+                                  className="btn btn-sm btn-default"
+                                >
+                                  <i className="fas fa-file-download mr-1"></i> Download Manual (.pdf)
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="col-md-6 mb-3">
+                            <div className="card h-100 border">
+                              <div className="card-body">
+                                <h5 className="card-title font-weight-bold text-info">
+                                  <i className="fab fa-wordpress mr-1"></i> WordPress Performance Guide
+                                </h5>
+                                <p className="card-text small text-muted">
+                                  LiteSpeed Cache (LSCache) optimization guide for maximum WordPress speed on BDIX hosting.
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => alert('Guide download started.')}
+                                  className="btn btn-sm btn-default"
+                                >
+                                  <i className="fas fa-file-download mr-1"></i> Download Guide (.pdf)
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1747,73 +1959,218 @@ export default function ServiceDetailsPage() {
                       <i className="fas fa-puzzle-piece mr-2 text-primary"></i> Available Service Addons
                     </h4>
                     <div className="row">
-                      <div className="col-md-6 mb-3">
-                        <div className="card border">
-                          <div className="card-header bg-light d-flex justify-content-between align-items-center">
-                            <strong>Extra 5 Extensions Pack</strong>
-                            <span className="badge badge-success">৳500.00 BDT/mo</span>
+                      {isPbx ? (
+                        <>
+                          <div className="col-md-6 mb-3">
+                            <div className="card border">
+                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>Extra 5 Extensions Pack</strong>
+                                <span className="badge badge-success">৳500.00 BDT/mo</span>
+                              </div>
+                              <div className="card-body" style={{ fontSize: '13px' }}>
+                                <p className="text-muted mb-3">
+                                  Expand your PBX with 5 additional SIP extensions for your office agents and support desks.
+                                </p>
+                                <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=1&serviceid=${service.id}`} className="btn btn-sm btn-primary">
+                                  <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
+                                </Link>
+                              </div>
+                            </div>
                           </div>
-                          <div className="card-body" style={{ fontSize: '13px' }}>
-                            <p className="text-muted mb-3">
-                              Expand your PBX with 5 additional SIP extensions for your office agents and support desks.
-                            </p>
-                            <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=1&serviceid=${service.id}`} className="btn btn-sm btn-primary">
-                              <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="col-md-6 mb-3">
-                        <div className="card border">
-                          <div className="card-header bg-light d-flex justify-content-between align-items-center">
-                            <strong>1-Year Call Recording Retention</strong>
-                            <span className="badge badge-success">৳1,000.00 BDT/mo</span>
+                          <div className="col-md-6 mb-3">
+                            <div className="card border">
+                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>1-Year Call Recording Cloud Archive</strong>
+                                <span className="badge badge-success">৳1,000.00 BDT/mo</span>
+                              </div>
+                              <div className="card-body" style={{ fontSize: '13px' }}>
+                                <p className="text-muted mb-3">
+                                  Extend your PBX call recording cloud archive from 30 days to a permanent 1-year compliant storage.
+                                </p>
+                                <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=2&serviceid=${service.id}`} className="btn btn-sm btn-primary">
+                                  <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
+                                </Link>
+                              </div>
+                            </div>
                           </div>
-                          <div className="card-body" style={{ fontSize: '13px' }}>
-                            <p className="text-muted mb-3">
-                              Extend your PBX call recording cloud archive from 30 days to a permanent 1-year compliant storage.
-                            </p>
-                            <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=2&serviceid=${service.id}`} className="btn btn-sm btn-primary">
-                              <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="col-md-6 mb-3">
-                        <div className="card border">
-                          <div className="card-header bg-light d-flex justify-content-between align-items-center">
-                            <strong>Dedicated DID Trunk Channel</strong>
-                            <span className="badge badge-success">৳300.00 BDT/mo</span>
+                          <div className="col-md-6 mb-3">
+                            <div className="card border">
+                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>Dedicated DID Trunk Channel</strong>
+                                <span className="badge badge-success">৳300.00 BDT/mo</span>
+                              </div>
+                              <div className="card-body" style={{ fontSize: '13px' }}>
+                                <p className="text-muted mb-3">
+                                  Add extra concurrent call capacity to your PBX trunk for peak inbound traffic handling.
+                                </p>
+                                <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=3&serviceid=${service.id}`} className="btn btn-sm btn-primary">
+                                  <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
+                                </Link>
+                              </div>
+                            </div>
                           </div>
-                          <div className="card-body" style={{ fontSize: '13px' }}>
-                            <p className="text-muted mb-3">
-                              Add extra concurrent call capacity to your IP Phone number for peak incoming traffic handling.
-                            </p>
-                            <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=3&serviceid=${service.id}`} className="btn btn-sm btn-primary">
-                              <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="col-md-6 mb-3">
-                        <div className="card border">
-                          <div className="card-header bg-light d-flex justify-content-between align-items-center">
-                            <strong>PositiveSSL Wildcard Certificate</strong>
-                            <span className="badge badge-success">৳1,500.00 BDT/yr</span>
+                          <div className="col-md-6 mb-3">
+                            <div className="card border">
+                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>Custom Multi-Level IVR Recording</strong>
+                                <span className="badge badge-success">৳1,500.00 BDT</span>
+                              </div>
+                              <div className="card-body" style={{ fontSize: '13px' }}>
+                                <p className="text-muted mb-3">
+                                  Professional studio voiceover artist recording for multi-level IVR greeting and department queues.
+                                </p>
+                                <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=5&serviceid=${service.id}`} className="btn btn-sm btn-primary">
+                                  <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
+                                </Link>
+                              </div>
+                            </div>
                           </div>
-                          <div className="card-body" style={{ fontSize: '13px' }}>
-                            <p className="text-muted mb-3">
-                              Enterprise 256-bit SSL encryption covering your root domain and all unlimited subdomains.
-                            </p>
-                            <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=4&serviceid=${service.id}`} className="btn btn-sm btn-primary">
-                              <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
-                            </Link>
+                        </>
+                      ) : isIpPhone ? (
+                        <>
+                          <div className="col-md-6 mb-3">
+                            <div className="card border">
+                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>Additional 2 Concurrent Channels</strong>
+                                <span className="badge badge-success">৳300.00 BDT/mo</span>
+                              </div>
+                              <div className="card-body" style={{ fontSize: '13px' }}>
+                                <p className="text-muted mb-3">
+                                  Double your concurrent call handling capacity for your dedicated IP phone number.
+                                </p>
+                                <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=11&serviceid=${service.id}`} className="btn btn-sm btn-primary">
+                                  <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
+                                </Link>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+
+                          <div className="col-md-6 mb-3">
+                            <div className="card border">
+                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>Inbound Call Recording (30-Day Storage)</strong>
+                                <span className="badge badge-success">৳200.00 BDT/mo</span>
+                              </div>
+                              <div className="card-body" style={{ fontSize: '13px' }}>
+                                <p className="text-muted mb-3">
+                                  Automated cloud audio recording for all incoming customer calls on this DID number.
+                                </p>
+                                <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=12&serviceid=${service.id}`} className="btn btn-sm btn-primary">
+                                  <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="col-md-6 mb-3">
+                            <div className="card border">
+                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>Virtual IVR Auto-Attendant Gateway</strong>
+                                <span className="badge badge-success">৳500.00 BDT/mo</span>
+                              </div>
+                              <div className="card-body" style={{ fontSize: '13px' }}>
+                                <p className="text-muted mb-3">
+                                  Interactive touch-tone voice menu (Press 1 for Sales, Press 2 for Support) routed to your mobiles.
+                                </p>
+                                <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=13&serviceid=${service.id}`} className="btn btn-sm btn-primary">
+                                  <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="col-md-6 mb-3">
+                            <div className="card border">
+                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>Bulk SMS Promotional API Gateway</strong>
+                                <span className="badge badge-success">৳500.00 BDT/mo</span>
+                              </div>
+                              <div className="card-body" style={{ fontSize: '13px' }}>
+                                <p className="text-muted mb-3">
+                                  Send high-speed automated OTP, transactional alerts, and SMS campaigns from this registered number.
+                                </p>
+                                <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=14&serviceid=${service.id}`} className="btn btn-sm btn-primary">
+                                  <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        /* Web Hosting Addons */
+                        <>
+                          <div className="col-md-6 mb-3">
+                            <div className="card border">
+                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>Dedicated IPv4 Address</strong>
+                                <span className="badge badge-success">৳300.00 BDT/mo</span>
+                              </div>
+                              <div className="card-body" style={{ fontSize: '13px' }}>
+                                <p className="text-muted mb-3">
+                                  Private dedicated IP address for your cPanel hosting account. Maximizes email deliverability and reputation.
+                                </p>
+                                <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=21&serviceid=${service.id}`} className="btn btn-sm btn-primary">
+                                  <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="col-md-6 mb-3">
+                            <div className="card border">
+                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>PositiveSSL Wildcard Certificate</strong>
+                                <span className="badge badge-success">৳1,500.00 BDT/yr</span>
+                              </div>
+                              <div className="card-body" style={{ fontSize: '13px' }}>
+                                <p className="text-muted mb-3">
+                                  Enterprise 256-bit SSL encryption covering your root domain and all unlimited subdomains with trust seal.
+                                </p>
+                                <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=4&serviceid=${service.id}`} className="btn btn-sm btn-primary">
+                                  <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="col-md-6 mb-3">
+                            <div className="card border">
+                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>cPanel Daily Cloud Backup (50GB)</strong>
+                                <span className="badge badge-success">৳450.00 BDT/mo</span>
+                              </div>
+                              <div className="card-body" style={{ fontSize: '13px' }}>
+                                <p className="text-muted mb-3">
+                                  Automated offsite daily snapshot backups with 1-click self-restore for files, mailboxes, and MySQL databases.
+                                </p>
+                                <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=22&serviceid=${service.id}`} className="btn btn-sm btn-primary">
+                                  <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="col-md-6 mb-3">
+                            <div className="card border">
+                              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>SpamExperts Inbound Email Filter</strong>
+                                <span className="badge badge-success">৳250.00 BDT/mo</span>
+                              </div>
+                              <div className="card-body" style={{ fontSize: '13px' }}>
+                                <p className="text-muted mb-3">
+                                  Industry-leading 99.98% anti-spam and anti-virus email security gateway for your corporate domain emails.
+                                </p>
+                                <Link href={`/cart${impQuery ? `${impQuery}&` : '?'}a=add&aid=23&serviceid=${service.id}`} className="btn btn-sm btn-primary">
+                                  <i className="fas fa-shopping-cart mr-1"></i> Purchase &amp; Activate
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}

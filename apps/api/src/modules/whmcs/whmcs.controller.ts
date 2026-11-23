@@ -124,8 +124,20 @@ export class WhmcsController {
 
   // SERVERS: cPanel
   @Get('servers/cpanel/sso')
-  async getCpanelSso(@Query('username') username: string, @Query('host') host?: string) {
-    return this.whmcs.cpanelServer.generateSsoUrl(username, host ? { host, user: 'sgsoft', apiToken: '' } : undefined);
+  async getCpanelSso(
+    @Query('username') username: string,
+    @Query('host') host?: string,
+    @Query('service') service?: 'cpaneld' | 'webmaild',
+    @Query('app') app?: string,
+  ) {
+    return this.whmcs.cpanelServer.generateSsoUrl(username, {
+      host: host || 'edge.rscolo.com',
+      port: 2087,
+      user: 'softcentsm',
+      apiToken: '56ET5MQII4WV0T18Q8UVJ0XL4OWEI36H',
+      service: service || 'cpaneld',
+      app: app || '',
+    });
   }
 
   @Post('servers/cpanel/change-password')

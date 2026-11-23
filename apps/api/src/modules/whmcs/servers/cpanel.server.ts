@@ -22,8 +22,8 @@ export class CpanelServer {
   private readonly logger = new Logger(CpanelServer.name);
 
   private getWhmUrl(config?: CpanelServerConfig): string {
-    const host = config?.host || '127.0.0.1';
-    const port = config?.port || 2087;
+    const host = config?.host || process.env.WHM_HOST || '138.252.125.4';
+    const port = config?.port || Number(process.env.WHM_PORT) || 2087;
     const proto = config?.secure !== false ? 'https://' : 'http://';
     return `${proto}${host}:${port}/json-api`;
   }
@@ -36,15 +36,21 @@ export class CpanelServer {
     }).toString();
 
     const url = `${baseUrl}/${action}?${query}`;
-    const token = config?.apiToken || process.env.WHM_API_TOKEN || '';
-    const user = config?.user || process.env.WHM_USER || 'root';
+    const token = config?.apiToken || process.env.WHM_API_TOKEN || '56ET5MQII4WV0T18Q8UVJ0XL4OWEI36H';
+    const user = config?.user || process.env.WHM_USER || 'softcentsm';
+    const password = process.env.WHM_PASSWORD || 'u-,hA?J1-&^aBufb';
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `whm ${user}:${token}`;
+    } else {
+      headers['Authorization'] = `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`;
+    }
 
     try {
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          Authorization: `whm ${user}:${token}`,
-        },
+        headers,
       });
       return await response.json();
     } catch (err: any) {
@@ -103,9 +109,20 @@ export class CpanelServer {
     return { success: ok, message: res?.metadata?.reason || 'Password updated' };
   }
 
-  async generateSsoUrl(username: string, config?: CpanelServerConfig): Promise<{ success: boolean; ssoUrl: string }> {
-    const res = await this.callWhm('create_user_session', { user: username, service: 'cpaneld' }, config);
-    const url = res?.data?.url || `https://${config?.host || 'cpanel.softcents.com'}:2083/`;
+  async generateSsoUrl(
+    username: string,
+    config?: CpanelServerConfig & { service?: 'cpaneld' | 'webmaild'; app?: string },
+  ): Promise<{ success: boolean; ssoUrl: string }> {
+    const serviceType = config?.service || 'cpaneld';
+    const params: Record<string, any> = { user: username, service: serviceType };
+    if (config?.app) {
+      params.app = config.app;
+    }
+    const res = await this.callWhm('create_user_session', params, config);
+    const host = config?.host || process.env.WHM_HOST || 'edge.rscolo.com';
+    const port = serviceType === 'webmaild' ? 2096 : 2083;
+    const fallbackUrl = `https://${host}:${port}/`;
+    const url = res?.data?.url || fallbackUrl;
     return { success: true, ssoUrl: url };
   }
 }
