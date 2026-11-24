@@ -118,7 +118,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         // Seed Super Admin (admin@softcents.com)
         await (this as any).adminUser.upsert({
           where: { email: 'admin@softcents.com' },
-          update: {},
+          update: {
+            password_hash: adminPasswordHash,
+            status: 'ACTIVE',
+          },
           create: {
             email: 'admin@softcents.com',
             password_hash: adminPasswordHash,
@@ -126,6 +129,23 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             last_name: 'Administrator',
             role: 'SUPER_ADMIN',
             status: 'ACTIVE',
+          },
+        });
+
+        // Seed Portal User for admin@softcents.com
+        await (this as any).user.upsert({
+          where: { email: 'admin@softcents.com' },
+          update: {
+            password_hash: adminPasswordHash,
+            status: 'ACTIVE',
+          },
+          create: {
+            id: 'user_admin_softcents',
+            email: 'admin@softcents.com',
+            password_hash: adminPasswordHash,
+            status: 'ACTIVE',
+            email_verified: true,
+            customer_registration_completed: true,
           },
         });
 

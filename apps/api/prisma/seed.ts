@@ -220,6 +220,24 @@ async function main() {
     },
   });
 
+  // Seed portal User for admin@softcents.com
+  await prisma.user.upsert({
+    where: { email: 'admin@softcents.com' },
+    update: {
+      password_hash: adminPasswordHash,
+      status: 'ACTIVE',
+      email_verified: true,
+    },
+    create: {
+      id: 'user_admin_softcents',
+      email: 'admin@softcents.com',
+      password_hash: adminPasswordHash,
+      status: 'ACTIVE',
+      email_verified: true,
+      customer_registration_completed: true,
+    },
+  });
+
   await (prisma as any).adminUser.upsert({
     where: { email: 'admin@centralidentity.com' },
     update: {
